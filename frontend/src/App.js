@@ -175,10 +175,16 @@ function App() {
       
       if (response.ok) {
         const data = await response.json();
-        window.open(data.auth_url, '_blank', 'width=500,height=600');
+        if (data.error) {
+          // Show setup instructions
+          alert(`Google OAuth Setup Required:\n\n${data.message}\n\nInstructions:\n${data.instructions.join('\n')}`);
+        } else {
+          window.open(data.auth_url, '_blank', 'width=500,height=600');
+        }
       }
     } catch (error) {
       console.error('Failed to get Google auth URL:', error);
+      alert('Failed to connect to Google. Please try again later.');
     }
   };
 
