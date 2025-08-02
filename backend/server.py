@@ -51,34 +51,10 @@ GOOGLE_SCOPES = [
     'https://www.googleapis.com/auth/drive.readonly'
 ]
 
-# Google OAuth flow configuration
+# Google OAuth configuration - DISABLED until proper setup
 def create_google_flow(redirect_uri=None):
-    # Use the frontend domain for redirect
-    if not redirect_uri:
-        # Extract domain from REACT_APP_BACKEND_URL and use it for frontend
-        backend_url = os.environ.get('REACT_APP_BACKEND_URL', 'http://localhost:3000')
-        if 'preview.emergentagent.com' in backend_url:
-            # Use the same domain but different subdomain for frontend
-            domain_parts = backend_url.split('.')
-            frontend_domain = f"https://login-signup.stage-{domain_parts[1]}.{domain_parts[2]}"
-            redirect_uri = f"{frontend_domain}/auth/google/callback"
-        else:
-            redirect_uri = "http://localhost:3000/auth/google/callback"
-    
-    flow = Flow.from_client_config(
-        {
-            "web": {
-                "client_id": GOOGLE_CLIENT_ID,
-                "client_secret": GOOGLE_CLIENT_SECRET,
-                "auth_uri": "https://accounts.google.com/o/oauth2/auth",
-                "token_uri": "https://oauth2.googleapis.com/token",
-                "redirect_uris": [redirect_uri]
-            }
-        },
-        scopes=GOOGLE_SCOPES
-    )
-    flow.redirect_uri = redirect_uri
-    return flow
+    # This function is disabled until Google Cloud Console is properly configured
+    raise HTTPException(status_code=501, detail="Google OAuth integration is disabled. Please configure Google Cloud Console first.")
 
 # Pydantic models
 class User(BaseModel):
