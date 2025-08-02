@@ -169,6 +169,49 @@ class LessonHubAPITester:
         )
         return success
 
+    def test_google_oauth_callback_without_auth(self):
+        """Test Google OAuth callback without authentication"""
+        success, response = self.run_test(
+            "Google OAuth Callback Without Auth",
+            "POST",
+            "api/google/callback",
+            401,
+            data={"code": "test_code", "state": "test_state"}
+        )
+        return success
+
+    def test_google_import_slides_without_auth(self):
+        """Test Google import slides without authentication"""
+        success, response = self.run_test(
+            "Google Import Slides Without Auth",
+            "POST",
+            "api/google/import-slides",
+            401,
+            data={"slides_id": "test_slides_id", "lesson_id": "test_lesson_id"}
+        )
+        return success
+
+    def test_google_import_docs_without_auth(self):
+        """Test Google import docs without authentication"""
+        success, response = self.run_test(
+            "Google Import Docs Without Auth",
+            "POST",
+            "api/google/import-docs",
+            401,
+            data={"docs_id": "test_docs_id", "lesson_id": "test_lesson_id"}
+        )
+        return success
+
+    def test_google_slides_content_without_auth(self):
+        """Test Google slides content without authentication"""
+        success, response = self.run_test(
+            "Google Slides Content Without Auth",
+            "GET",
+            "api/google/slides/test_slides_id",
+            401
+        )
+        return success
+
     def test_google_slides_without_auth(self):
         """Test Google slides without authentication"""
         success, response = self.run_test(
