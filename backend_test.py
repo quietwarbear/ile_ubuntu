@@ -318,6 +318,10 @@ def main():
     tester.test_google_auth_url_with_mock_session()
     tester.test_google_slides_without_auth()
     tester.test_google_docs_without_auth()
+    tester.test_google_oauth_callback_without_auth()
+    tester.test_google_import_slides_without_auth()
+    tester.test_google_import_docs_without_auth()
+    tester.test_google_slides_content_without_auth()
     
     return tester.print_summary()
 
