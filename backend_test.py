@@ -272,6 +272,7 @@ def main():
     print("\n🔗 TESTING GOOGLE INTEGRATION ENDPOINTS (WITHOUT AUTH)")
     print("-" * 40)
     tester.test_google_auth_url_without_auth()
+    tester.test_google_auth_url_with_mock_session()
     tester.test_google_slides_without_auth()
     tester.test_google_docs_without_auth()
     
