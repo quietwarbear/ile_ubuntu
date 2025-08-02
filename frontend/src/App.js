@@ -520,13 +520,28 @@ function App() {
               <Card className="bg-midnight-800/50 backdrop-blur-lg border-midnight-700">
                 <CardContent className="p-8 text-center">
                   <Presentation className="mx-auto h-16 w-16 text-gold-400 mb-4" />
-                  <h3 className="text-xl font-semibold text-white mb-2">Connect Your Google Account</h3>
-                  <p className="text-gray-400 mb-6">
-                    Connect your Google account to import slides and documents directly into your lessons.
-                  </p>
+                  <h3 className="text-xl font-semibold text-white mb-2">Google Integration Setup Required</h3>
+                  <div className="text-gray-400 mb-6 text-left max-w-2xl mx-auto">
+                    <p className="mb-4">
+                      To enable Google Slides and Docs import, you need to configure the OAuth redirect URI in your Google Cloud Console:
+                    </p>
+                    <div className="bg-black/30 p-4 rounded-lg mb-4">
+                      <p className="text-gold-400 font-mono text-sm">
+                        https://8bec313c-42bc-492f-8514-71511295d06c.preview.emergentagent.com/auth/google/callback
+                      </p>
+                    </div>
+                    <ol className="list-decimal list-inside space-y-2 text-sm">
+                      <li>Go to <a href="https://console.cloud.google.com/" target="_blank" rel="noopener noreferrer" className="text-gold-400 hover:text-gold-300">Google Cloud Console</a></li>
+                      <li>Select your project</li>
+                      <li>Go to "APIs & Services" → "Credentials"</li>
+                      <li>Edit your OAuth 2.0 Client ID</li>
+                      <li>Add the above URI to "Authorized redirect URIs"</li>
+                      <li>Save the changes</li>
+                    </ol>
+                  </div>
                   <Button onClick={connectGoogle} className="bg-gold-600 hover:bg-gold-700 text-black">
                     <LogIn className="mr-2 h-4 w-4" />
-                    Connect Google Account
+                    Try Connect Google Account
                   </Button>
                 </CardContent>
               </Card>
