@@ -156,6 +156,19 @@ class LessonHubAPITester:
         )
         return success
 
+    def test_google_auth_url_with_mock_session(self):
+        """Test Google auth URL with mock session to check error handling"""
+        # This will fail with 401 but we want to see what the response would be
+        # if we had a valid session - testing the error handling logic
+        success, response = self.run_test(
+            "Google Auth URL With Mock Session (Expected to fail but shows error handling)",
+            "GET",
+            "api/google/auth-url",
+            401,  # We expect 401 since we don't have valid session
+            headers={"X-Session-ID": "mock_session_for_testing"}
+        )
+        return success
+
     def test_google_slides_without_auth(self):
         """Test Google slides without authentication"""
         success, response = self.run_test(
