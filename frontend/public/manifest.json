@@ -1,21 +1,21 @@
 {
   "short_name": "Ile Ubuntu",
   "name": "The Ile Ubuntu - Classroom Management",
-  "description": "Your comprehensive classroom management platform with Google integration",
+  "description": "Your comprehensive classroom management platform with ancient wisdom",
   "icons": [
     {
-      "src": "favicon.ico",
+      "src": "https://customer-assets.emergentagent.com/job_lessonhub-4/artifacts/58m7009f_anhk.png",
       "sizes": "64x64 32x32 24x24 16x16",
-      "type": "image/x-icon"
+      "type": "image/png"
     },
     {
-      "src": "logo192.png",
+      "src": "https://customer-assets.emergentagent.com/job_lessonhub-4/artifacts/58m7009f_anhk.png",
       "type": "image/png",
       "sizes": "192x192",
       "purpose": "maskable any"
     },
     {
-      "src": "logo512.png",
+      "src": "https://customer-assets.emergentagent.com/job_lessonhub-4/artifacts/58m7009f_anhk.png",
       "type": "image/png",
       "sizes": "512x512",
       "purpose": "maskable any"
@@ -27,6 +27,6 @@
   "background_color": "#0f172a",
   "orientation": "portrait-primary",
   "scope": "/",
-  "categories": ["education", "productivity", "business"],
+  "categories": ["education", "productivity", "business", "spiritual"],
   "lang": "en-US"
 }
