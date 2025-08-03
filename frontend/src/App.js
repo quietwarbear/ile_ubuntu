@@ -351,8 +351,7 @@ function App() {
               <img 
                 src="https://customer-assets.emergentagent.com/job_lessonhub-4/artifacts/58m7009f_anhk.png" 
                 alt="Ankh Symbol" 
-                className="h-8 w-8"
-                style={{ filter: 'brightness(0) saturate(100%) invert(75%) sepia(67%) saturate(1899%) hue-rotate(18deg) brightness(103%) contrast(96%)' }}
+                className="h-8 w-8 object-contain"
               />
               <h1 className="text-2xl font-bold text-white">The Ile Ubuntu</h1>
             </div>
