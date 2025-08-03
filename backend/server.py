@@ -128,7 +128,7 @@ async def get_current_user(x_session_id: Optional[str] = Header(None)):
 # Root endpoint
 @app.get("/")
 async def root():
-    return {"message": "LessonHub API is running"}
+    return {"message": "The Ile Ubuntu API is running"}
 
 # Authentication endpoints
 @app.post("/api/auth/profile")
