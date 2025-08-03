@@ -383,62 +383,11 @@ async def list_google_docs(current_user: dict = Depends(get_current_user)):
 
 @app.post("/api/google/import-slides")
 async def import_google_slides(data: dict, current_user: dict = Depends(get_current_user)):
-    """Import Google Slides presentation"""
-    try:
-        slides_id = data.get("slides_id")
-        lesson_id = data.get("lesson_id")
-        
-        if not slides_id:
-            raise HTTPException(status_code=400, detail="Slides ID required")
-        
-        # Get user's Google credentials
-        token_data = google_tokens_collection.find_one({"user_id": current_user["id"]})
-        if not token_data:
-            raise HTTPException(status_code=401, detail="Google account not connected")
-        
-        # Create credentials object
-        credentials = Credentials(
-            token=token_data["access_token"],
-            refresh_token=token_data["refresh_token"],
-            token_uri=token_data["token_uri"],
-            client_id=token_data["client_id"],
-            client_secret=token_data["client_secret"],
-            scopes=token_data["scopes"]
-        )
-        
-        # Build Slides service
-        slides_service = build('slides', 'v1', credentials=credentials)
-        
-        # Get presentation details
-        presentation = slides_service.presentations().get(presentationId=slides_id).execute()
-        
-        # Import slides data
-        imported_slides = {
-            "id": str(uuid.uuid4()),
-            "user_id": current_user["id"],
-            "google_slides_id": slides_id,
-            "lesson_id": lesson_id,
-            "title": presentation.get('title', 'Untitled Presentation'),
-            "slides_data": presentation,
-            "imported_at": datetime.utcnow()
-        }
-        
-        slides_collection.insert_one(imported_slides)
-        
-        # Update lesson if lesson_id provided
-        if lesson_id:
-            lessons_collection.update_one(
-                {"id": lesson_id, "teacher_id": current_user["id"]},
-                {"$set": {"google_slides_id": slides_id}}
-            )
-        
-        imported_slides.pop("_id", None)
-        return imported_slides
-        
-    except HttpError as error:
-        raise HTTPException(status_code=400, detail=f"Google API error: {error}")
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to import slides: {str(e)}")
+    """Import Google Slides presentation - DISABLED"""
+    raise HTTPException(
+        status_code=501, 
+        detail="Google Slides import is temporarily disabled. Please configure Google Cloud Console first."
+    )
 
 @app.post("/api/google/import-docs")
 async def import_google_docs(data: dict, current_user: dict = Depends(get_current_user)):
