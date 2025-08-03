@@ -320,7 +320,7 @@ function App() {
           <div className="flex justify-between items-center py-4">
             <div className="flex items-center space-x-4">
               <BookOpen className="h-8 w-8 text-gold-400" />
-              <h1 className="text-2xl font-bold text-white">LessonHub</h1>
+              <h1 className="text-2xl font-bold text-white">The Ile Ubuntu</h1>
             </div>
             
             <div className="flex items-center space-x-4">
