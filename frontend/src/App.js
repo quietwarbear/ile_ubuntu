@@ -27,7 +27,30 @@ function App() {
 
   useEffect(() => {
     checkAuthStatus();
+    
+    // PWA Install Prompt Handler
+    const handleBeforeInstallPrompt = (e) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+      setShowInstallPrompt(true);
+    };
+
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    };
   }, []);
+
+  const installPWA = async () => {
+    if (deferredPrompt) {
+      deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
+      console.log(`User response to the install prompt: ${outcome}`);
+      setDeferredPrompt(null);
+      setShowInstallPrompt(false);
+    }
+  };
 
   const checkAuthStatus = async () => {
     const sessionId = getCookie('session_id');
