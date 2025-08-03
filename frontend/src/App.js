@@ -284,25 +284,77 @@ function App() {
     }
   };
 
-  const sendMessage = async (messageData) => {
+  const uploadFile = async (file, lessonId = null, classId = null) => {
     const sessionId = getCookie('session_id');
+    setUploading(true);
+    
     try {
-      const response = await fetch(`${BACKEND_URL}/api/messages`, {
+      const formData = new FormData();
+      formData.append('file', file);
+      if (lessonId) formData.append('lesson_id', lessonId);
+      if (classId) formData.append('class_id', classId);
+
+      const response = await fetch(`${BACKEND_URL}/api/files/upload`, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
           'X-Session-ID': sessionId
         },
-        body: JSON.stringify(messageData)
+        body: formData
       });
 
       if (response.ok) {
-        const newMessage = await response.json();
-        setMessages([newMessage, ...messages]);
-        return newMessage;
+        const result = await response.json();
+        setUploadedFiles([result.file, ...uploadedFiles]);
+        alert('File uploaded successfully!');
+        return result;
+      } else {
+        const error = await response.json();
+        alert(`Upload failed: ${error.detail}`);
       }
     } catch (error) {
-      console.error('Failed to send message:', error);
+      console.error('Failed to upload file:', error);
+      alert('Upload failed. Please try again.');
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const loadFiles = async (lessonId = null, classId = null) => {
+    const sessionId = getCookie('session_id');
+    try {
+      let url = `${BACKEND_URL}/api/files`;
+      const params = new URLSearchParams();
+      if (lessonId) params.append('lesson_id', lessonId);
+      if (classId) params.append('class_id', classId);
+      if (params.toString()) url += `?${params.toString()}`;
+
+      const response = await fetch(url, {
+        headers: { 'X-Session-ID': sessionId }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setUploadedFiles(data.files);
+      }
+    } catch (error) {
+      console.error('Failed to load files:', error);
+    }
+  };
+
+  const deleteFile = async (fileId) => {
+    const sessionId = getCookie('session_id');
+    try {
+      const response = await fetch(`${BACKEND_URL}/api/files/${fileId}`, {
+        method: 'DELETE',
+        headers: { 'X-Session-ID': sessionId }
+      });
+
+      if (response.ok) {
+        setUploadedFiles(uploadedFiles.filter(file => file.id !== fileId));
+        alert('File deleted successfully!');
+      }
+    } catch (error) {
+      console.error('Failed to delete file:', error);
     }
   };
 
