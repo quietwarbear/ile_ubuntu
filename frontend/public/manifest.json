@@ -1,0 +1,32 @@
+{
+  "short_name": "Ile Ubuntu",
+  "name": "The Ile Ubuntu - Classroom Management",
+  "description": "Your comprehensive classroom management platform with Google integration",
+  "icons": [
+    {
+      "src": "favicon.ico",
+      "sizes": "64x64 32x32 24x24 16x16",
+      "type": "image/x-icon"
+    },
+    {
+      "src": "logo192.png",
+      "type": "image/png",
+      "sizes": "192x192",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "logo512.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "maskable any"
+    }
+  ],
+  "start_url": ".",
+  "display": "standalone",
+  "theme_color": "#0f172a",
+  "background_color": "#0f172a",
+  "orientation": "portrait-primary",
+  "scope": "/",
+  "categories": ["education", "productivity", "business"],
+  "lang": "en-US"
+}
