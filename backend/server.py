@@ -101,6 +101,7 @@ class Lesson(BaseModel):
     google_docs_id: Optional[str] = None
     audio_url: Optional[str] = None
     video_url: Optional[str] = None
+    files: List[str] = []  # File IDs
     created_at: datetime
     updated_at: datetime
 
