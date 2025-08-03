@@ -476,6 +476,19 @@ def main():
     tester.test_google_import_docs_without_auth()
     tester.test_google_slides_content_without_auth()
     
+    # Test file upload endpoints without authentication
+    print("\n📁 TESTING FILE UPLOAD ENDPOINTS (WITHOUT AUTH)")
+    print("-" * 40)
+    tester.test_file_upload_without_auth()
+    tester.test_file_upload_invalid_type_without_auth()
+    tester.test_get_files_without_auth()
+    tester.test_download_file_without_auth()
+    tester.test_delete_file_without_auth()
+    
+    # Test file type validation
+    tester.test_file_upload_allowed_types_simulation()
+    tester.test_file_upload_disallowed_types_simulation()
+    
     return tester.print_summary()
 
 if __name__ == "__main__":
