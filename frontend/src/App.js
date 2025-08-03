@@ -545,12 +545,23 @@ function App() {
           <TabsContent value="lessons" className="space-y-6">
             <div className="flex justify-between items-center">
               <h2 className="text-2xl font-bold text-white">Lessons</h2>
-              {user.role === 'teacher' && <CreateLessonDialog classes={classes} onCreateLesson={createLesson} />}
+              {user.role === 'teacher' && (
+                <CreateLessonDialog 
+                  classes={classes} 
+                  onCreateLesson={createLesson} 
+                  onUploadFile={uploadFile}
+                  uploading={uploading}
+                />
+              )}
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {lessons.map(lesson => (
-                <LessonCard key={lesson.id} lesson={lesson} />
+                <LessonCard 
+                  key={lesson.id} 
+                  lesson={lesson}
+                  files={uploadedFiles.filter(file => file.lesson_id === lesson.id)}
+                />
               ))}
             </div>
           </TabsContent>
