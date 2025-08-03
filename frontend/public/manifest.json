@@ -1,6 +1,6 @@
 {
   "short_name": "Ile Ubuntu",
-  "name": "The Ile Ubuntu - Classroom Management",
+  "name": "The Ile Ubuntu - Classroom Management v2.0",
   "description": "Your comprehensive classroom management platform with ancient wisdom",
   "icons": [
     {
@@ -28,5 +28,6 @@
   "orientation": "portrait-primary",
   "scope": "/",
   "categories": ["education", "productivity", "business", "spiritual"],
-  "lang": "en-US"
+  "lang": "en-US",
+  "version": "2.0"
 }
