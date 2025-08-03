@@ -1,6 +1,7 @@
-from fastapi import FastAPI, HTTPException, Depends, Header, Request
+from fastapi import FastAPI, HTTPException, Depends, Header, Request, File, UploadFile, Form
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, FileResponse
+from fastapi.staticfiles import StaticFiles
 from pymongo import MongoClient
 from pydantic import BaseModel
 from typing import Optional, List, Dict, Any
@@ -9,6 +10,8 @@ import uuid
 import requests
 from datetime import datetime, timedelta
 import json
+import shutil
+from pathlib import Path
 from google.auth.transport.requests import Request as GoogleRequest
 from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import Flow
