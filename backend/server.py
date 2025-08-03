@@ -16,7 +16,7 @@ from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 
 # Initialize FastAPI app
-app = FastAPI(title="LessonHub API", version="1.0.0")
+app = FastAPI(title="The Ile Ubuntu API", version="1.0.0")
 
 # CORS middleware
 app.add_middleware(
