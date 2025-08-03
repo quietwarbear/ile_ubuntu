@@ -399,35 +399,11 @@ async def import_google_docs(data: dict, current_user: dict = Depends(get_curren
 
 @app.get("/api/google/slides/{slides_id}")
 async def get_slides_content(slides_id: str, current_user: dict = Depends(get_current_user)):
-    """Get Google Slides content"""
-    try:
-        # Get user's Google credentials
-        token_data = google_tokens_collection.find_one({"user_id": current_user["id"]})
-        if not token_data:
-            raise HTTPException(status_code=401, detail="Google account not connected")
-        
-        # Create credentials object
-        credentials = Credentials(
-            token=token_data["access_token"],
-            refresh_token=token_data["refresh_token"],
-            token_uri=token_data["token_uri"],
-            client_id=token_data["client_id"],
-            client_secret=token_data["client_secret"],
-            scopes=token_data["scopes"]
-        )
-        
-        # Build Slides service
-        slides_service = build('slides', 'v1', credentials=credentials)
-        
-        # Get presentation content
-        presentation = slides_service.presentations().get(presentationId=slides_id).execute()
-        
-        return {"presentation": presentation}
-        
-    except HttpError as error:
-        raise HTTPException(status_code=400, detail=f"Google API error: {error}")
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to get slides content: {str(e)}")
+    """Get Google Slides content - DISABLED"""
+    raise HTTPException(
+        status_code=501, 
+        detail="Google Slides content access is temporarily disabled. Please configure Google Cloud Console first."
+    )
 
 # Messaging endpoints
 @app.post("/api/messages")
