@@ -282,6 +282,142 @@ class IleUbuntuAPITester:
         )
         return success
 
+    def create_test_file(self, filename, content, content_type):
+        """Create a test file for upload"""
+        if content_type == 'text/plain':
+            return io.BytesIO(content.encode('utf-8'))
+        elif content_type == 'application/pdf':
+            # Create a minimal PDF-like content
+            pdf_content = b"%PDF-1.4\n1 0 obj\n<<\n/Type /Catalog\n/Pages 2 0 R\n>>\nendobj\n2 0 obj\n<<\n/Type /Pages\n/Kids [3 0 R]\n/Count 1\n>>\nendobj\n3 0 obj\n<<\n/Type /Page\n/Parent 2 0 R\n/MediaBox [0 0 612 792]\n>>\nendobj\nxref\n0 4\n0000000000 65535 f \n0000000009 00000 n \n0000000074 00000 n \n0000000120 00000 n \ntrailer\n<<\n/Size 4\n/Root 1 0 R\n>>\nstartxref\n179\n%%EOF"
+            return io.BytesIO(pdf_content)
+        else:
+            # For other types, create simple content
+            return io.BytesIO(content.encode('utf-8'))
+
+    def test_file_upload_without_auth(self):
+        """Test file upload without authentication"""
+        test_file = self.create_test_file("test.txt", "Test content", "text/plain")
+        files = {'file': ('test.txt', test_file, 'text/plain')}
+        
+        success, response = self.run_test(
+            "File Upload Without Auth",
+            "POST",
+            "api/files/upload",
+            401,
+            files=files
+        )
+        return success
+
+    def test_file_upload_invalid_type_without_auth(self):
+        """Test file upload with invalid type without authentication"""
+        test_file = self.create_test_file("test.exe", "Invalid content", "application/x-executable")
+        files = {'file': ('test.exe', test_file, 'application/x-executable')}
+        
+        success, response = self.run_test(
+            "File Upload Invalid Type Without Auth",
+            "POST",
+            "api/files/upload",
+            401,  # Should fail with 401 before checking file type
+            files=files
+        )
+        return success
+
+    def test_get_files_without_auth(self):
+        """Test getting files without authentication"""
+        success, response = self.run_test(
+            "Get Files Without Auth",
+            "GET",
+            "api/files",
+            401
+        )
+        return success
+
+    def test_download_file_without_auth(self):
+        """Test downloading file without authentication"""
+        success, response = self.run_test(
+            "Download File Without Auth",
+            "GET",
+            "api/files/test_file_id/download",
+            401
+        )
+        return success
+
+    def test_delete_file_without_auth(self):
+        """Test deleting file without authentication"""
+        success, response = self.run_test(
+            "Delete File Without Auth",
+            "DELETE",
+            "api/files/test_file_id",
+            401
+        )
+        return success
+
+    def test_file_upload_allowed_types_simulation(self):
+        """Test file upload validation for allowed types (simulation without auth)"""
+        allowed_types = [
+            ('test.pdf', 'application/pdf'),
+            ('test.doc', 'application/msword'),
+            ('test.docx', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'),
+            ('test.ppt', 'application/vnd.ms-powerpoint'),
+            ('test.pptx', 'application/vnd.openxmlformats-officedocument.presentationml.presentation'),
+            ('test.jpg', 'image/jpeg'),
+            ('test.png', 'image/png'),
+            ('test.gif', 'image/gif'),
+            ('test.txt', 'text/plain'),
+            ('test.xls', 'application/vnd.ms-excel'),
+            ('test.xlsx', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+        ]
+        
+        print(f"\n📁 TESTING FILE TYPE VALIDATION (WITHOUT AUTH - EXPECT 401)")
+        print("-" * 60)
+        
+        all_passed = True
+        for filename, content_type in allowed_types:
+            test_file = self.create_test_file(filename, f"Test content for {filename}", content_type)
+            files = {'file': (filename, test_file, content_type)}
+            
+            success, response = self.run_test(
+                f"File Upload {filename} ({content_type})",
+                "POST",
+                "api/files/upload",
+                401,  # Expect 401 without auth
+                files=files
+            )
+            if not success:
+                all_passed = False
+        
+        return all_passed
+
+    def test_file_upload_disallowed_types_simulation(self):
+        """Test file upload validation for disallowed types (simulation without auth)"""
+        disallowed_types = [
+            ('test.exe', 'application/x-executable'),
+            ('test.bat', 'application/x-bat'),
+            ('test.sh', 'application/x-sh'),
+            ('test.zip', 'application/zip'),
+            ('test.rar', 'application/x-rar-compressed')
+        ]
+        
+        print(f"\n🚫 TESTING DISALLOWED FILE TYPES (WITHOUT AUTH - EXPECT 401)")
+        print("-" * 60)
+        
+        all_passed = True
+        for filename, content_type in disallowed_types:
+            test_file = self.create_test_file(filename, f"Test content for {filename}", content_type)
+            files = {'file': (filename, test_file, content_type)}
+            
+            success, response = self.run_test(
+                f"File Upload {filename} ({content_type}) - Should be blocked",
+                "POST",
+                "api/files/upload",
+                401,  # Expect 401 without auth (would be 400 with auth due to file type)
+                files=files
+            )
+            if not success:
+                all_passed = False
+        
+        return all_passed
+
     def print_summary(self):
         """Print test summary"""
         print(f"\n" + "="*60)
