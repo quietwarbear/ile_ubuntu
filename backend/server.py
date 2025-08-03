@@ -30,7 +30,7 @@ app.add_middleware(
 # MongoDB connection
 MONGO_URL = os.environ.get('MONGO_URL', 'mongodb://localhost:27017')
 client = MongoClient(MONGO_URL)
-db = client.lessonhub
+db = client.ile_ubuntu
 
 # Collections
 users_collection = db.users
