@@ -297,7 +297,7 @@ function App() {
         <div className="max-w-md w-full space-y-8 p-8">
           <div className="text-center">
             <BookOpen className="mx-auto h-16 w-16 text-gold-400 mb-6" />
-            <h2 className="text-4xl font-bold text-white mb-2">LessonHub</h2>
+            <h2 className="text-4xl font-bold text-white mb-2">The Ile Ubuntu</h2>
             <p className="text-gray-300 mb-8">Your comprehensive classroom management platform</p>
             <Button 
               onClick={handleLogin}
