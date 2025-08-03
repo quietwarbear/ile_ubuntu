@@ -21,6 +21,10 @@ from googleapiclient.errors import HttpError
 # Initialize FastAPI app
 app = FastAPI(title="The Ile Ubuntu API", version="1.0.0")
 
+# Create uploads directory
+UPLOADS_DIR = Path("uploads")
+UPLOADS_DIR.mkdir(exist_ok=True)
+
 # CORS middleware
 app.add_middleware(
     CORSMiddleware,
@@ -29,6 +33,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Mount static files for serving uploads
+app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
 
 # MongoDB connection
 MONGO_URL = os.environ.get('MONGO_URL', 'mongodb://localhost:27017')
