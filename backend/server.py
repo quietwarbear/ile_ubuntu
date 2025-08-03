@@ -51,6 +51,7 @@ slides_collection = db.slides
 messages_collection = db.messages
 notifications_collection = db.notifications
 google_tokens_collection = db.google_tokens
+files_collection = db.files
 
 # Google OAuth credentials
 GOOGLE_CLIENT_ID = os.environ.get('GOOGLE_CLIENT_ID')
