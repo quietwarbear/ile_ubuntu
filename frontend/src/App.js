@@ -324,8 +324,7 @@ function App() {
             <img 
               src="https://customer-assets.emergentagent.com/job_lessonhub-4/artifacts/58m7009f_anhk.png" 
               alt="Ankh Symbol" 
-              className="mx-auto h-16 w-16 mb-6 filter brightness-0 invert opacity-90"
-              style={{ filter: 'brightness(0) saturate(100%) invert(75%) sepia(67%) saturate(1899%) hue-rotate(18deg) brightness(103%) contrast(96%)' }}
+              className="mx-auto h-16 w-16 mb-6 object-contain"
             />
             <h2 className="text-4xl font-bold text-white mb-2">The Ile Ubuntu</h2>
             <p className="text-gray-300 mb-8">Your comprehensive classroom management platform</p>
