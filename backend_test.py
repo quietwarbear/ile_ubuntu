@@ -3,7 +3,7 @@ import sys
 import json
 from datetime import datetime
 
-class LessonHubAPITester:
+class IleUbuntuAPITester:
     def __init__(self, base_url="https://8bec313c-42bc-492f-8514-71511295d06c.preview.emergentagent.com"):
         self.base_url = base_url
         self.session_id = None
@@ -72,6 +72,12 @@ class LessonHubAPITester:
             "",
             200
         )
+        # Check if the response contains "The Ile Ubuntu"
+        if success and response.get("message"):
+            if "The Ile Ubuntu" in response["message"]:
+                print("✅ App name correctly updated to 'The Ile Ubuntu'")
+            else:
+                print(f"⚠️  App name in response: {response['message']}")
         return success
 
     def test_auth_me_without_session(self):
@@ -283,10 +289,10 @@ class LessonHubAPITester:
             return 1
 
 def main():
-    print("🚀 Starting LessonHub API Tests...")
+    print("🚀 Starting The Ile Ubuntu API Tests...")
     print("="*60)
     
-    tester = LessonHubAPITester()
+    tester = IleUbuntuAPITester()
     
     # Test basic endpoints
     print("\n📋 TESTING BASIC ENDPOINTS")
