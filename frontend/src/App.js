@@ -843,18 +843,33 @@ const CreateClassDialog = ({ onCreateClass }) => {
   );
 };
 
-const CreateLessonDialog = ({ classes, onCreateLesson }) => {
+const CreateLessonDialog = ({ classes, onCreateLesson, onUploadFile, uploading }) => {
   const [open, setOpen] = useState(false);
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [classId, setClassId] = useState('');
+  const [selectedFiles, setSelectedFiles] = useState([]);
+
+  const handleFileSelect = (event) => {
+    const files = Array.from(event.target.files);
+    setSelectedFiles(files);
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    await onCreateLesson({ title, description, class_id: classId });
+    const newLesson = await onCreateLesson({ title, description, class_id: classId });
+    
+    // Upload files if lesson created successfully and files selected
+    if (newLesson && selectedFiles.length > 0) {
+      for (const file of selectedFiles) {
+        await onUploadFile(file, newLesson.id, classId);
+      }
+    }
+    
     setTitle('');
     setDescription('');
     setClassId('');
+    setSelectedFiles([]);
     setOpen(false);
   };
 
@@ -866,11 +881,11 @@ const CreateLessonDialog = ({ classes, onCreateLesson }) => {
           Create Lesson
         </Button>
       </DialogTrigger>
-      <DialogContent className="bg-midnight-800 border-midnight-700">
+      <DialogContent className="bg-midnight-800 border-midnight-700 max-w-2xl">
         <DialogHeader>
           <DialogTitle className="text-white">Create New Lesson</DialogTitle>
           <DialogDescription className="text-gray-400">
-            Create a new lesson with Google Slides and Docs integration.
+            Create a new lesson with files, Google Slides and Docs integration.
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -900,8 +915,55 @@ const CreateLessonDialog = ({ classes, onCreateLesson }) => {
               </option>
             ))}
           </select>
-          <Button type="submit" className="w-full bg-gold-600 hover:bg-gold-700 text-black">
-            Create Lesson
+          
+          {/* File Upload Section */}
+          <div className="space-y-3">
+            <label className="block text-sm font-medium text-gray-300">
+              Upload Lesson Materials
+            </label>
+            <div className="flex items-center space-x-3">
+              <input
+                type="file"
+                multiple
+                onChange={handleFileSelect}
+                className="hidden"
+                id="lesson-files"
+                accept=".pdf,.doc,.docx,.ppt,.pptx,.jpg,.jpeg,.png,.gif,.txt,.xls,.xlsx"
+              />
+              <label
+                htmlFor="lesson-files"
+                className="flex items-center px-4 py-2 bg-midnight-700 hover:bg-midnight-600 text-white rounded-md cursor-pointer transition-colors"
+              >
+                <Upload className="mr-2 h-4 w-4" />
+                Choose Files
+              </label>
+              {selectedFiles.length > 0 && (
+                <span className="text-gray-400 text-sm">
+                  {selectedFiles.length} file(s) selected
+                </span>
+              )}
+            </div>
+            
+            {selectedFiles.length > 0 && (
+              <div className="space-y-2">
+                <p className="text-sm text-gray-400">Selected files:</p>
+                {selectedFiles.map((file, index) => (
+                  <div key={index} className="flex items-center space-x-2 text-sm text-gray-300">
+                    <File className="h-4 w-4 text-gold-400" />
+                    <span>{file.name}</span>
+                    <span className="text-gray-500">({(file.size / 1024 / 1024).toFixed(2)} MB)</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+          
+          <Button 
+            type="submit" 
+            className="w-full bg-gold-600 hover:bg-gold-700 text-black"
+            disabled={uploading}
+          >
+            {uploading ? 'Creating & Uploading...' : 'Create Lesson'}
           </Button>
         </form>
       </DialogContent>
