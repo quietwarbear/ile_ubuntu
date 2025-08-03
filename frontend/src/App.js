@@ -321,7 +321,12 @@ function App() {
       <div className="min-h-screen bg-gradient-to-br from-midnight-900 via-black to-midnight-800 flex items-center justify-center">
         <div className="max-w-md w-full space-y-8 p-8">
           <div className="text-center">
-            <BookOpen className="mx-auto h-16 w-16 text-gold-400 mb-6" />
+            <img 
+              src="https://customer-assets.emergentagent.com/job_lessonhub-4/artifacts/58m7009f_anhk.png" 
+              alt="Ankh Symbol" 
+              className="mx-auto h-16 w-16 mb-6 filter brightness-0 invert opacity-90"
+              style={{ filter: 'brightness(0) saturate(100%) invert(75%) sepia(67%) saturate(1899%) hue-rotate(18deg) brightness(103%) contrast(96%)' }}
+            />
             <h2 className="text-4xl font-bold text-white mb-2">The Ile Ubuntu</h2>
             <p className="text-gray-300 mb-8">Your comprehensive classroom management platform</p>
             <Button 
