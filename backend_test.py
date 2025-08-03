@@ -15,10 +15,10 @@ class IleUbuntuAPITester:
         self.created_class_id = None
         self.created_lesson_id = None
 
-    def run_test(self, name, method, endpoint, expected_status, data=None, headers=None):
+    def run_test(self, name, method, endpoint, expected_status, data=None, headers=None, files=None):
         """Run a single API test"""
         url = f"{self.base_url}/{endpoint}"
-        test_headers = {'Content-Type': 'application/json'}
+        test_headers = {}
         
         if headers:
             test_headers.update(headers)
@@ -26,19 +26,28 @@ class IleUbuntuAPITester:
         if self.session_id and 'X-Session-ID' not in test_headers:
             test_headers['X-Session-ID'] = self.session_id
 
+        # Don't set Content-Type for file uploads
+        if not files and 'Content-Type' not in test_headers:
+            test_headers['Content-Type'] = 'application/json'
+
         self.tests_run += 1
         print(f"\n🔍 Testing {name}...")
         print(f"   URL: {url}")
         print(f"   Method: {method}")
         print(f"   Headers: {test_headers}")
-        if data:
+        if data and not files:
             print(f"   Data: {json.dumps(data, indent=2)}")
+        elif files:
+            print(f"   Files: {list(files.keys()) if files else 'None'}")
         
         try:
             if method == 'GET':
                 response = requests.get(url, headers=test_headers)
             elif method == 'POST':
-                response = requests.post(url, json=data, headers=test_headers)
+                if files:
+                    response = requests.post(url, files=files, data=data, headers=test_headers)
+                else:
+                    response = requests.post(url, json=data, headers=test_headers)
             elif method == 'PUT':
                 response = requests.put(url, json=data, headers=test_headers)
             elif method == 'DELETE':
