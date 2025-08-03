@@ -349,7 +349,12 @@ function App() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-4">
             <div className="flex items-center space-x-4">
-              <BookOpen className="h-8 w-8 text-gold-400" />
+              <img 
+                src="https://customer-assets.emergentagent.com/job_lessonhub-4/artifacts/58m7009f_anhk.png" 
+                alt="Ankh Symbol" 
+                className="h-8 w-8"
+                style={{ filter: 'brightness(0) saturate(100%) invert(75%) sepia(67%) saturate(1899%) hue-rotate(18deg) brightness(103%) contrast(96%)' }}
+              />
               <h1 className="text-2xl font-bold text-white">The Ile Ubuntu</h1>
             </div>
             
