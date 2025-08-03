@@ -121,6 +121,18 @@ class Notification(BaseModel):
     read: bool = False
     created_at: datetime
 
+class LessonFile(BaseModel):
+    id: str
+    filename: str
+    original_filename: str
+    file_path: str
+    file_size: int
+    mime_type: str
+    lesson_id: Optional[str] = None
+    class_id: Optional[str] = None
+    uploaded_by: str
+    uploaded_at: datetime
+
 # Authentication helper
 async def get_current_user(x_session_id: Optional[str] = Header(None)):
     if not x_session_id:
