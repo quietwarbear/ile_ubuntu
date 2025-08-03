@@ -281,6 +281,7 @@ async def create_lesson(lesson_data: dict, current_user: dict = Depends(get_curr
         "google_docs_id": lesson_data.get("google_docs_id"),
         "audio_url": lesson_data.get("audio_url"),
         "video_url": lesson_data.get("video_url"),
+        "files": [],  # Initialize empty files list
         "created_at": datetime.utcnow(),
         "updated_at": datetime.utcnow()
     }
