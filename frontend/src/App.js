@@ -349,6 +349,15 @@ function App() {
             </div>
             
             <div className="flex items-center space-x-4">
+              {showInstallPrompt && (
+                <Button 
+                  onClick={installPWA}
+                  className="bg-gold-600 hover:bg-gold-700 text-black text-sm px-3 py-1"
+                >
+                  Install App
+                </Button>
+              )}
+              
               <div className="relative">
                 <Bell className="h-6 w-6 text-gray-300 hover:text-gold-400 cursor-pointer transition-colors" />
                 {notifications.filter(n => !n.read).length > 0 && (
