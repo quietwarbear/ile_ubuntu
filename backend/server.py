@@ -677,7 +677,200 @@ async def mark_notification_read(notification_id: str, current_user: dict = Depe
     if result.matched_count == 0:
         raise HTTPException(status_code=404, detail="Notification not found")
     
-    return {"success": True}
+# File upload endpoints
+@app.post("/api/files/upload")
+async def upload_file(
+    file: UploadFile = File(...),
+    lesson_id: Optional[str] = Form(None),
+    class_id: Optional[str] = Form(None),
+    current_user: dict = Depends(get_current_user)
+):
+    """Upload a file for lesson plans"""
+    try:
+        # Validate file type
+        allowed_types = {
+            'application/pdf': '.pdf',
+            'application/msword': '.doc',
+            'application/vnd.openxmlformats-officedocument.wordprocessingml.document': '.docx',
+            'application/vnd.ms-powerpoint': '.ppt',
+            'application/vnd.openxmlformats-officedocument.presentationml.presentation': '.pptx',
+            'image/jpeg': '.jpg',
+            'image/png': '.png',
+            'image/gif': '.gif',
+            'text/plain': '.txt',
+            'application/vnd.ms-excel': '.xls',
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': '.xlsx'
+        }
+        
+        if file.content_type not in allowed_types:
+            raise HTTPException(status_code=400, detail="File type not allowed")
+        
+        # Generate unique filename
+        file_id = str(uuid.uuid4())
+        extension = allowed_types[file.content_type]
+        filename = f"{file_id}{extension}"
+        file_path = UPLOADS_DIR / filename
+        
+        # Save file
+        with open(file_path, "wb") as buffer:
+            shutil.copyfileobj(file.file, buffer)
+        
+        # Get file size
+        file_size = os.path.getsize(file_path)
+        
+        # Save file metadata to database
+        file_data = {
+            "id": file_id,
+            "filename": filename,
+            "original_filename": file.filename,
+            "file_path": str(file_path),
+            "file_size": file_size,
+            "mime_type": file.content_type,
+            "lesson_id": lesson_id,
+            "class_id": class_id,
+            "uploaded_by": current_user["id"],
+            "uploaded_at": datetime.utcnow()
+        }
+        
+        files_collection.insert_one(file_data)
+        
+        # Update lesson if lesson_id provided
+        if lesson_id:
+            lessons_collection.update_one(
+                {"id": lesson_id, "teacher_id": current_user["id"]},
+                {"$addToSet": {"files": file_id}}
+            )
+        
+        file_data.pop("_id", None)
+        return {
+            "success": True,
+            "file": file_data,
+            "download_url": f"/api/files/{file_id}/download"
+        }
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"File upload failed: {str(e)}")
+
+@app.get("/api/files/{file_id}/download")
+async def download_file(file_id: str, current_user: dict = Depends(get_current_user)):
+    """Download a file"""
+    try:
+        file_data = files_collection.find_one({"id": file_id})
+        if not file_data:
+            raise HTTPException(status_code=404, detail="File not found")
+        
+        # Check permissions (file owner or lesson access)
+        if file_data["uploaded_by"] != current_user["id"]:
+            # Check if user has access to the lesson/class
+            if file_data.get("lesson_id"):
+                lesson = lessons_collection.find_one({"id": file_data["lesson_id"]})
+                if not lesson:
+                    raise HTTPException(status_code=403, detail="Access denied")
+                
+                # Check if user is teacher or student in the class
+                class_data = classes_collection.find_one({"id": lesson["class_id"]})
+                if not class_data:
+                    raise HTTPException(status_code=403, detail="Access denied")
+                
+                if (current_user["role"] == "teacher" and class_data["teacher_id"] != current_user["id"]) or \
+                   (current_user["role"] == "student" and current_user["id"] not in class_data["students"]):
+                    raise HTTPException(status_code=403, detail="Access denied")
+        
+        file_path = Path(file_data["file_path"])
+        if not file_path.exists():
+            raise HTTPException(status_code=404, detail="File not found on disk")
+        
+        return FileResponse(
+            path=file_path,
+            filename=file_data["original_filename"],
+            media_type=file_data["mime_type"]
+        )
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"File download failed: {str(e)}")
+
+@app.get("/api/files")
+async def get_files(
+    lesson_id: Optional[str] = None,
+    class_id: Optional[str] = None,
+    current_user: dict = Depends(get_current_user)
+):
+    """Get files for a lesson or class"""
+    try:
+        query = {}
+        
+        if lesson_id:
+            query["lesson_id"] = lesson_id
+            # Verify access to lesson
+            lesson = lessons_collection.find_one({"id": lesson_id})
+            if not lesson:
+                raise HTTPException(status_code=404, detail="Lesson not found")
+            
+            class_data = classes_collection.find_one({"id": lesson["class_id"]})
+            if not class_data:
+                raise HTTPException(status_code=404, detail="Class not found")
+            
+            if (current_user["role"] == "teacher" and class_data["teacher_id"] != current_user["id"]) or \
+               (current_user["role"] == "student" and current_user["id"] not in class_data["students"]):
+                raise HTTPException(status_code=403, detail="Access denied")
+        
+        elif class_id:
+            query["class_id"] = class_id
+            # Verify access to class
+            class_data = classes_collection.find_one({"id": class_id})
+            if not class_data:
+                raise HTTPException(status_code=404, detail="Class not found")
+            
+            if (current_user["role"] == "teacher" and class_data["teacher_id"] != current_user["id"]) or \
+               (current_user["role"] == "student" and current_user["id"] not in class_data["students"]):
+                raise HTTPException(status_code=403, detail="Access denied")
+        
+        else:
+            # Get user's files
+            query["uploaded_by"] = current_user["id"]
+        
+        files = list(files_collection.find(query).sort("uploaded_at", -1))
+        
+        for file_data in files:
+            file_data.pop("_id", None)
+            file_data["download_url"] = f"/api/files/{file_data['id']}/download"
+        
+        return {"files": files}
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to get files: {str(e)}")
+
+@app.delete("/api/files/{file_id}")
+async def delete_file(file_id: str, current_user: dict = Depends(get_current_user)):
+    """Delete a file"""
+    try:
+        file_data = files_collection.find_one({"id": file_id})
+        if not file_data:
+            raise HTTPException(status_code=404, detail="File not found")
+        
+        # Check if user owns the file
+        if file_data["uploaded_by"] != current_user["id"]:
+            raise HTTPException(status_code=403, detail="Access denied")
+        
+        # Delete file from disk
+        file_path = Path(file_data["file_path"])
+        if file_path.exists():
+            file_path.unlink()
+        
+        # Remove from database
+        files_collection.delete_one({"id": file_id})
+        
+        # Remove from lesson if associated
+        if file_data.get("lesson_id"):
+            lessons_collection.update_one(
+                {"id": file_data["lesson_id"]},
+                {"$pull": {"files": file_id}}
+            )
+        
+        return {"success": True, "message": "File deleted successfully"}
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to delete file: {str(e)}")
 
 if __name__ == "__main__":
     import uvicorn
