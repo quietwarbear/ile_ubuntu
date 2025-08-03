@@ -755,7 +755,7 @@ const ClassCard = ({ classData }) => (
   </Card>
 );
 
-const LessonCard = ({ lesson }) => (
+const LessonCard = ({ lesson, onLoadFiles, files = [] }) => (
   <Card className="bg-midnight-800/50 backdrop-blur-lg border-midnight-700 hover:border-gold-400/50 transition-all duration-300 hover:scale-105">
     <CardHeader>
       <CardTitle className="text-white">{lesson.title}</CardTitle>
@@ -767,7 +767,40 @@ const LessonCard = ({ lesson }) => (
         {lesson.google_docs_id && <FileText className="h-4 w-4 text-gold-400" />}
         {lesson.video_url && <Video className="h-4 w-4 text-gold-400" />}
         {lesson.audio_url && <Mic className="h-4 w-4 text-gold-400" />}
+        {lesson.files && lesson.files.length > 0 && (
+          <div className="flex items-center space-x-1">
+            <File className="h-4 w-4 text-gold-400" />
+            <span className="text-xs text-gold-400">{lesson.files.length}</span>
+          </div>
+        )}
       </div>
+      
+      {/* Show uploaded files */}
+      {files.length > 0 && (
+        <div className="space-y-2">
+          <p className="text-xs text-gray-400">Lesson Materials:</p>
+          {files.slice(0, 3).map(file => (
+            <div key={file.id} className="flex items-center justify-between text-xs">
+              <div className="flex items-center space-x-2">
+                <File className="h-3 w-3 text-gold-400" />
+                <span className="text-gray-300 truncate max-w-32">{file.original_filename}</span>
+              </div>
+              <Button
+                size="sm"
+                variant="ghost"
+                className="h-6 w-6 p-0 text-gold-400 hover:text-gold-300"
+                onClick={() => window.open(`${process.env.REACT_APP_BACKEND_URL || 'http://localhost:8001'}${file.download_url}`, '_blank')}
+              >
+                <Download className="h-3 w-3" />
+              </Button>
+            </div>
+          ))}
+          {files.length > 3 && (
+            <p className="text-xs text-gray-500">+{files.length - 3} more files</p>
+          )}
+        </div>
+      )}
+      
       <Badge className="bg-midnight-700 text-gray-300">
         {new Date(lesson.created_at).toLocaleDateString()}
       </Badge>
