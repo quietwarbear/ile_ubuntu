@@ -54,8 +54,8 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('push', (event) => {
   const options = {
     body: event.data ? event.data.text() : 'New notification from The Ile Ubuntu',
-    icon: '/logo192.png',
-    badge: '/logo192.png',
+    icon: 'https://customer-assets.emergentagent.com/job_lessonhub-4/artifacts/58m7009f_anhk.png',
+    badge: 'https://customer-assets.emergentagent.com/job_lessonhub-4/artifacts/58m7009f_anhk.png',
     vibrate: [100, 50, 100],
     data: {
       dateOfArrival: Date.now(),
@@ -65,12 +65,12 @@ self.addEventListener('push', (event) => {
       {
         action: 'explore',
         title: 'View',
-        icon: '/logo192.png'
+        icon: 'https://customer-assets.emergentagent.com/job_lessonhub-4/artifacts/58m7009f_anhk.png'
       },
       {
         action: 'close',
         title: 'Close',
-        icon: '/logo192.png'
+        icon: 'https://customer-assets.emergentagent.com/job_lessonhub-4/artifacts/58m7009f_anhk.png'
       }
     ]
   };
