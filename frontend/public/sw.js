@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ile-ubuntu-v1';
+const CACHE_NAME = 'ile-ubuntu-v2';
 const urlsToCache = [
   '/',
   '/static/js/bundle.js',
