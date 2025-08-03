@@ -112,14 +112,17 @@ class Message(BaseModel):
     message: str
     created_at: datetime
 
-class Notification(BaseModel):
+class LessonFile(BaseModel):
     id: str
-    user_id: str
-    title: str
-    message: str
-    type: str  # lesson, message, assignment
-    read: bool = False
-    created_at: datetime
+    filename: str
+    original_filename: str
+    file_path: str
+    file_size: int
+    mime_type: str
+    lesson_id: Optional[str] = None
+    class_id: Optional[str] = None
+    uploaded_by: str
+    uploaded_at: datetime
 
 # Authentication helper
 async def get_current_user(x_session_id: Optional[str] = Header(None)):
