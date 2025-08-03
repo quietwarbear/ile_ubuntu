@@ -12,11 +12,12 @@ from datetime import datetime, timedelta
 import json
 import shutil
 from pathlib import Path
-from google.auth.transport.requests import Request as GoogleRequest
-from google.oauth2.credentials import Credentials
-from google_auth_oauthlib.flow import Flow
-from googleapiclient.discovery import build
-from googleapiclient.errors import HttpError
+# Google OAuth imports temporarily disabled to prevent connection errors
+# from google.auth.transport.requests import Request as GoogleRequest
+# from google.oauth2.credentials import Credentials
+# from google_auth_oauthlib.flow import Flow
+# from googleapiclient.discovery import build
+# from googleapiclient.errors import HttpError
 
 # Initialize FastAPI app
 app = FastAPI(title="The Ile Ubuntu API", version="1.0.0")
