@@ -367,53 +367,11 @@ async def google_oauth_callback(request: Request, current_user: dict = Depends(g
 
 @app.get("/api/google/slides")
 async def list_google_slides(current_user: dict = Depends(get_current_user)):
-    """List user's Google Slides presentations"""
-    try:
-        # Get user's Google credentials
-        token_data = google_tokens_collection.find_one({"user_id": current_user["id"]})
-        if not token_data:
-            raise HTTPException(status_code=401, detail="Google account not connected")
-        
-        # Create credentials object
-        credentials = Credentials(
-            token=token_data["access_token"],
-            refresh_token=token_data["refresh_token"],
-            token_uri=token_data["token_uri"],
-            client_id=token_data["client_id"],
-            client_secret=token_data["client_secret"],
-            scopes=token_data["scopes"]
-        )
-        
-        # Refresh credentials if needed
-        if credentials.expired:
-            credentials.refresh(GoogleRequest())
-            # Update stored credentials
-            google_tokens_collection.update_one(
-                {"user_id": current_user["id"]},
-                {"$set": {
-                    "access_token": credentials.token,
-                    "expires_at": credentials.expiry
-                }}
-            )
-        
-        # Build Drive service to list presentations
-        drive_service = build('drive', 'v3', credentials=credentials)
-        
-        # Search for Google Slides presentations
-        results = drive_service.files().list(
-            q="mimeType='application/vnd.google-apps.presentation'",
-            pageSize=50,
-            fields="nextPageToken, files(id, name, createdTime, modifiedTime, thumbnailLink)"
-        ).execute()
-        
-        presentations = results.get('files', [])
-        
-        return {"presentations": presentations}
-        
-    except HttpError as error:
-        raise HTTPException(status_code=400, detail=f"Google API error: {error}")
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to list slides: {str(e)}")
+    """List user's Google Slides presentations - DISABLED"""
+    raise HTTPException(
+        status_code=501, 
+        detail="Google Slides integration is temporarily disabled. Please configure Google Cloud Console first."
+    )
 
 @app.get("/api/google/docs")
 async def list_google_docs(current_user: dict = Depends(get_current_user)):
