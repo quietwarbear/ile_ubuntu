@@ -87,7 +87,7 @@ self.addEventListener('notificationclick', (event) => {
   if (event.action === 'explore') {
     // Open the app
     event.waitUntil(
-      clients.openWindow('/')
+      self.clients.openWindow('/')
     );
   }
 });
