@@ -391,53 +391,11 @@ async def import_google_slides(data: dict, current_user: dict = Depends(get_curr
 
 @app.post("/api/google/import-docs")
 async def import_google_docs(data: dict, current_user: dict = Depends(get_current_user)):
-    """Import Google Docs document"""
-    try:
-        docs_id = data.get("docs_id")
-        lesson_id = data.get("lesson_id")
-        
-        if not docs_id:
-            raise HTTPException(status_code=400, detail="Docs ID required")
-        
-        # Get user's Google credentials
-        token_data = google_tokens_collection.find_one({"user_id": current_user["id"]})
-        if not token_data:
-            raise HTTPException(status_code=401, detail="Google account not connected")
-        
-        # Create credentials object
-        credentials = Credentials(
-            token=token_data["access_token"],
-            refresh_token=token_data["refresh_token"],
-            token_uri=token_data["token_uri"],
-            client_id=token_data["client_id"],
-            client_secret=token_data["client_secret"],
-            scopes=token_data["scopes"]
-        )
-        
-        # Build Docs service
-        docs_service = build('docs', 'v1', credentials=credentials)
-        
-        # Get document details
-        document = docs_service.documents().get(documentId=docs_id).execute()
-        
-        # Update lesson if lesson_id provided
-        if lesson_id:
-            lessons_collection.update_one(
-                {"id": lesson_id, "teacher_id": current_user["id"]},
-                {"$set": {"google_docs_id": docs_id}}
-            )
-        
-        return {
-            "success": True,
-            "docs_id": docs_id,
-            "title": document.get('title', 'Untitled Document'),
-            "message": "Google Docs imported successfully"
-        }
-        
-    except HttpError as error:
-        raise HTTPException(status_code=400, detail=f"Google API error: {error}")
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to import docs: {str(e)}")
+    """Import Google Docs document - DISABLED"""
+    raise HTTPException(
+        status_code=501, 
+        detail="Google Docs import is temporarily disabled. Please configure Google Cloud Console first."
+    )
 
 @app.get("/api/google/slides/{slides_id}")
 async def get_slides_content(slides_id: str, current_user: dict = Depends(get_current_user)):
