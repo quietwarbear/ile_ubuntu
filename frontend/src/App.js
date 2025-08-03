@@ -569,6 +569,120 @@ function App() {
             </div>
           </TabsContent>
 
+          {/* Files Tab */}
+          <TabsContent value="files" className="space-y-6">
+            <div className="flex justify-between items-center">
+              <h2 className="text-2xl font-bold text-white">File Manager</h2>
+              <div className="space-x-2">
+                <input
+                  type="file"
+                  multiple
+                  onChange={(e) => {
+                    const files = Array.from(e.target.files);
+                    files.forEach(file => uploadFile(file));
+                  }}
+                  className="hidden"
+                  id="bulk-upload"
+                  accept=".pdf,.doc,.docx,.ppt,.pptx,.jpg,.jpeg,.png,.gif,.txt,.xls,.xlsx"
+                />
+                <label
+                  htmlFor="bulk-upload"
+                  className="inline-flex items-center px-4 py-2 bg-gold-600 hover:bg-gold-700 text-black rounded-md cursor-pointer transition-colors"
+                >
+                  <Upload className="mr-2 h-4 w-4" />
+                  Upload Files
+                </label>
+                <Button 
+                  onClick={() => loadFiles()}
+                  variant="outline"
+                  className="border-midnight-600 text-white hover:bg-midnight-700"
+                >
+                  Refresh
+                </Button>
+              </div>
+            </div>
+            
+            {uploading && (
+              <Card className="bg-midnight-800/50 backdrop-blur-lg border-midnight-700">
+                <CardContent className="p-4">
+                  <div className="flex items-center space-x-3">
+                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-gold-400"></div>
+                    <span className="text-white">Uploading files...</span>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {uploadedFiles.map(file => (
+                <Card key={file.id} className="bg-midnight-800/50 backdrop-blur-lg border-midnight-700">
+                  <CardContent className="p-4">
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-center space-x-2 mb-2">
+                          <File className="h-5 w-5 text-gold-400" />
+                          <span className="text-white font-medium truncate">{file.original_filename}</span>
+                        </div>
+                        <p className="text-sm text-gray-400">
+                          Size: {(file.file_size / 1024 / 1024).toFixed(2)} MB
+                        </p>
+                        <p className="text-sm text-gray-400">
+                          Uploaded: {new Date(file.uploaded_at).toLocaleDateString()}
+                        </p>
+                        {file.lesson_id && (
+                          <Badge className="mt-2 bg-gold-600/20 text-gold-400 border-gold-400/30">
+                            Lesson Attached
+                          </Badge>
+                        )}
+                      </div>
+                      <div className="flex flex-col space-y-1">
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="h-8 w-8 p-0 text-gold-400 hover:text-gold-300"
+                          onClick={() => window.open(`${BACKEND_URL}${file.download_url}`, '_blank')}
+                        >
+                          <Download className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="h-8 w-8 p-0 text-red-400 hover:text-red-300"
+                          onClick={() => {
+                            if (window.confirm('Are you sure you want to delete this file?')) {
+                              deleteFile(file.id);
+                            }
+                          }}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+            
+            {uploadedFiles.length === 0 && !uploading && (
+              <Card className="bg-midnight-800/50 backdrop-blur-lg border-midnight-700">
+                <CardContent className="p-8 text-center">
+                  <File className="mx-auto h-16 w-16 text-gold-400 mb-4" />
+                  <h3 className="text-xl font-semibold text-white mb-2">No Files Yet</h3>
+                  <p className="text-gray-400 mb-6">
+                    Upload lesson plans, documents, presentations, and other materials for your classes.
+                  </p>
+                  <label
+                    htmlFor="bulk-upload"
+                    className="inline-flex items-center px-6 py-3 bg-gold-600 hover:bg-gold-700 text-black rounded-lg cursor-pointer transition-colors"
+                  >
+                    <Upload className="mr-2 h-5 w-5" />
+                    Upload Your First Files
+                  </label>
+                </CardContent>
+              </Card>
+            )}
+          </TabsContent>
+
           {/* Google Import Tab */}
           <TabsContent value="google" className="space-y-6">
             <div className="flex justify-between items-center">
