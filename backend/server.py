@@ -62,10 +62,22 @@ GOOGLE_SCOPES = [
     'https://www.googleapis.com/auth/drive.readonly'
 ]
 
-# Google OAuth configuration - DISABLED until proper setup
-def create_google_flow(redirect_uri=None):
-    # This function is disabled until Google Cloud Console is properly configured
-    raise HTTPException(status_code=501, detail="Google OAuth integration is disabled. Please configure Google Cloud Console first.")
+# Google OAuth flow configuration - ENABLED with new credentials
+def create_google_flow():
+    flow = Flow.from_client_config(
+        {
+            "web": {
+                "client_id": GOOGLE_CLIENT_ID,
+                "client_secret": GOOGLE_CLIENT_SECRET,
+                "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+                "token_uri": "https://oauth2.googleapis.com/token",
+                "redirect_uris": ["https://8bec313c-42bc-492f-8514-71511295d06c.preview.emergentagent.com/auth/google/callback"]
+            }
+        },
+        scopes=GOOGLE_SCOPES
+    )
+    flow.redirect_uri = "https://8bec313c-42bc-492f-8514-71511295d06c.preview.emergentagent.com/auth/google/callback"
+    return flow
 
 # Pydantic models
 class User(BaseModel):
