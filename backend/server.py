@@ -361,12 +361,43 @@ async def get_google_auth_url(current_user: dict = Depends(get_current_user)):
 
 @app.post("/api/google/callback")
 async def google_oauth_callback(request: Request, current_user: dict = Depends(get_current_user)):
-    """Handle Google OAuth callback - DISABLED"""
-    return {
-        "error": "Google OAuth integration is disabled",
-        "message": "Please configure Google Cloud Console first",
-        "redirect_uri_needed": "https://8bec313c-42bc-492f-8514-71511295d06c.preview.emergentagent.com/auth/google/callback"
-    }
+    """Handle Google OAuth callback"""
+    try:
+        data = await request.json()
+        authorization_code = data.get("code")
+        
+        if not authorization_code:
+            raise HTTPException(status_code=400, detail="Authorization code required")
+        
+        flow = create_google_flow()
+        flow.fetch_token(code=authorization_code)
+        
+        credentials = flow.credentials
+        
+        # Store Google credentials
+        token_data = {
+            "user_id": current_user["id"],
+            "access_token": credentials.token,
+            "refresh_token": credentials.refresh_token,
+            "token_uri": credentials.token_uri,
+            "client_id": credentials.client_id,
+            "client_secret": credentials.client_secret,
+            "scopes": credentials.scopes,
+            "created_at": datetime.utcnow(),
+            "expires_at": credentials.expiry
+        }
+        
+        # Update or insert Google token
+        google_tokens_collection.replace_one(
+            {"user_id": current_user["id"]},
+            token_data,
+            upsert=True
+        )
+        
+        return {"success": True, "message": "Google account connected successfully"}
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"OAuth callback failed: {str(e)}")
 
 @app.get("/api/google/slides")
 async def list_google_slides(current_user: dict = Depends(get_current_user)):
