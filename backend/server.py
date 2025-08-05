@@ -540,6 +540,16 @@ async def get_slides_content(slides_id: str, current_user: dict = Depends(get_cu
         detail="Google Slides content access is temporarily disabled. Please configure Google Cloud Console first."
     )
 
+@app.get("/api/test-google-config")
+async def test_google_config():
+    """Test Google OAuth configuration"""
+    return {
+        "client_id": GOOGLE_CLIENT_ID,
+        "project_id": os.environ.get('GOOGLE_PROJECT_ID'),
+        "redirect_uri": "https://8bec313c-42bc-492f-8514-71511295d06c.preview.emergentagent.com/auth/google/callback",
+        "test_auth_url": f"https://accounts.google.com/o/oauth2/v2/auth?client_id={GOOGLE_CLIENT_ID}&redirect_uri=https://8bec313c-42bc-492f-8514-71511295d06c.preview.emergentagent.com/auth/google/callback&response_type=code&scope=https://www.googleapis.com/auth/presentations&access_type=offline&prompt=consent"
+    }
+
 # Messaging endpoints
 @app.post("/api/messages")
 async def send_message(message_data: dict, current_user: dict = Depends(get_current_user)):
