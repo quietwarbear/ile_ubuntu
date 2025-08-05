@@ -202,11 +202,10 @@ function App() {
       
       if (response.ok) {
         const data = await response.json();
-        if (data.error) {
-          // Show setup instructions
-          alert(`Google OAuth Setup Required:\n\n${data.message}\n\nInstructions:\n${data.instructions.join('\n')}`);
-        } else {
+        if (data.auth_url) {
           window.open(data.auth_url, '_blank', 'width=500,height=600');
+        } else if (data.error) {
+          alert(`Google OAuth Setup Required:\n\n${data.message}\n\nInstructions:\n${data.instructions.join('\n')}`);
         }
       }
     } catch (error) {
