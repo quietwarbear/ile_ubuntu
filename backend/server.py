@@ -352,19 +352,10 @@ async def get_lessons(class_id: Optional[str] = None, current_user: dict = Depen
 async def get_google_auth_url(current_user: dict = Depends(get_current_user)):
     """Get Google OAuth authorization URL"""
     try:
-        # For now, return a message that Google integration needs proper setup
-        return {
-            "error": "Google OAuth needs setup",
-            "message": "To enable Google integration, please add this redirect URI to your Google Cloud Console: https://8bec313c-42bc-492f-8514-71511295d06c.preview.emergentagent.com/auth/google/callback",
-            "instructions": [
-                "1. Go to Google Cloud Console (https://console.cloud.google.com/)",
-                "2. Select your project",
-                "3. Go to 'APIs & Services' > 'Credentials'",
-                "4. Edit your OAuth 2.0 Client ID",
-                "5. Add this URI to 'Authorized redirect URIs': https://8bec313c-42bc-492f-8514-71511295d06c.preview.emergentagent.com/auth/google/callback",
-                "6. Save the changes"
-            ]
-        }
+        flow = create_google_flow()
+        auth_url, _ = flow.authorization_url(prompt='consent')
+        
+        return {"auth_url": auth_url}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to create auth URL: {str(e)}")
 
