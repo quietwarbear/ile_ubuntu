@@ -45,12 +45,15 @@ function App() {
       }
     };
 
-    // Handle Google auth code from URL
+    // Handle Google auth code from URL and localStorage
     const handleGoogleAuthFromURL = async () => {
       const urlParams = new URLSearchParams(window.location.search);
-      const googleAuthCode = urlParams.get('google_auth_code');
-      if (googleAuthCode) {
+      const googleConnected = urlParams.get('google_connected');
+      const googleAuthCode = localStorage.getItem('google_auth_code');
+      
+      if (googleConnected && googleAuthCode) {
         await completeGoogleAuth(googleAuthCode);
+        localStorage.removeItem('google_auth_code');
         // Clean up URL
         window.history.replaceState({}, document.title, window.location.pathname);
       }
