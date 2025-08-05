@@ -216,10 +216,6 @@ function App() {
   };
 
   const loadGoogleData = async () => {
-    // Temporarily disabled to prevent Google OAuth errors
-    console.log('Google integration disabled - preventing OAuth connection errors');
-    return;
-    
     const sessionId = getCookie('session_id');
     try {
       const headers = { 'X-Session-ID': sessionId };
