@@ -352,8 +352,20 @@ async def get_lessons(class_id: Optional[str] = None, current_user: dict = Depen
 async def get_google_auth_url(current_user: dict = Depends(get_current_user)):
     """Get Google OAuth authorization URL"""
     try:
-        flow = create_google_flow()
-        auth_url, _ = flow.authorization_url(prompt='consent')
+        # Construct OAuth URL manually to avoid Flow issues
+        client_id = GOOGLE_CLIENT_ID
+        redirect_uri = "https://8bec313c-42bc-492f-8514-71511295d06c.preview.emergentagent.com/auth/google/callback"
+        scope = "https://www.googleapis.com/auth/presentations https://www.googleapis.com/auth/documents https://www.googleapis.com/auth/drive.readonly"
+        
+        auth_url = (
+            f"https://accounts.google.com/o/oauth2/v2/auth?"
+            f"client_id={client_id}&"
+            f"redirect_uri={redirect_uri}&"
+            f"response_type=code&"
+            f"scope={scope}&"
+            f"access_type=offline&"
+            f"prompt=consent"
+        )
         
         return {"auth_url": auth_url}
     except Exception as e:
