@@ -352,21 +352,16 @@ async def get_lessons(class_id: Optional[str] = None, current_user: dict = Depen
 async def get_google_auth_url(current_user: dict = Depends(get_current_user)):
     """Get Google OAuth authorization URL"""
     try:
-        # Use the exact domain from the Emergent preview
         client_id = GOOGLE_CLIENT_ID
         redirect_uri = "https://8bec313c-42bc-492f-8514-71511295d06c.preview.emergentagent.com/auth/google/callback"
         
-        # Encode the redirect URI properly
-        import urllib.parse
-        encoded_redirect_uri = urllib.parse.quote(redirect_uri, safe=':/?#[]@!$&\'()*+,;=')
-        encoded_scope = urllib.parse.quote("https://www.googleapis.com/auth/presentations https://www.googleapis.com/auth/documents https://www.googleapis.com/auth/drive.readonly", safe=':/?#[]@!$&\'()*+,;=')
-        
+        # Build the OAuth URL with proper encoding
         auth_url = (
             f"https://accounts.google.com/o/oauth2/v2/auth?"
             f"client_id={client_id}&"
-            f"redirect_uri={encoded_redirect_uri}&"
+            f"redirect_uri={redirect_uri}&"
             f"response_type=code&"
-            f"scope={encoded_scope}&"
+            f"scope=https://www.googleapis.com/auth/presentations%20https://www.googleapis.com/auth/documents%20https://www.googleapis.com/auth/drive.readonly&"
             f"access_type=offline&"
             f"prompt=consent&"
             f"include_granted_scopes=true"
