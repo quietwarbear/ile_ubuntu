@@ -379,57 +379,75 @@ async def get_google_auth_url(current_user: dict = Depends(get_current_user)):
 async def google_oauth_callback_get(request: Request):
     """Handle Google OAuth callback - GET request"""
     try:
+        # Log the callback for debugging
+        print(f"OAuth callback received: {request.url}")
+        print(f"Query params: {dict(request.query_params)}")
+        
         # Get the authorization code from query parameters
         authorization_code = request.query_params.get("code")
         error = request.query_params.get("error")
         
         if error:
-            # Redirect to frontend with error
-            return JSONResponse(
-                status_code=400,
-                content={"error": f"OAuth error: {error}"}
-            )
+            html_content = f"""
+            <!DOCTYPE html>
+            <html>
+            <head><title>OAuth Error</title></head>
+            <body style="font-family: Arial, sans-serif; text-align: center; padding: 50px;">
+                <h2>🔱 The Ile Ubuntu</h2>
+                <p style="color: red;">OAuth Error: {error}</p>
+                <p>Please close this window and try again.</p>
+            </body>
+            </html>
+            """
+            from fastapi.responses import HTMLResponse
+            return HTMLResponse(content=html_content)
         
         if not authorization_code:
-            return JSONResponse(
-                status_code=400,
-                content={"error": "Authorization code not found"}
-            )
+            html_content = """
+            <!DOCTYPE html>
+            <html>
+            <head><title>OAuth Error</title></head>
+            <body style="font-family: Arial, sans-serif; text-align: center; padding: 50px;">
+                <h2>🔱 The Ile Ubuntu</h2>
+                <p style="color: red;">No authorization code received</p>
+                <p>Please close this window and try again.</p>
+            </body>
+            </html>
+            """
+            from fastapi.responses import HTMLResponse
+            return HTMLResponse(content=html_content)
         
-        # Create a simple HTML page that will handle the OAuth completion
+        # Create a simple success page that redirects to the main app
         html_content = f"""
         <!DOCTYPE html>
         <html>
         <head>
-            <title>Google OAuth - The Ile Ubuntu</title>
-            <script>
-                // Send the authorization code to the parent window (The Ile Ubuntu app)
-                if (window.opener) {{
-                    window.opener.postMessage({{
-                        type: 'GOOGLE_OAUTH_SUCCESS',
-                        code: '{authorization_code}'
-                    }}, '*');
-                    window.close();
-                }} else {{
-                    // If no opener, redirect to main app with code
-                    window.location.href = 'https://8bec313c-42bc-492f-8514-71511295d06c.preview.emergentagent.com/?google_auth_code={authorization_code}';
+            <title>Google OAuth Success - The Ile Ubuntu</title>
+            <style>
+                body {{ 
+                    font-family: Arial, sans-serif; 
+                    text-align: center; 
+                    padding: 50px; 
+                    background: linear-gradient(135deg, #0f172a, #1e293b);
+                    color: white;
                 }}
-            </script>
+                .ankh {{ color: #d97706; font-size: 48px; }}
+                .success {{ color: #10b981; }}
+            </style>
         </head>
         <body>
-            <div style="font-family: Arial, sans-serif; text-align: center; padding: 50px;">
-                <h2>🔱 The Ile Ubuntu</h2>
-                <p>Connecting to Google...</p>
-                <script>
-                    setTimeout(function() {{
-                        if (window.opener) {{
-                            window.close();
-                        }} else {{
-                            window.location.href = 'https://8bec313c-42bc-492f-8514-71511295d06c.preview.emergentagent.com/';
-                        }}
-                    }}, 3000);
-                </script>
-            </div>
+            <div class="ankh">🔱</div>
+            <h2>The Ile Ubuntu</h2>
+            <p class="success">✅ Google Authentication Successful!</p>
+            <p>Completing connection...</p>
+            
+            <script>
+                // Store the auth code and redirect to main app
+                localStorage.setItem('google_auth_code', '{authorization_code}');
+                setTimeout(function() {{
+                    window.location.href = 'https://8bec313c-42bc-492f-8514-71511295d06c.preview.emergentagent.com/?google_connected=true';
+                }}, 2000);
+            </script>
         </body>
         </html>
         """
@@ -438,10 +456,20 @@ async def google_oauth_callback_get(request: Request):
         return HTMLResponse(content=html_content)
         
     except Exception as e:
-        return JSONResponse(
-            status_code=500,
-            content={"error": f"OAuth callback failed: {str(e)}"}
-        )
+        print(f"OAuth callback error: {str(e)}")
+        html_content = f"""
+        <!DOCTYPE html>
+        <html>
+        <head><title>OAuth Error</title></head>
+        <body style="font-family: Arial, sans-serif; text-align: center; padding: 50px;">
+            <h2>🔱 The Ile Ubuntu</h2>
+            <p style="color: red;">OAuth callback error: {str(e)}</p>
+            <p>Please close this window and try again.</p>
+        </body>
+        </html>
+        """
+        from fastapi.responses import HTMLResponse
+        return HTMLResponse(content=html_content)
 
 @app.post("/api/google/complete-auth")
 async def complete_google_auth(request: Request, current_user: dict = Depends(get_current_user)):
