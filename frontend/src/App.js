@@ -37,12 +37,62 @@ function App() {
       setShowInstallPrompt(true);
     };
 
+    // Handle Google OAuth callback
+    const handleGoogleAuthMessage = async (event) => {
+      if (event.data && event.data.type === 'GOOGLE_OAUTH_SUCCESS') {
+        const code = event.data.code;
+        await completeGoogleAuth(code);
+      }
+    };
+
+    // Handle Google auth code from URL
+    const handleGoogleAuthFromURL = async () => {
+      const urlParams = new URLSearchParams(window.location.search);
+      const googleAuthCode = urlParams.get('google_auth_code');
+      if (googleAuthCode) {
+        await completeGoogleAuth(googleAuthCode);
+        // Clean up URL
+        window.history.replaceState({}, document.title, window.location.pathname);
+      }
+    };
+
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    window.addEventListener('message', handleGoogleAuthMessage);
+    
+    // Check for Google auth code in URL on load
+    handleGoogleAuthFromURL();
 
     return () => {
       window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+      window.removeEventListener('message', handleGoogleAuthMessage);
     };
   }, []);
+
+  const completeGoogleAuth = async (code) => {
+    const sessionId = getCookie('session_id');
+    try {
+      const response = await fetch(`${BACKEND_URL}/api/google/complete-auth`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Session-ID': sessionId
+        },
+        body: JSON.stringify({ code })
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        alert('Google account connected successfully!');setGoogleConnected(true);
+        loadGoogleData();
+      } else {
+        const error = await response.json();
+        alert(`Failed to connect Google account: ${error.detail}`);
+      }
+    } catch (error) {
+      console.error('Failed to complete Google auth:', error);
+      alert('Failed to complete Google authentication.');
+    }
+  };
 
   const installPWA = async () => {
     if (deferredPrompt) {
