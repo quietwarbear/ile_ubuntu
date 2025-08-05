@@ -256,7 +256,8 @@ function App() {
       if (response.ok) {
         const data = await response.json();
         if (data.auth_url) {
-          window.open(data.auth_url, '_blank', 'width=500,height=600');
+          // Open in the same window instead of popup to avoid blocking
+          window.location.href = data.auth_url;
         } else if (data.error) {
           alert(`Google OAuth Setup Required:\n\n${data.message}\n\nInstructions:\n${data.instructions.join('\n')}`);
         }
