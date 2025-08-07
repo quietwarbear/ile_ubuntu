@@ -1124,32 +1124,42 @@ const MessageCard = ({ message, currentUser }) => (
   </Card>
 );
 
-const CreateClassDialog = ({ onCreateClass }) => {
+const EditClassDialog = ({ classData, onUpdateClass }) => {
   const [open, setOpen] = useState(false);
-  const [name, setName] = useState('');
-  const [description, setDescription] = useState('');
+  const [name, setName] = useState(classData?.name || '');
+  const [description, setDescription] = useState(classData?.description || '');
+
+  useEffect(() => {
+    if (classData) {
+      setName(classData.name);
+      setDescription(classData.description);
+    }
+  }, [classData]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    await onCreateClass({ name, description });
-    setName('');
-    setDescription('');
-    setOpen(false);
+    if (classData) {
+      await onUpdateClass(classData.id, { name, description });
+      setOpen(false);
+    }
   };
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button className="bg-gold-600 hover:bg-gold-700 text-black">
-          <PlusCircle className="mr-2 h-4 w-4" />
-          Create Class
+        <Button
+          size="sm"
+          variant="ghost" 
+          className="h-8 w-8 p-0 text-gold-400 hover:text-gold-300"
+        >
+          <Edit className="h-4 w-4" />
         </Button>
       </DialogTrigger>
       <DialogContent className="bg-midnight-800 border-midnight-700">
         <DialogHeader>
-          <DialogTitle className="text-white">Create New Class</DialogTitle>
+          <DialogTitle className="text-white">Edit Class</DialogTitle>
           <DialogDescription className="text-gray-400">
-            Create a new classroom to organize your lessons and students.
+            Update your class information.
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -1166,9 +1176,19 @@ const CreateClassDialog = ({ onCreateClass }) => {
             onChange={(e) => setDescription(e.target.value)}
             className="bg-midnight-900 border-midnight-600 text-white"
           />
-          <Button type="submit" className="w-full bg-gold-600 hover:bg-gold-700 text-black">
-            Create Class
-          </Button>
+          <div className="flex space-x-2">
+            <Button type="submit" className="flex-1 bg-gold-600 hover:bg-gold-700 text-black">
+              Update Class
+            </Button>
+            <Button 
+              type="button" 
+              variant="outline" 
+              onClick={() => setOpen(false)}
+              className="border-midnight-600 text-white hover:bg-midnight-700"
+            >
+              Cancel
+            </Button>
+          </div>
         </form>
       </DialogContent>
     </Dialog>
