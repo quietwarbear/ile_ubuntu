@@ -1016,14 +1016,7 @@ const ClassCard = ({ classData, onEditClass, onDeleteClass, currentUser }) => (
         </div>
         {currentUser.role === 'teacher' && currentUser.id === classData.teacher_id && (
           <div className="flex space-x-1 ml-2">
-            <Button
-              size="sm"
-              variant="ghost"
-              className="h-8 w-8 p-0 text-gold-400 hover:text-gold-300"
-              onClick={() => onEditClass(classData)}
-            >
-              <PlusCircle className="h-4 w-4" />
-            </Button>
+            <EditClassDialog classData={classData} onUpdateClass={onEditClass} />
             <Button
               size="sm"
               variant="ghost"
