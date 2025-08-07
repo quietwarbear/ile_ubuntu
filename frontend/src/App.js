@@ -158,6 +158,7 @@ function App() {
         });
         if (response.ok) {
           const userData = await response.json();
+          console.log('User data loaded:', userData);
           setUser(userData);
           await loadDashboardData(sessionId);
         }
