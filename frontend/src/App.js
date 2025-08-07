@@ -959,11 +959,39 @@ const RecentNotifications = ({ notifications }) => (
   </Card>
 );
 
-const ClassCard = ({ classData }) => (
+const ClassCard = ({ classData, onEditClass, onDeleteClass, currentUser }) => (
   <Card className="bg-midnight-800/50 backdrop-blur-lg border-midnight-700 hover:border-gold-400/50 transition-all duration-300 hover:scale-105">
     <CardHeader>
-      <CardTitle className="text-white">{classData.name}</CardTitle>
-      <CardDescription className="text-gray-400">{classData.description}</CardDescription>
+      <div className="flex justify-between items-start">
+        <div className="flex-1">
+          <CardTitle className="text-white">{classData.name}</CardTitle>
+          <CardDescription className="text-gray-400">{classData.description}</CardDescription>
+        </div>
+        {currentUser.role === 'teacher' && currentUser.id === classData.teacher_id && (
+          <div className="flex space-x-1 ml-2">
+            <Button
+              size="sm"
+              variant="ghost"
+              className="h-8 w-8 p-0 text-gold-400 hover:text-gold-300"
+              onClick={() => onEditClass(classData)}
+            >
+              <PlusCircle className="h-4 w-4" />
+            </Button>
+            <Button
+              size="sm"
+              variant="ghost"
+              className="h-8 w-8 p-0 text-red-400 hover:text-red-300"
+              onClick={() => {
+                if (window.confirm(`Are you sure you want to delete "${classData.name}"? This will also delete all associated lessons and cannot be undone.`)) {
+                  onDeleteClass(classData.id);
+                }
+              }}
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          </div>
+        )}
+      </div>
     </CardHeader>
     <CardContent>
       <div className="flex items-center justify-between">
@@ -971,6 +999,9 @@ const ClassCard = ({ classData }) => (
           {classData.students.length} Students
         </Badge>
         <Users className="h-5 w-5 text-gray-400" />
+      </div>
+      <div className="mt-2 text-xs text-gray-500">
+        Created: {new Date(classData.created_at).toLocaleDateString()}
       </div>
     </CardContent>
   </Card>
