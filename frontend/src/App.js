@@ -48,12 +48,39 @@ function App() {
     // Handle Google auth code from URL and localStorage
     const handleGoogleAuthFromURL = async () => {
       const urlParams = new URLSearchParams(window.location.search);
-      const googleConnected = urlParams.get('google_connected');
-      const googleAuthCode = localStorage.getItem('google_auth_code');
+      const googleOAuthComplete = urlParams.get('google_oauth_complete');
       
-      if (googleConnected && googleAuthCode) {
-        await completeGoogleAuth(googleAuthCode);
-        localStorage.removeItem('google_auth_code');
+      if (googleOAuthComplete) {
+        console.log('Google OAuth completion detected');
+        
+        const googleAuthCode = localStorage.getItem('google_auth_code');
+        const authTimestamp = localStorage.getItem('google_auth_timestamp');
+        
+        console.log('Auth code from localStorage:', googleAuthCode ? 'Present' : 'Missing');
+        console.log('Auth timestamp:', authTimestamp);
+        
+        if (googleAuthCode) {
+          // Check if the auth code is recent (within 10 minutes)
+          const now = Date.now();
+          const authTime = parseInt(authTimestamp);
+          const timeDiff = now - authTime;
+          
+          if (timeDiff < 10 * 60 * 1000) { // 10 minutes
+            console.log('Completing Google auth with code...');
+            await completeGoogleAuth(googleAuthCode);
+          } else {
+            console.log('Auth code expired, please try again');
+            alert('Authentication session expired. Please try connecting to Google again.');
+          }
+          
+          // Clean up
+          localStorage.removeItem('google_auth_code');
+          localStorage.removeItem('google_auth_timestamp');
+        } else {
+          console.log('No auth code found in localStorage');
+          alert('Authentication code not found. Please try connecting to Google again.');
+        }
+        
         // Clean up URL
         window.history.replaceState({}, document.title, window.location.pathname);
       }
