@@ -100,7 +100,15 @@ function App() {
 
   const completeGoogleAuth = async (code) => {
     const sessionId = getCookie('session_id');
+    console.log('Attempting to complete Google auth with session:', sessionId ? 'Present' : 'Missing');
+    
+    if (!sessionId) {
+      alert('Please log in first before connecting Google account.');
+      return;
+    }
+    
     try {
+      console.log('Sending auth completion request...');
       const response = await fetch(`${BACKEND_URL}/api/google/complete-auth`, {
         method: 'POST',
         headers: {
@@ -110,17 +118,22 @@ function App() {
         body: JSON.stringify({ code })
       });
 
+      console.log('Auth completion response status:', response.status);
+      
       if (response.ok) {
         const result = await response.json();
-        alert('Google account connected successfully!');setGoogleConnected(true);
-        loadGoogleData();
+        console.log('Auth completion successful:', result);
+        alert('✅ Google account connected successfully!\n\nYou can now import your Google Slides and Docs.');
+        setGoogleConnected(true);
+        await loadGoogleData();
       } else {
         const error = await response.json();
-        alert(`Failed to connect Google account: ${error.detail}`);
+        console.error('Auth completion failed:', error);
+        alert(`❌ Failed to connect Google account:\n\n${error.detail || 'Unknown error'}\n\nPlease try again.`);
       }
     } catch (error) {
-      console.error('Failed to complete Google auth:', error);
-      alert('Failed to complete Google authentication.');
+      console.error('Auth completion error:', error);
+      alert('❌ Failed to complete Google authentication.\n\nPlease check your internet connection and try again.');
     }
   };
 
