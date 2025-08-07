@@ -1028,6 +1028,8 @@ const ClassCard = ({ classData, onEditClass, onDeleteClass, currentUser }) => {
     match: currentUser?.id === classData?.teacher_id
   });
 
+  const canEdit = currentUser?.role === 'teacher' && currentUser?.id === classData?.teacher_id;
+
   return (
     <Card className="bg-midnight-800/50 backdrop-blur-lg border-midnight-700 hover:border-gold-400/50 transition-all duration-300 hover:scale-105">
       <CardHeader>
@@ -1036,11 +1038,16 @@ const ClassCard = ({ classData, onEditClass, onDeleteClass, currentUser }) => {
             <CardTitle className="text-white">{classData.name}</CardTitle>
             <CardDescription className="text-gray-400">{classData.description}</CardDescription>
           </div>
-          {/* Debug: Show the condition result */}
-          <div className="text-xs text-gray-500 mb-2">
-            Role: {currentUser?.role} | Owner: {currentUser?.id === classData?.teacher_id ? 'Yes' : 'No'}
+          
+          {/* VISIBLE DEBUG INFO */}
+          <div className="text-xs text-yellow-400 bg-black/50 p-2 rounded mb-2 border border-yellow-600">
+            <div>Role: {currentUser?.role || 'undefined'}</div>
+            <div>User ID: {currentUser?.id?.slice(-4) || 'undefined'}</div>
+            <div>Teacher ID: {classData?.teacher_id?.slice(-4) || 'undefined'}</div>
+            <div>Can Edit: {canEdit ? '✅ YES' : '❌ NO'}</div>
           </div>
-          {currentUser?.role === 'teacher' && currentUser?.id === classData?.teacher_id && (
+
+          {canEdit && (
             <div className="flex space-x-1 ml-2">
               <EditClassDialog classData={classData} onUpdateClass={onEditClass} />
               <Button
