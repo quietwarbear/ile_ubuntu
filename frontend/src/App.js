@@ -180,7 +180,11 @@ function App() {
         fetch(`${BACKEND_URL}/api/messages`, { headers })
       ]);
 
-      if (classesRes.ok) setClasses(await classesRes.json());
+      if (classesRes.ok) {
+        const classesData = await classesRes.json();
+        console.log('Classes loaded:', classesData);
+        setClasses(classesData);
+      }
       if (lessonsRes.ok) setLessons(await lessonsRes.json());
       if (notificationsRes.ok) setNotifications(await notificationsRes.json());
       if (messagesRes.ok) setMessages(await messagesRes.json());
