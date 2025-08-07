@@ -1124,6 +1124,57 @@ const MessageCard = ({ message, currentUser }) => (
   </Card>
 );
 
+const CreateClassDialog = ({ onCreateClass }) => {
+  const [open, setOpen] = useState(false);
+  const [name, setName] = useState('');
+  const [description, setDescription] = useState('');
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    await onCreateClass({ name, description });
+    setName('');
+    setDescription('');
+    setOpen(false);
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button className="bg-gold-600 hover:bg-gold-700 text-black">
+          <PlusCircle className="mr-2 h-4 w-4" />
+          Create Class
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="bg-midnight-800 border-midnight-700">
+        <DialogHeader>
+          <DialogTitle className="text-white">Create New Class</DialogTitle>
+          <DialogDescription className="text-gray-400">
+            Create a new classroom to organize your lessons and students.
+          </DialogDescription>
+        </DialogHeader>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <Input
+            placeholder="Class Name"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            className="bg-midnight-900 border-midnight-600 text-white"
+            required
+          />
+          <Textarea
+            placeholder="Class Description"
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            className="bg-midnight-900 border-midnight-600 text-white"
+          />
+          <Button type="submit" className="w-full bg-gold-600 hover:bg-gold-700 text-black">
+            Create Class
+          </Button>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
 const EditClassDialog = ({ classData, onUpdateClass }) => {
   const [open, setOpen] = useState(false);
   const [name, setName] = useState(classData?.name || '');
