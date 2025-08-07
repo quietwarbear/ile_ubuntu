@@ -1012,46 +1012,62 @@ const RecentNotifications = ({ notifications }) => (
   </Card>
 );
 
-const ClassCard = ({ classData, onEditClass, onDeleteClass, currentUser }) => (
-  <Card className="bg-midnight-800/50 backdrop-blur-lg border-midnight-700 hover:border-gold-400/50 transition-all duration-300 hover:scale-105">
-    <CardHeader>
-      <div className="flex justify-between items-start">
-        <div className="flex-1">
-          <CardTitle className="text-white">{classData.name}</CardTitle>
-          <CardDescription className="text-gray-400">{classData.description}</CardDescription>
-        </div>
-        {currentUser.role === 'teacher' && currentUser.id === classData.teacher_id && (
-          <div className="flex space-x-1 ml-2">
-            <EditClassDialog classData={classData} onUpdateClass={onEditClass} />
-            <Button
-              size="sm"
-              variant="ghost"
-              className="h-8 w-8 p-0 text-red-400 hover:text-red-300"
-              onClick={() => {
-                if (window.confirm(`Are you sure you want to delete "${classData.name}"? This will also delete all associated lessons and cannot be undone.`)) {
-                  onDeleteClass(classData.id);
-                }
-              }}
-            >
-              <Trash2 className="h-4 w-4" />
-            </Button>
+const ClassCard = ({ classData, onEditClass, onDeleteClass, currentUser }) => {
+  // Debug logging
+  console.log('ClassCard Debug:', {
+    currentUser: currentUser,
+    classData: classData,
+    userRole: currentUser?.role,
+    userId: currentUser?.id,
+    teacherId: classData?.teacher_id,
+    match: currentUser?.id === classData?.teacher_id
+  });
+
+  return (
+    <Card className="bg-midnight-800/50 backdrop-blur-lg border-midnight-700 hover:border-gold-400/50 transition-all duration-300 hover:scale-105">
+      <CardHeader>
+        <div className="flex justify-between items-start">
+          <div className="flex-1">
+            <CardTitle className="text-white">{classData.name}</CardTitle>
+            <CardDescription className="text-gray-400">{classData.description}</CardDescription>
           </div>
-        )}
-      </div>
-    </CardHeader>
-    <CardContent>
-      <div className="flex items-center justify-between">
-        <Badge className="bg-gold-600/20 text-gold-400 border-gold-400/30">
-          {classData.students.length} Students
-        </Badge>
-        <Users className="h-5 w-5 text-gray-400" />
-      </div>
-      <div className="mt-2 text-xs text-gray-500">
-        Created: {new Date(classData.created_at).toLocaleDateString()}
-      </div>
-    </CardContent>
-  </Card>
-);
+          {/* Debug: Show the condition result */}
+          <div className="text-xs text-gray-500 mb-2">
+            Role: {currentUser?.role} | Owner: {currentUser?.id === classData?.teacher_id ? 'Yes' : 'No'}
+          </div>
+          {currentUser?.role === 'teacher' && currentUser?.id === classData?.teacher_id && (
+            <div className="flex space-x-1 ml-2">
+              <EditClassDialog classData={classData} onUpdateClass={onEditClass} />
+              <Button
+                size="sm"
+                variant="ghost"
+                className="h-8 w-8 p-0 text-red-400 hover:text-red-300"
+                onClick={() => {
+                  if (window.confirm(`Are you sure you want to delete "${classData.name}"? This will also delete all associated lessons and cannot be undone.`)) {
+                    onDeleteClass(classData.id);
+                  }
+                }}
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            </div>
+          )}
+        </div>
+      </CardHeader>
+      <CardContent>
+        <div className="flex items-center justify-between">
+          <Badge className="bg-gold-600/20 text-gold-400 border-gold-400/30">
+            {classData.students.length} Students
+          </Badge>
+          <Users className="h-5 w-5 text-gray-400" />
+        </div>
+        <div className="mt-2 text-xs text-gray-500">
+          Created: {new Date(classData.created_at).toLocaleDateString()}
+        </div>
+      </CardContent>
+    </Card>
+  );
+};
 
 const LessonCard = ({ lesson, onLoadFiles, files = [] }) => (
   <Card className="bg-midnight-800/50 backdrop-blur-lg border-midnight-700 hover:border-gold-400/50 transition-all duration-300 hover:scale-105">
