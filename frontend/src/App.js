@@ -242,6 +242,28 @@ function App() {
     setMessages([]);
   };
 
+  const createClass = async (classData) => {
+    const sessionId = getCookie('session_id');
+    try {
+      const response = await fetch(`${BACKEND_URL}/api/classes`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Session-ID': sessionId
+        },
+        body: JSON.stringify(classData)
+      });
+
+      if (response.ok) {
+        const newClass = await response.json();
+        setClasses([...classes, newClass]);
+        return newClass;
+      }
+    } catch (error) {
+      console.error('Failed to create class:', error);
+    }
+  };
+
   const updateClass = async (classId, classData) => {
     const sessionId = getCookie('session_id');
     try {
