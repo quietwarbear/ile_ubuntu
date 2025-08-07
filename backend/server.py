@@ -242,10 +242,12 @@ async def create_class(class_data: dict, current_user: dict = Depends(get_curren
         "description": class_data.get("description", ""),
         "teacher_id": current_user["id"],
         "students": [],
-        "created_at": datetime.utcnow()
+        "created_at": datetime.utcnow(),
+        "updated_at": datetime.utcnow()
     }
     
     classes_collection.insert_one(new_class)
+    new_class.pop("_id", None)
     return new_class
 
 @app.get("/api/classes")
