@@ -275,6 +275,112 @@ async def get_class(class_id: str, current_user: dict = Depends(get_current_user
     class_data.pop("_id", None)
     return class_data
 
+@app.put("/api/classes/{class_id}")
+async def update_class(class_id: str, class_data: dict, current_user: dict = Depends(get_current_user)):
+    """Update a class - only the teacher who created it can edit"""
+    if current_user["role"] != "teacher":
+        raise HTTPException(status_code=403, detail="Only teachers can update classes")
+    
+    # Check if class exists and user owns it
+    existing_class = classes_collection.find_one({"id": class_id})
+    if not existing_class:
+        raise HTTPException(status_code=404, detail="Class not found")
+    
+    if existing_class["teacher_id"] != current_user["id"]:
+        raise HTTPException(status_code=403, detail="You can only edit classes you created")
+    
+    # Update the class
+    updated_data = {
+        "name": class_data.get("name", existing_class["name"]),
+        "description": class_data.get("description", existing_class["description"]),
+        "updated_at": datetime.utcnow()
+    }
+    
+    result = classes_collection.update_one(
+        {"id": class_id},
+        {"$set": updated_data}
+    )
+    
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Class not found")
+    
+    # Return updated class
+    updated_class = classes_collection.find_one({"id": class_id})
+    updated_class.pop("_id", None)
+    return updated_class
+
+@app.delete("/api/classes/{class_id}")
+async def delete_class(class_id: str, current_user: dict = Depends(get_current_user)):
+    """Delete a class - only the teacher who created it can delete"""
+    if current_user["role"] != "teacher":
+        raise HTTPException(status_code=403, detail="Only teachers can delete classes")
+    
+    # Check if class exists and user owns it
+    existing_class = classes_collection.find_one({"id": class_id})
+    if not existing_class:
+        raise HTTPException(status_code=404, detail="Class not found")
+    
+    if existing_class["teacher_id"] != current_user["id"]:
+        raise HTTPException(status_code=403, detail="You can only delete classes you created")
+    
+    # Delete associated lessons first
+    lessons_collection.delete_many({"class_id": class_id})
+    
+    # Delete associated files
+    files_collection.delete_many({"class_id": class_id})
+    
+    # Delete the class
+    result = classes_collection.delete_one({"id": class_id})
+    
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Class not found")
+    
+    return {"success": True, "message": "Class deleted successfully"}
+
+@app.post("/api/classes/{class_id}/students")
+async def add_student_to_class(class_id: str, student_data: dict, current_user: dict = Depends(get_current_user)):
+    """Add a student to a class"""
+    if current_user["role"] != "teacher":
+        raise HTTPException(status_code=403, detail="Only teachers can add students")
+    
+    # Check if class exists and user owns it
+    existing_class = classes_collection.find_one({"id": class_id})
+    if not existing_class:
+        raise HTTPException(status_code=404, detail="Class not found")
+    
+    if existing_class["teacher_id"] != current_user["id"]:
+        raise HTTPException(status_code=403, detail="You can only modify classes you created")
+    
+    student_email = student_data.get("email")
+    if not student_email:
+        raise HTTPException(status_code=400, detail="Student email required")
+    
+    # Find or create student user
+    student = users_collection.find_one({"email": student_email})
+    if not student:
+        # Create new student user
+        student_user = {
+            "id": str(uuid.uuid4()),
+            "email": student_email,
+            "name": student_data.get("name", student_email.split("@")[0]),
+            "picture": "https://ui-avatars.com/api/?name=" + student_email.split("@")[0],
+            "role": "student",
+            "created_at": datetime.utcnow()
+        }
+        users_collection.insert_one(student_user)
+        student_id = student_user["id"]
+    else:
+        student_id = student["id"]
+    
+    # Add student to class if not already added
+    if student_id not in existing_class.get("students", []):
+        classes_collection.update_one(
+            {"id": class_id},
+            {"$addToSet": {"students": student_id}}
+        )
+    
+    return {"success": True, "message": "Student added successfully", "student_id": student_id}
+
 # Lesson endpoints
 @app.post("/api/lessons")
 async def create_lesson(lesson_data: dict, current_user: dict = Depends(get_current_user)):
