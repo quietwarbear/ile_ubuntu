@@ -242,11 +242,11 @@ function App() {
     setMessages([]);
   };
 
-  const createClass = async (classData) => {
+  const updateClass = async (classId, classData) => {
     const sessionId = getCookie('session_id');
     try {
-      const response = await fetch(`${BACKEND_URL}/api/classes`, {
-        method: 'POST',
+      const response = await fetch(`${BACKEND_URL}/api/classes/${classId}`, {
+        method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
           'X-Session-ID': sessionId
@@ -255,12 +255,37 @@ function App() {
       });
 
       if (response.ok) {
-        const newClass = await response.json();
-        setClasses([...classes, newClass]);
-        return newClass;
+        const updatedClass = await response.json();
+        setClasses(classes.map(c => c.id === classId ? updatedClass : c));
+        return updatedClass;
+      } else {
+        const error = await response.json();
+        alert(`Failed to update class: ${error.detail}`);
       }
     } catch (error) {
-      console.error('Failed to create class:', error);
+      console.error('Failed to update class:', error);
+      alert('Failed to update class. Please try again.');
+    }
+  };
+
+  const deleteClass = async (classId) => {
+    const sessionId = getCookie('session_id');
+    try {
+      const response = await fetch(`${BACKEND_URL}/api/classes/${classId}`, {
+        method: 'DELETE',
+        headers: { 'X-Session-ID': sessionId }
+      });
+
+      if (response.ok) {
+        setClasses(classes.filter(c => c.id !== classId));
+        alert('Class deleted successfully!');
+      } else {
+        const error = await response.json();
+        alert(`Failed to delete class: ${error.detail}`);
+      }
+    } catch (error) {
+      console.error('Failed to delete class:', error);
+      alert('Failed to delete class. Please try again.');
     }
   };
 
