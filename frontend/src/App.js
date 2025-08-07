@@ -679,7 +679,13 @@ function App() {
             
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {classes.map(classItem => (
-                <ClassCard key={classItem.id} classData={classItem} />
+                <ClassCard 
+                  key={classItem.id} 
+                  classData={classItem}
+                  onEditClass={updateClass}
+                  onDeleteClass={deleteClass}
+                  currentUser={user}
+                />
               ))}
             </div>
           </TabsContent>
