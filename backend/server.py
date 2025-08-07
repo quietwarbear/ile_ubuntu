@@ -377,25 +377,50 @@ async def get_google_auth_url(current_user: dict = Depends(get_current_user)):
 
 @app.get("/auth/google/callback")
 async def google_oauth_callback_get(request: Request):
-    """Handle Google OAuth callback - GET request"""
+    """Handle Google OAuth callback - GET request with detailed debugging"""
     try:
-        # Log the callback for debugging
-        print(f"OAuth callback received: {request.url}")
+        # Comprehensive logging
+        print(f"=== OAuth Callback Debug Info ===")
+        print(f"Full URL: {request.url}")
         print(f"Query params: {dict(request.query_params)}")
+        print(f"Headers: {dict(request.headers)}")
+        print(f"Method: {request.method}")
         
         # Get the authorization code from query parameters
         authorization_code = request.query_params.get("code")
         error = request.query_params.get("error")
+        state = request.query_params.get("state")
+        
+        # Log what we received
+        print(f"Authorization code: {authorization_code[:20]}..." if authorization_code else "None")
+        print(f"Error: {error}")
+        print(f"State: {state}")
         
         if error:
+            print(f"OAuth error received: {error}")
             html_content = f"""
             <!DOCTYPE html>
             <html>
-            <head><title>OAuth Error</title></head>
-            <body style="font-family: Arial, sans-serif; text-align: center; padding: 50px;">
+            <head>
+                <title>OAuth Error - The Ile Ubuntu</title>
+                <style>
+                    body {{ 
+                        font-family: Arial, sans-serif; 
+                        text-align: center; 
+                        padding: 50px; 
+                        background: linear-gradient(135deg, #0f172a, #1e293b);
+                        color: white;
+                    }}
+                    .error {{ color: #ef4444; }}
+                </style>
+            </head>
+            <body>
                 <h2>🔱 The Ile Ubuntu</h2>
-                <p style="color: red;">OAuth Error: {error}</p>
+                <p class="error">❌ OAuth Error: {error}</p>
                 <p>Please close this window and try again.</p>
+                <button onclick="window.location.href='https://8bec313c-42bc-492f-8514-71511295d06c.preview.emergentagent.com/'">
+                    Return to App
+                </button>
             </body>
             </html>
             """
@@ -403,21 +428,39 @@ async def google_oauth_callback_get(request: Request):
             return HTMLResponse(content=html_content)
         
         if not authorization_code:
+            print("No authorization code received!")
             html_content = """
             <!DOCTYPE html>
             <html>
-            <head><title>OAuth Error</title></head>
-            <body style="font-family: Arial, sans-serif; text-align: center; padding: 50px;">
-                <h2>🔱 The Ile Ubuntu</h2>
-                <p style="color: red;">No authorization code received</p>
-                <p>Please close this window and try again.</p>
+            <head>
+                <title>OAuth Debug - The Ile Ubuntu</title>
+                <style>
+                    body {{ 
+                        font-family: Arial, sans-serif; 
+                        text-align: center; 
+                        padding: 50px; 
+                        background: linear-gradient(135deg, #0f172a, #1e293b);
+                        color: white;
+                    }}
+                </style>
+            </head>
+            <body>
+                <h2>🔱 The Ile Ubuntu - Debug Info</h2>
+                <p>❌ No authorization code received</p>
+                <p>Callback URL was accessed but Google didn't send the expected code.</p>
+                <p>This suggests a configuration mismatch in Google Cloud Console.</p>
+                <button onclick="window.location.href='https://8bec313c-42bc-492f-8514-71511295d06c.preview.emergentagent.com/'">
+                    Return to App
+                </button>
             </body>
             </html>
             """
             from fastapi.responses import HTMLResponse
             return HTMLResponse(content=html_content)
         
-        # Create a simple success page that redirects to the main app
+        print(f"✅ Valid authorization code received, redirecting to complete auth...")
+        
+        # Create success page that stores the code and redirects
         html_content = f"""
         <!DOCTYPE html>
         <html>
@@ -431,22 +474,45 @@ async def google_oauth_callback_get(request: Request):
                     background: linear-gradient(135deg, #0f172a, #1e293b);
                     color: white;
                 }}
-                .ankh {{ color: #d97706; font-size: 48px; }}
+                .ankh {{ color: #d97706; font-size: 48px; margin-bottom: 20px; }}
                 .success {{ color: #10b981; }}
+                .loading {{ 
+                    display: inline-block;
+                    width: 20px;
+                    height: 20px;
+                    border: 3px solid #f3f3f3;
+                    border-top: 3px solid #d97706;
+                    border-radius: 50%;
+                    animation: spin 1s linear infinite;
+                }}
+                @keyframes spin {{
+                    0% {{ transform: rotate(0deg); }}
+                    100% {{ transform: rotate(360deg); }}
+                }}
             </style>
         </head>
         <body>
             <div class="ankh">🔱</div>
             <h2>The Ile Ubuntu</h2>
             <p class="success">✅ Google Authentication Successful!</p>
-            <p>Completing connection...</p>
+            <p><span class="loading"></span> Completing connection...</p>
+            <p id="status">Storing authentication data...</p>
             
             <script>
-                // Store the auth code and redirect to main app
+                console.log('OAuth callback page loaded');
+                console.log('Authorization code received:', '{authorization_code[:20]}...');
+                
+                // Store the auth code in localStorage
                 localStorage.setItem('google_auth_code', '{authorization_code}');
+                localStorage.setItem('google_auth_timestamp', Date.now().toString());
+                
+                document.getElementById('status').textContent = 'Redirecting to complete authentication...';
+                
+                // Redirect back to the main app
                 setTimeout(function() {{
-                    window.location.href = 'https://8bec313c-42bc-492f-8514-71511295d06c.preview.emergentagent.com/?google_connected=true';
-                }}, 2000);
+                    console.log('Redirecting to main app...');
+                    window.location.href = 'https://8bec313c-42bc-492f-8514-71511295d06c.preview.emergentagent.com/?google_oauth_complete=true';
+                }}, 3000);
             </script>
         </body>
         </html>
@@ -456,15 +522,20 @@ async def google_oauth_callback_get(request: Request):
         return HTMLResponse(content=html_content)
         
     except Exception as e:
-        print(f"OAuth callback error: {str(e)}")
+        print(f"OAuth callback exception: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        
         html_content = f"""
         <!DOCTYPE html>
         <html>
-        <head><title>OAuth Error</title></head>
-        <body style="font-family: Arial, sans-serif; text-align: center; padding: 50px;">
+        <head><title>OAuth System Error</title></head>
+        <body style="font-family: Arial, sans-serif; text-align: center; padding: 50px; background: #1e293b; color: white;">
             <h2>🔱 The Ile Ubuntu</h2>
-            <p style="color: red;">OAuth callback error: {str(e)}</p>
-            <p>Please close this window and try again.</p>
+            <p style="color: #ef4444;">System Error: {str(e)}</p>
+            <button onclick="window.location.href='https://8bec313c-42bc-492f-8514-71511295d06c.preview.emergentagent.com/'">
+                Return to App
+            </button>
         </body>
         </html>
         """
