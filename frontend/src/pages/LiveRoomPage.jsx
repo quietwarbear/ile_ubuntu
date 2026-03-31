@@ -5,15 +5,14 @@ import {
   ArrowLeft,
   Stop,
   Users,
-  Circle,
-  Microphone,
-  MicrophoneSlash,
   VideoCamera,
-  VideoCameraSlash,
-  ScreenShare,
-  Chat,
+  Image,
+  Prohibit,
+  Drop,
+  Check,
 } from '@phosphor-icons/react';
 import { apiGet, apiPost, apiPut } from '../lib/api';
+import BRANDED_BACKGROUNDS from '../lib/backgrounds';
 
 export default function LiveRoomPage({ user }) {
   const { sessionId } = useParams();
@@ -24,6 +23,9 @@ export default function LiveRoomPage({ user }) {
   const [loading, setLoading] = useState(true);
   const [jitsiLoaded, setJitsiLoaded] = useState(false);
   const [participantCount, setParticipantCount] = useState(0);
+  const [showPreJoin, setShowPreJoin] = useState(true);
+  const [selectedBg, setSelectedBg] = useState(null);
+  const [bgType, setBgType] = useState('none'); // 'none', 'blur', 'image'
 
   const isHost = session?.host_id === user?.id;
 
@@ -37,19 +39,10 @@ export default function LiveRoomPage({ user }) {
     };
   }, [sessionId]);
 
-  useEffect(() => {
-    if (session && !jitsiApiRef.current) {
-      loadJitsiScript();
-    }
-  }, [session]);
-
   const loadSession = async () => {
     try {
       const data = await apiGet(`/api/live-sessions/${sessionId}`);
       setSession(data);
-
-      // Join the session
-      await apiPost(`/api/live-sessions/${sessionId}/join`, {});
     } catch (e) {
       console.error('Failed to load session:', e);
     } finally {
@@ -57,12 +50,21 @@ export default function LiveRoomPage({ user }) {
     }
   };
 
+  const handleJoinRoom = async () => {
+    try {
+      await apiPost(`/api/live-sessions/${sessionId}/join`, {});
+    } catch (e) {
+      console.error('Join error:', e);
+    }
+    setShowPreJoin(false);
+    loadJitsiScript();
+  };
+
   const loadJitsiScript = () => {
     if (window.JitsiMeetExternalAPI) {
       initJitsi();
       return;
     }
-
     const script = document.createElement('script');
     script.src = 'https://meet.jit.si/external_api.js';
     script.async = true;
@@ -112,21 +114,37 @@ export default function LiveRoomPage({ user }) {
     api.addEventListener('participantJoined', () => {
       setParticipantCount(prev => prev + 1);
     });
-
     api.addEventListener('participantLeft', () => {
       setParticipantCount(prev => Math.max(0, prev - 1));
     });
-
     api.addEventListener('videoConferenceJoined', () => {
       setJitsiLoaded(true);
       setParticipantCount(api.getNumberOfParticipants());
+      // Apply selected background
+      applyBackground(api);
     });
-
     api.addEventListener('readyToClose', () => {
       handleLeave();
     });
 
     jitsiApiRef.current = api;
+  };
+
+  const applyBackground = (api) => {
+    if (!api) return;
+    try {
+      if (bgType === 'blur') {
+        api.executeCommand('toggleVirtualBackgroundDialog');
+      } else if (bgType === 'image' && selectedBg) {
+        api.executeCommand('setVirtualBackground', {
+          backgroundType: 'image',
+          enabled: true,
+          url: selectedBg.url,
+        });
+      }
+    } catch (e) {
+      console.error('Background apply error:', e);
+    }
   };
 
   const handleEndSession = async () => {
@@ -171,8 +189,118 @@ export default function LiveRoomPage({ user }) {
     );
   }
 
+  // Pre-join screen with background picker
+  if (showPreJoin) {
+    return (
+      <div className="min-h-screen bg-[#050814] flex items-center justify-center p-6" data-testid="pre-join-screen">
+        <div className="max-w-lg w-full space-y-6">
+          {/* Session info */}
+          <div className="text-center">
+            <div className="w-14 h-14 mx-auto rounded-lg bg-[#D4AF37]/10 border border-[#D4AF37]/20 flex items-center justify-center mb-4">
+              <VideoCamera size={24} weight="duotone" className="text-[#D4AF37]" />
+            </div>
+            <h1
+              className="text-2xl text-[#F8FAFC] mb-1"
+              style={{ fontFamily: 'Cormorant Garamond, serif' }}
+              data-testid="prejoin-title"
+            >
+              {session.title}
+            </h1>
+            <p className="text-xs text-[#94A3B8]">Host: {session.host_name}</p>
+          </div>
+
+          {/* Background picker */}
+          <div>
+            <h3 className="text-xs tracking-[0.15em] uppercase text-[#D4AF37] mb-3 text-center">
+              Choose Your Background
+            </h3>
+
+            {/* Special options */}
+            <div className="flex gap-2 mb-3 justify-center">
+              <button
+                onClick={() => { setBgType('none'); setSelectedBg(null); }}
+                className={`flex flex-col items-center gap-1.5 p-3 rounded-md border transition-all w-20 ${
+                  bgType === 'none'
+                    ? 'border-[#D4AF37] bg-[#D4AF37]/10'
+                    : 'border-[#1E293B] bg-[#0F172A] hover:border-[#D4AF37]/30'
+                }`}
+                data-testid="bg-none"
+              >
+                <Prohibit size={20} className={bgType === 'none' ? 'text-[#D4AF37]' : 'text-[#94A3B8]'} />
+                <span className="text-[10px] text-[#94A3B8]">None</span>
+              </button>
+              <button
+                onClick={() => { setBgType('blur'); setSelectedBg(null); }}
+                className={`flex flex-col items-center gap-1.5 p-3 rounded-md border transition-all w-20 ${
+                  bgType === 'blur'
+                    ? 'border-[#D4AF37] bg-[#D4AF37]/10'
+                    : 'border-[#1E293B] bg-[#0F172A] hover:border-[#D4AF37]/30'
+                }`}
+                data-testid="bg-blur"
+              >
+                <Drop size={20} className={bgType === 'blur' ? 'text-[#D4AF37]' : 'text-[#94A3B8]'} />
+                <span className="text-[10px] text-[#94A3B8]">Blur</span>
+              </button>
+            </div>
+
+            {/* Branded backgrounds grid */}
+            <div className="grid grid-cols-3 gap-2">
+              {BRANDED_BACKGROUNDS.map(bg => (
+                <button
+                  key={bg.id}
+                  onClick={() => { setBgType('image'); setSelectedBg(bg); }}
+                  className={`relative aspect-video rounded-md overflow-hidden border-2 transition-all ${
+                    bgType === 'image' && selectedBg?.id === bg.id
+                      ? 'border-[#D4AF37] ring-1 ring-[#D4AF37]/30'
+                      : 'border-[#1E293B] hover:border-[#D4AF37]/40'
+                  }`}
+                  data-testid={`bg-${bg.id}`}
+                >
+                  <img
+                    src={bg.thumbnail}
+                    alt={bg.name}
+                    className="w-full h-full object-cover"
+                    loading="lazy"
+                  />
+                  {bgType === 'image' && selectedBg?.id === bg.id && (
+                    <div className="absolute inset-0 bg-[#D4AF37]/20 flex items-center justify-center">
+                      <Check size={20} weight="bold" className="text-[#D4AF37]" />
+                    </div>
+                  )}
+                  <div className="absolute bottom-0 inset-x-0 px-1.5 py-1 bg-gradient-to-t from-black/70">
+                    <span className="text-[9px] text-white">{bg.name}</span>
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Join button */}
+          <div className="flex gap-3">
+            <Button
+              variant="outline"
+              onClick={() => navigate('/live')}
+              className="flex-1 border-[#1E293B] text-[#94A3B8] hover:text-[#F8FAFC]"
+              data-testid="prejoin-back-btn"
+            >
+              <ArrowLeft size={16} className="mr-2" /> Back
+            </Button>
+            <Button
+              onClick={handleJoinRoom}
+              className="flex-1 bg-[#D4AF37] text-[#050814] hover:bg-[#F3E5AB] font-medium"
+              data-testid="prejoin-join-btn"
+            >
+              <VideoCamera size={16} className="mr-2" /> Join Session
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Active room
   return (
-    <div className="h-[calc(100vh-5rem)] flex flex-col" data-testid="live-room-page">
+    <div className="h-[calc(100vh-0rem)] flex flex-col" data-testid="live-room-page">
       {/* Top Bar */}
       <div className="flex items-center justify-between px-4 py-3 bg-[#0A1128] border-b border-[#1E293B]">
         <div className="flex items-center gap-3">
