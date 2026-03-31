@@ -1,0 +1,92 @@
+{
+  "theme": "dark",
+  "archetype": "5",
+  "archetype_name": "Jewel & Luxury",
+  "colors": {
+    "background_primary": "#050814",
+    "background_secondary": "#0A1128",
+    "background_card": "#0F172A",
+    "primary": "#D4AF37",
+    "primary_hover": "#F3E5AB",
+    "text_main": "#F8FAFC",
+    "text_muted": "#94A3B8",
+    "border": "#1E293B",
+    "border_highlight": "rgba(212, 175, 55, 0.3)"
+  },
+  "typography": {
+    "font_family_heading": "Cormorant Garamond, serif",
+    "font_family_body": "Outfit, sans-serif",
+    "h1_classes": "text-4xl sm:text-5xl lg:text-6xl font-light tracking-tight text-[#F8FAFC]",
+    "h2_classes": "text-2xl sm:text-3xl lg:text-4xl font-normal tracking-tight text-[#F8FAFC]",
+    "body_classes": "text-base leading-relaxed text-[#94A3B8]",
+    "label_classes": "text-xs tracking-[0.2em] uppercase text-[#D4AF37] font-semibold"
+  },
+  "spacing_and_layout": {
+    "container_padding": "p-6 md:p-8 lg:p-12",
+    "bento_gap": "gap-6 md:gap-8",
+    "card_padding": "p-6",
+    "border_radius": "rounded-none md:rounded-lg"
+  },
+  "surfaces": {
+    "card": "bg-[#0F172A] border border-[#1E293B] hover:border-[#D4AF37]/50 transition-colors duration-300",
+    "glass_header": "bg-[#050814]/80 backdrop-blur-xl border-b border-[#1E293B]",
+    "active_tab": "border-b-2 border-[#D4AF37] text-[#D4AF37]",
+    "button_primary": "bg-[#D4AF37] text-[#050814] font-medium hover:bg-[#F3E5AB] transition-all px-6 py-2 rounded-md"
+  },
+  "motion": {
+    "hover_card": "hover:-translate-y-1 hover:shadow-[0_8px_30px_rgba(212,175,55,0.08)] transition-all duration-300 ease-out",
+    "page_enter": "animate-in fade-in slide-in-from-bottom-4 duration-500"
+  },
+  "icons": {
+    "library": "@phosphor-icons/react",
+    "weight": "duotone",
+    "installation": "yarn add @phosphor-icons/react"
+  },
+  "images": [
+    {
+      "category": "login_background",
+      "url": "https://images.pexels.com/photos/6563056/pexels-photo-6563056.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940",
+      "description": "A sophisticated abstract texture in blue and gold"
+    },
+    {
+      "category": "logo_ankh",
+      "url": "https://images.pexels.com/photos/161147/ank-cross-spiritual-egypt-161147.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940",
+      "description": "Detailed view of an ankh symbol"
+    },
+    {
+      "category": "cohorts_community",
+      "url": "https://images.pexels.com/photos/6684506/pexels-photo-6684506.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940",
+      "description": "Multiracial group of college students studying together indoors"
+    },
+    {
+      "category": "archive_knowledge",
+      "url": "https://images.pexels.com/photos/32765735/pexels-photo-32765735.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940",
+      "description": "A collection of vintage books displayed on wooden shelves in a library setting"
+    },
+    {
+      "category": "live_teaching",
+      "url": "https://images.unsplash.com/photo-1758520145147-c30bc656f314?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NTY2Njl8MHwxfHNlYXJjaHw0fHxkaXZlcnNlJTIwc3R1ZGVudHMlMjBzdHVkeWluZyUyMGRhcmslMjBiYWNrZ3JvdW5kfGVufDB8fHx8MTc3NDkyMzYyMHww&ixlib=rb-4.1.0&q=85",
+      "description": "Man working late at a dimly lit office desk"
+    }
+  ],
+  "components": {
+    "sidebar": "Fixed left sidebar. Deep background (#050814). Active link highlighted with gold text and a subtle left border. Inactive links muted blue-gray.",
+    "dashboard_grid": "Use grid-cols-1 md:grid-cols-3 lg:grid-cols-4. High density, 1px solid borders for separation.",
+    "courses_cards": "Image at the top, dark card body (#0F172A), gold accent for progress bar. Minimal padding.",
+    "forum_list": "Flat list items with bottom borders. Avatars on the left. Unread status uses a gold dot."
+  },
+  "accessibility": {
+    "contrast": "Ensure text over midnight blue has at least 4.5:1 contrast. Use pure white or off-white for body text. Use gold strictly for large text, icons, or prominent accents.",
+    "focus_states": "focus:ring-2 focus:ring-[#D4AF37] focus:outline-none focus:ring-offset-2 focus:ring-offset-[#050814]"
+  },
+  "instructions_to_main_agent": [
+    "This is a premium, heritage-focused educational SaaS. Avoid 'fintech-bro' tech aesthetics.",
+    "Use strictly custom Shadcn UI with the provided colors. No default Vercel/Stripe styles.",
+    "For the login page, use the abstract blue and gold image with an overlay (`bg-[#050814]/70`).",
+    "Replace generic icons with Phosphor Icons (duotone weight) to enhance the luxurious feel.",
+    "Use 'Cormorant Garamond' for headings and 'Outfit' for body text. Do not use Inter or generic sans-serif for headings.",
+    "Ensure all interactive elements have data-testid attributes.",
+    "The sidebar navigation must always be visible on desktop. Only use a hamburger menu for mobile.",
+    "Avoid muddy drop shadows. Define components with 1px borders (`border-[#1E293B]`)."
+  ]
+}
