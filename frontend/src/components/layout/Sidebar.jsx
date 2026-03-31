@@ -17,6 +17,7 @@ import {
   Sparkle,
   FilmSlate,
   GlobeSimple,
+  Megaphone,
 } from '@phosphor-icons/react';
 import { clearCookie, apiPut } from '../../lib/api';
 import { useI18n } from '../../i18n';
@@ -34,6 +35,7 @@ const navItems = [
   { to: '/messages', labelKey: 'messages', icon: Bell },
   { to: '/analytics', labelKey: 'analytics', icon: ChartBar, facultyOnly: true },
   { to: '/subscriptions', labelKey: 'membership', icon: Sparkle },
+  { to: '/marketing', labelKey: 'marketing', icon: Megaphone, facultyOnly: true },
 ];
 
 export default function Sidebar({ user, onLogout }) {

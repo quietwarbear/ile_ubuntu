@@ -11,6 +11,7 @@ const yo = {
   messages: 'Àwọn Ifiránṣẹ́',
   analytics: 'Ìtúpalẹ̀',
   membership: 'Ọmọ Ẹgbẹ́',
+  marketing: 'Marketing',
   settings: 'Ètò',
   sign_out: 'Jáde',
 

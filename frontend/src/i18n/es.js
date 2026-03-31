@@ -11,6 +11,7 @@ const es = {
   messages: 'Mensajes',
   analytics: 'Analítica',
   membership: 'Membresía',
+  marketing: 'Marketing',
   settings: 'Configuración',
   sign_out: 'Cerrar Sesión',
 

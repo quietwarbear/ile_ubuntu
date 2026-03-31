@@ -52,42 +52,44 @@ self.addEventListener('activate', (event) => {
 
 // Push notification handling
 self.addEventListener('push', (event) => {
+  let data = { title: 'The Ile Ubuntu', body: 'New notification', url: '/dashboard' };
+  try {
+    if (event.data) data = Object.assign(data, JSON.parse(event.data.text()));
+  } catch (e) {
+    if (event.data) data.body = event.data.text();
+  }
+
   const options = {
-    body: event.data ? event.data.text() : 'New notification from The Ile Ubuntu',
-    icon: 'https://customer-assets.emergentagent.com/job_lessonhub-4/artifacts/58m7009f_anhk.png',
-    badge: 'https://customer-assets.emergentagent.com/job_lessonhub-4/artifacts/58m7009f_anhk.png',
+    body: data.body,
+    icon: data.icon || '/logo192.png',
+    badge: data.badge || '/logo192.png',
     vibrate: [100, 50, 100],
-    data: {
-      dateOfArrival: Date.now(),
-      primaryKey: 1
-    },
+    data: { url: data.url || '/dashboard' },
     actions: [
-      {
-        action: 'explore',
-        title: 'View',
-        icon: 'https://customer-assets.emergentagent.com/job_lessonhub-4/artifacts/58m7009f_anhk.png'
-      },
-      {
-        action: 'close',
-        title: 'Close',
-        icon: 'https://customer-assets.emergentagent.com/job_lessonhub-4/artifacts/58m7009f_anhk.png'
-      }
-    ]
+      { action: 'open', title: 'View' },
+      { action: 'close', title: 'Dismiss' },
+    ],
   };
 
-  event.waitUntil(
-    self.registration.showNotification('The Ile Ubuntu', options)
-  );
+  event.waitUntil(self.registration.showNotification(data.title, options));
 });
 
 // Handle notification clicks
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
-
-  if (event.action === 'explore') {
-    // Open the app
+  const url = event.notification.data?.url || '/';
+  if (event.action !== 'close') {
     event.waitUntil(
-      self.clients.openWindow('/')
+      self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clients) => {
+        for (const client of clients) {
+          if (client.url.includes(self.location.origin)) {
+            client.focus();
+            client.navigate(url);
+            return;
+          }
+        }
+        return self.clients.openWindow(url);
+      })
     );
   }
 });

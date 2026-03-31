@@ -11,6 +11,7 @@ const en = {
   messages: 'Messages',
   analytics: 'Analytics',
   membership: 'Membership',
+  marketing: 'Marketing',
   settings: 'Settings',
   sign_out: 'Sign Out',
 

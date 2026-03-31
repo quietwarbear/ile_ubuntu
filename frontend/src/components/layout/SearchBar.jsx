@@ -63,7 +63,11 @@ export default function SearchBar() {
   }, [query]);
 
   const totalResults = results
-    ? Object.values(results).reduce((s, arr) => s + arr.length, 0)
+    ? Object.entries(results).reduce((s, [key, arr]) => {
+        // Skip 'total' field which is a number, not an array
+        if (key === 'total' || !Array.isArray(arr)) return s;
+        return s + arr.length;
+      }, 0)
     : 0;
 
   const handleSelect = (section, item) => {
@@ -103,9 +107,16 @@ export default function SearchBar() {
             <div className="p-4 text-center">
               <p className="text-xs text-[#94A3B8]">No results for "{query}"</p>
             </div>
-          ) : (
-            Object.entries(results).map(([section, items]) => {
-              if (!items || items.length === 0) return null;
+          ) : (<>
+            <button
+              onClick={() => { navigate(`/search?q=${encodeURIComponent(query)}`); setOpen(false); setQuery(''); }}
+              className="w-full text-left px-3 py-2 text-[10px] text-[#D4AF37] hover:bg-[#1E293B]/50 transition-colors border-b border-[#1E293B]"
+              data-testid="view-all-results"
+            >
+              View all {totalResults} results with filters &rarr;
+            </button>
+            {Object.entries(results).filter(([key]) => key !== 'total').map(([section, items]) => {
+              if (!items || !Array.isArray(items) || items.length === 0) return null;
               const Icon = SECTION_ICONS[section] || BookOpenText;
               return (
                 <div key={section}>
@@ -131,8 +142,8 @@ export default function SearchBar() {
                   ))}
                 </div>
               );
-            })
-          )}
+            })}
+          </>)}
         </div>
       )}
     </div>

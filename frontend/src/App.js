@@ -21,6 +21,8 @@ import AnalyticsPage from './pages/AnalyticsPage';
 import SubscriptionsPage from './pages/SubscriptionsPage';
 import SessionRecordsPage from './pages/SessionRecordsPage';
 import AboutPage from './pages/AboutPage';
+import SearchResultsPage from './pages/SearchResultsPage';
+import MarketingPage from './pages/MarketingPage';
 import './App.css';
 
 function App() {
@@ -129,6 +131,8 @@ function App() {
             <Route path="/archives" element={<ArchivesPage user={user} />} />
             <Route path="/messages" element={<MessagesPage user={user} />} />
             <Route path="/settings" element={<SettingsPage user={user} />} />
+            <Route path="/search" element={<SearchResultsPage user={user} />} />
+            <Route path="/marketing" element={<MarketingPage />} />
             <Route path="/about" element={<AboutPage />} />
             <Route path="*" element={<Navigate to="/dashboard" replace />} />
           </Routes>
