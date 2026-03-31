@@ -68,7 +68,33 @@ async def get_me(current_user: dict = Depends(get_current_user)):
         "picture": current_user["picture"],
         "role": current_user["role"],
         "bio": current_user.get("bio", ""),
+        "subscription_tier": current_user.get("subscription_tier", "explorer"),
+        "onboarding_complete": current_user.get("onboarding_complete", False),
+        "language": current_user.get("language", "en"),
+        "interests": current_user.get("interests", []),
     }
+
+
+@router.put("/me/onboarding")
+async def complete_onboarding(request: Request, current_user: dict = Depends(get_current_user)):
+    data = await request.json()
+    update = {"onboarding_complete": True}
+    if "interests" in data:
+        update["interests"] = data["interests"]
+    if "language" in data:
+        update["language"] = data["language"]
+    users_col.update_one({"id": current_user["id"]}, {"$set": update})
+    return {"success": True}
+
+
+@router.put("/me/language")
+async def set_language(request: Request, current_user: dict = Depends(get_current_user)):
+    data = await request.json()
+    lang = data.get("language", "en")
+    if lang not in ("en", "es", "yo"):
+        raise HTTPException(status_code=400, detail="Supported: en, es, yo")
+    users_col.update_one({"id": current_user["id"]}, {"$set": {"language": lang}})
+    return {"success": True, "language": lang}
 
 
 @router.get("/users")

@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { getCookie, setCookie, apiPost, apiGet } from './lib/api';
+import { I18nProvider } from './i18n';
 import AppLayout from './components/layout/AppLayout';
+import OnboardingWizard from './components/OnboardingWizard';
 import LoginPage from './pages/LoginPage';
 import DashboardPage from './pages/DashboardPage';
 import CoursesPage from './pages/CoursesPage';
@@ -18,11 +20,13 @@ import SpacesPage from './pages/SpacesPage';
 import AnalyticsPage from './pages/AnalyticsPage';
 import SubscriptionsPage from './pages/SubscriptionsPage';
 import SessionRecordsPage from './pages/SessionRecordsPage';
+import AboutPage from './pages/AboutPage';
 import './App.css';
 
 function App() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [showOnboarding, setShowOnboarding] = useState(false);
 
   useEffect(() => {
     checkAuth();
@@ -35,6 +39,9 @@ function App() {
       try {
         const userData = await apiGet('/api/auth/me');
         setUser(userData);
+        if (!userData.onboarding_complete) {
+          setShowOnboarding(true);
+        }
       } catch (e) {
         console.error('Auth check failed:', e);
       }
@@ -52,6 +59,9 @@ function App() {
         window.location.hash = '';
         const userData = await apiGet('/api/auth/me');
         setUser(userData);
+        if (!userData.onboarding_complete) {
+          setShowOnboarding(true);
+        }
       } catch (e) {
         console.error('Auth callback failed:', e);
       }
@@ -82,37 +92,49 @@ function App() {
 
   if (!user) {
     return (
-      <BrowserRouter>
-        <Routes>
-          <Route path="*" element={<LoginPage onLogin={handleLogin} />} />
-        </Routes>
-      </BrowserRouter>
+      <I18nProvider defaultLang="en">
+        <BrowserRouter>
+          <Routes>
+            <Route path="/about" element={<AboutPage />} />
+            <Route path="*" element={<LoginPage onLogin={handleLogin} />} />
+          </Routes>
+        </BrowserRouter>
+      </I18nProvider>
     );
   }
 
   return (
-    <BrowserRouter>
-      <AppLayout user={user} onLogout={handleLogout}>
-        <Routes>
-          <Route path="/dashboard" element={<DashboardPage user={user} />} />
-          <Route path="/courses" element={<CoursesPage user={user} />} />
-          <Route path="/courses/:courseId" element={<CourseDetailPage user={user} />} />
-          <Route path="/live" element={<LiveSessionsPage user={user} />} />
-          <Route path="/live/:sessionId" element={<LiveRoomPage user={user} />} />
-          <Route path="/cohorts" element={<CohortsPage user={user} />} />
-          <Route path="/cohorts/:cohortId" element={<CohortDetailPage user={user} />} />
-          <Route path="/spaces" element={<SpacesPage user={user} />} />
-          <Route path="/analytics" element={<AnalyticsPage user={user} />} />
-          <Route path="/subscriptions" element={<SubscriptionsPage user={user} />} />
-          <Route path="/session-records" element={<SessionRecordsPage user={user} />} />
-          <Route path="/community" element={<CommunityPage user={user} />} />
-          <Route path="/archives" element={<ArchivesPage user={user} />} />
-          <Route path="/messages" element={<MessagesPage user={user} />} />
-          <Route path="/settings" element={<SettingsPage user={user} />} />
-          <Route path="*" element={<Navigate to="/dashboard" replace />} />
-        </Routes>
-      </AppLayout>
-    </BrowserRouter>
+    <I18nProvider defaultLang={user.language || 'en'}>
+      <BrowserRouter>
+        {showOnboarding && (
+          <OnboardingWizard
+            user={user}
+            onComplete={() => setShowOnboarding(false)}
+          />
+        )}
+        <AppLayout user={user} onLogout={handleLogout}>
+          <Routes>
+            <Route path="/dashboard" element={<DashboardPage user={user} />} />
+            <Route path="/courses" element={<CoursesPage user={user} />} />
+            <Route path="/courses/:courseId" element={<CourseDetailPage user={user} />} />
+            <Route path="/live" element={<LiveSessionsPage user={user} />} />
+            <Route path="/live/:sessionId" element={<LiveRoomPage user={user} />} />
+            <Route path="/cohorts" element={<CohortsPage user={user} />} />
+            <Route path="/cohorts/:cohortId" element={<CohortDetailPage user={user} />} />
+            <Route path="/spaces" element={<SpacesPage user={user} />} />
+            <Route path="/analytics" element={<AnalyticsPage user={user} />} />
+            <Route path="/subscriptions" element={<SubscriptionsPage user={user} />} />
+            <Route path="/session-records" element={<SessionRecordsPage user={user} />} />
+            <Route path="/community" element={<CommunityPage user={user} />} />
+            <Route path="/archives" element={<ArchivesPage user={user} />} />
+            <Route path="/messages" element={<MessagesPage user={user} />} />
+            <Route path="/settings" element={<SettingsPage user={user} />} />
+            <Route path="/about" element={<AboutPage />} />
+            <Route path="*" element={<Navigate to="/dashboard" replace />} />
+          </Routes>
+        </AppLayout>
+      </BrowserRouter>
+    </I18nProvider>
   );
 }
 

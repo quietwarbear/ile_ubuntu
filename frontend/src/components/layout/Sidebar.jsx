@@ -16,32 +16,40 @@ import {
   ChartBar,
   Sparkle,
   FilmSlate,
+  GlobeSimple,
 } from '@phosphor-icons/react';
-import { clearCookie } from '../../lib/api';
+import { clearCookie, apiPut } from '../../lib/api';
+import { useI18n } from '../../i18n';
 import SearchBar from './SearchBar';
 
 const navItems = [
-  { to: '/dashboard', label: 'Dashboard', icon: House },
-  { to: '/courses', label: 'Courses', icon: BookOpenText },
-  { to: '/live', label: 'Live Teaching', icon: VideoCamera },
-  { to: '/session-records', label: 'Session Records', icon: FilmSlate, facultyOnly: true },
-  { to: '/cohorts', label: 'Cohorts', icon: UsersThree },
-  { to: '/spaces', label: 'Spaces', icon: ShieldCheck },
-  { to: '/community', label: 'Community', icon: Chats },
-  { to: '/archives', label: 'Archives', icon: Archive },
-  { to: '/messages', label: 'Messages', icon: Bell },
-  { to: '/analytics', label: 'Analytics', icon: ChartBar, facultyOnly: true },
-  { to: '/subscriptions', label: 'Membership', icon: Sparkle },
+  { to: '/dashboard', labelKey: 'dashboard', icon: House },
+  { to: '/courses', labelKey: 'courses', icon: BookOpenText },
+  { to: '/live', labelKey: 'live_teaching', icon: VideoCamera },
+  { to: '/session-records', labelKey: 'session_records', icon: FilmSlate, facultyOnly: true },
+  { to: '/cohorts', labelKey: 'cohorts', icon: UsersThree },
+  { to: '/spaces', labelKey: 'spaces', icon: ShieldCheck },
+  { to: '/community', labelKey: 'community', icon: Chats },
+  { to: '/archives', labelKey: 'archives', icon: Archive },
+  { to: '/messages', labelKey: 'messages', icon: Bell },
+  { to: '/analytics', labelKey: 'analytics', icon: ChartBar, facultyOnly: true },
+  { to: '/subscriptions', labelKey: 'membership', icon: Sparkle },
 ];
 
 export default function Sidebar({ user, onLogout }) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const navigate = useNavigate();
+  const { t, lang, setLang, LANG_NAMES } = useI18n();
 
   const handleLogout = () => {
     clearCookie('session_id');
     onLogout();
     navigate('/');
+  };
+
+  const handleLangChange = async (newLang) => {
+    setLang(newLang);
+    try { await apiPut('/api/auth/me/language', { language: newLang }); } catch (e) {}
   };
 
   const linkClass = ({ isActive }) =>
@@ -83,13 +91,36 @@ export default function Sidebar({ user, onLogout }) {
             to={item.to}
             className={linkClass}
             onClick={() => setMobileOpen(false)}
-            data-testid={`nav-${item.label.toLowerCase()}`}
+            data-testid={`nav-${item.labelKey}`}
           >
             <item.icon size={20} weight="duotone" />
-            {item.label}
+            {t(item.labelKey)}
           </NavLink>
         ))}
       </nav>
+
+      {/* Language Selector */}
+      <div className="px-4 py-2 border-t border-[#1E293B]">
+        <div className="flex items-center gap-2">
+          <GlobeSimple size={14} weight="duotone" className="text-[#94A3B8] flex-shrink-0" />
+          <div className="flex gap-1 flex-1" data-testid="language-selector">
+            {Object.entries(LANG_NAMES).map(([code, name]) => (
+              <button
+                key={code}
+                onClick={() => handleLangChange(code)}
+                className={`flex-1 py-1 rounded text-[9px] transition-all ${
+                  lang === code
+                    ? 'bg-[#D4AF37]/10 text-[#D4AF37] border border-[#D4AF37]/30'
+                    : 'text-[#475569] border border-[#1E293B] hover:text-[#94A3B8]'
+                }`}
+                data-testid={`lang-${code}`}
+              >
+                {name}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
 
       {/* User */}
       <div className="border-t border-[#1E293B] p-4">
@@ -111,7 +142,7 @@ export default function Sidebar({ user, onLogout }) {
             data-testid="nav-settings"
           >
             <GearSix size={14} weight="duotone" />
-            Settings
+            {t('settings')}
           </NavLink>
           <button
             onClick={handleLogout}
