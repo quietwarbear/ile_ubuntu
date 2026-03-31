@@ -66,7 +66,7 @@ Build a "Living Learning Commons" platform called "The Ile Ubuntu" that holds co
 
 ### What's Been Implemented (Phase 2b - Branded Virtual Backgrounds - Feb 2026)
 - [x] Pre-join screen with background picker before entering Jitsi sessions
-- [x] 5 curated branded backgrounds matching Ile Ubuntu aesthetic (Blue & Gold Abstract, Gold Ornate, Dark Metallic, Vintage Study, Ice & Gold)
+- [x] 5 curated branded backgrounds matching Ile Ubuntu aesthetic
 - [x] "None" and "Blur" background options
 - [x] Visual selection state with gold border and checkmark overlay
 - [x] Background auto-applied to Jitsi via executeCommand API on join
@@ -89,18 +89,31 @@ Build a "Living Learning Commons" platform called "The Ile Ubuntu" that holds co
 - [x] Token refresh mechanism for long-lived Google access
 - [x] Full test suite: 25 backend + all frontend tests passing
 
+### What's Been Implemented (Phase 4 - Cohorts, Spaces, Community, Archives - Mar 2026)
+- [x] Cohort-Course linking: faculty link/unlink courses to cohorts
+- [x] Cohort detail page with curriculum, member list, and per-member progress tracking
+- [x] Protected Knowledge Spaces with 4 access levels: public, members, faculty+, elders only
+- [x] Space discovery: members-only spaces visible to all users (content stripped for non-members)
+- [x] Access request/approval flow for members-only spaces
+- [x] Resource management within spaces (text, links, embeds)
+- [x] Community forums fully functional with posts, replies, likes, categories
+- [x] Archives with access-level filtering (public visible to all, restricted to faculty+)
+- [x] Sidebar navigation updated with all sections
+- [x] Fixed spaces visibility bug (non-members can now discover and request access)
+- [x] Fixed archives delete button condition (admin-only properly)
+- [x] Full test suite: 28 backend + 23 frontend tests passing (iteration 7)
+
 ### Prioritized Backlog
 
 #### P0 (Next)
 - (none - all P0s completed!)
 
 #### P1 (Up Next)
-- Cohort-course linking (assign courses to cohorts)
-- Protected knowledge spaces with membership management
 - Lesson content viewer (rich text, embedded media)
 - Custom AI-generated backgrounds (when image gen quota resets)
 
 #### P2
+- Edit/Delete course controls RBAC validation for faculty/elders
 - Subscription/membership management
 - Advanced analytics dashboard
 - Search across courses, archives, community
@@ -110,24 +123,26 @@ Build a "Living Learning Commons" platform called "The Ile Ubuntu" that holds co
 ### Key Files
 ```
 /app/backend/
-├── server.py (FastAPI entry point, mounts routers)
-├── database.py (MongoDB connection)
-├── middleware.py (Auth middleware)
-├── models/ (user.py, course.py, cohort.py)
-├── routes/ (auth.py, courses.py, cohorts.py, community.py, archives.py, files.py, messages.py)
+  server.py (FastAPI entry point, mounts routers)
+  database.py (MongoDB connection)
+  middleware.py (Auth middleware)
+  models/ (user.py, course.py, cohort.py)
+  routes/ (auth.py, courses.py, cohorts.py, community.py, archives.py, files.py, messages.py, enrollments.py, live_sessions.py, google_integration.py, spaces.py)
 /app/frontend/src/
-├── App.js (React Router)
-├── lib/api.js (API client)
-├── components/layout/ (Sidebar.jsx, AppLayout.jsx)
-├── pages/ (LoginPage, DashboardPage, CoursesPage, CohortsPage, CommunityPage, ArchivesPage, MessagesPage, SettingsPage)
+  App.js (React Router)
+  lib/api.js (API client)
+  components/layout/ (Sidebar.jsx, AppLayout.jsx)
+  pages/ (LoginPage, DashboardPage, CoursesPage, CourseDetailPage, CohortsPage, CohortDetailPage, SpacesPage, CommunityPage, ArchivesPage, LiveSessionsPage, LiveRoomPage, MessagesPage, SettingsPage)
 ```
 
 ### API Endpoints
 - Auth: POST /api/auth/profile, GET /api/auth/me, GET /api/auth/users, PUT /api/auth/users/{id}/role
 - Courses: GET/POST /api/courses, GET/PUT/DELETE /api/courses/{id}, GET/POST /api/courses/{id}/lessons
 - Enrollment: POST /api/courses/{id}/enroll, POST /api/courses/{id}/unenroll, GET /api/courses/{id}/enrollment, GET /api/courses/{id}/progress, POST /api/courses/{id}/lessons/{lid}/complete, GET /api/courses/{id}/enrollments, GET /api/enrollments/my-courses
-- Cohorts: GET/POST /api/cohorts, GET/PUT/DELETE /api/cohorts/{id}, POST /api/cohorts/{id}/join, POST /api/cohorts/{id}/leave
+- Cohorts: GET/POST /api/cohorts, GET/PUT/DELETE /api/cohorts/{id}, POST /api/cohorts/{id}/join, POST /api/cohorts/{id}/leave, POST /api/cohorts/{id}/courses, DELETE /api/cohorts/{id}/courses/{cid}, GET /api/cohorts/{id}/detail
+- Spaces: GET/POST /api/spaces, GET/PUT/DELETE /api/spaces/{id}, POST /api/spaces/{id}/request-access, POST /api/spaces/{id}/approve/{uid}, POST /api/spaces/{id}/deny/{uid}, POST /api/spaces/{id}/resources
 - Community: GET/POST /api/community/posts, GET/DELETE /api/community/posts/{id}, POST /api/community/posts/{id}/reply, POST /api/community/posts/{id}/like
 - Archives: GET/POST /api/archives, GET/DELETE /api/archives/{id}
 - Files: POST /api/files/upload, GET /api/files, GET /api/files/{id}/download, DELETE /api/files/{id}
 - Messages: GET/POST /api/messages, GET /api/notifications, PUT /api/notifications/{id}/read
+- Live: GET/POST /api/live-sessions, PUT /api/live-sessions/{id}/start, PUT /api/live-sessions/{id}/end, DELETE /api/live-sessions/{id}
