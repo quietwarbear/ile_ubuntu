@@ -28,6 +28,7 @@ from routes.community import router as community_router
 from routes.archives import router as archives_router
 from routes.files import router as files_router
 from routes.messages import router as messages_router
+from routes.enrollments import router as enrollments_router
 
 app.include_router(auth_router)
 app.include_router(courses_router)
@@ -36,6 +37,7 @@ app.include_router(community_router)
 app.include_router(archives_router)
 app.include_router(files_router)
 app.include_router(messages_router)
+app.include_router(enrollments_router)
 
 
 @app.get("/")

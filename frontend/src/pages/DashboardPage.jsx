@@ -8,6 +8,8 @@ import {
   Archive,
   TrendUp,
   ArrowRight,
+  GraduationCap,
+  Trophy,
 } from '@phosphor-icons/react';
 import { apiGet } from '../lib/api';
 
@@ -35,16 +37,18 @@ const StatCard = ({ label, value, icon: Icon, color, to }) => {
 export default function DashboardPage({ user }) {
   const [stats, setStats] = useState({ courses: 0, cohorts: 0, posts: 0, archives: 0 });
   const [recentCourses, setRecentCourses] = useState([]);
+  const [myEnrollments, setMyEnrollments] = useState([]);
   const navigate = useNavigate();
 
   useEffect(() => {
     async function load() {
       try {
-        const [courses, cohorts, posts, archives] = await Promise.all([
+        const [courses, cohorts, posts, archives, enrollments] = await Promise.all([
           apiGet('/api/courses'),
           apiGet('/api/cohorts'),
           apiGet('/api/community/posts'),
           apiGet('/api/archives'),
+          apiGet('/api/enrollments/my-courses'),
         ]);
         setStats({
           courses: courses.length,
@@ -53,6 +57,7 @@ export default function DashboardPage({ user }) {
           archives: archives.length,
         });
         setRecentCourses(courses.slice(0, 4));
+        setMyEnrollments(enrollments.slice(0, 3));
       } catch (e) {
         console.error('Dashboard load error:', e);
       }
@@ -135,6 +140,59 @@ export default function DashboardPage({ user }) {
           )}
         </CardContent>
       </Card>
+
+      {/* My Learning */}
+      {myEnrollments.length > 0 && (
+        <Card className="bg-[#0F172A] border-[#1E293B]">
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle
+              className="text-lg text-[#F8FAFC] flex items-center gap-2"
+              style={{ fontFamily: 'Cormorant Garamond, serif' }}
+            >
+              <GraduationCap size={20} weight="duotone" className="text-[#D4AF37]" />
+              My Learning
+            </CardTitle>
+            <button
+              className="text-xs text-[#D4AF37] flex items-center gap-1 hover:underline"
+              onClick={() => navigate('/courses')}
+              data-testid="view-my-learning"
+            >
+              View all <ArrowRight size={12} />
+            </button>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {myEnrollments.map(enrollment => (
+              <div
+                key={enrollment.id}
+                className="flex items-center gap-3 p-3 rounded-md bg-[#050814] border border-[#1E293B] hover:border-[#D4AF37]/20 transition-colors cursor-pointer"
+                onClick={() => navigate(`/courses/${enrollment.course_id}`)}
+                data-testid={`dash-enrollment-${enrollment.course_id}`}
+              >
+                <div className="relative w-10 h-10 flex-shrink-0">
+                  <svg className="w-10 h-10 -rotate-90" viewBox="0 0 40 40">
+                    <circle cx="20" cy="20" r="16" fill="none" stroke="#1E293B" strokeWidth="2.5" />
+                    <circle cx="20" cy="20" r="16" fill="none" stroke="#D4AF37" strokeWidth="2.5"
+                      strokeDasharray={`${(enrollment.progress || 0) * 1.005} 100.5`} strokeLinecap="round" />
+                  </svg>
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    {enrollment.status === 'completed' ? (
+                      <Trophy size={12} weight="fill" className="text-[#D4AF37]" />
+                    ) : (
+                      <span className="text-[9px] font-semibold text-[#F8FAFC]">{Math.round(enrollment.progress || 0)}%</span>
+                    )}
+                  </div>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm text-[#F8FAFC] truncate">{enrollment.course_title}</p>
+                  <p className="text-[10px] text-[#94A3B8]">
+                    {enrollment.completed_lessons?.length || 0} / {enrollment.total_lessons} lessons
+                  </p>
+                </div>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+      )}
 
       {/* Quick Actions */}
       <div>

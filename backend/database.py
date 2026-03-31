@@ -19,3 +19,4 @@ files_col = db.files
 messages_col = db.messages
 notifications_col = db.notifications
 google_tokens_col = db.google_tokens
+enrollments_col = db.enrollments
