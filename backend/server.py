@@ -75,12 +75,12 @@ def create_google_flow():
                 "client_secret": GOOGLE_CLIENT_SECRET,
                 "auth_uri": "https://accounts.google.com/o/oauth2/auth",
                 "token_uri": "https://oauth2.googleapis.com/token",
-                "redirect_uris": ["https://8bec313c-42bc-492f-8514-71511295d06c.preview.emergentagent.com/auth/google/callback"]
+                "redirect_uris": ["https://living-commons-dev.preview.emergentagent.com/auth/google/callback"]
             }
         },
         scopes=GOOGLE_SCOPES
     )
-    flow.redirect_uri = "https://8bec313c-42bc-492f-8514-71511295d06c.preview.emergentagent.com/auth/google/callback"
+    flow.redirect_uri = "https://living-commons-dev.preview.emergentagent.com/auth/google/callback"
     return flow
 
 # Pydantic models
@@ -465,7 +465,7 @@ async def get_google_auth_url(current_user: dict = Depends(get_current_user)):
     """Get Google OAuth authorization URL"""
     try:
         client_id = GOOGLE_CLIENT_ID
-        redirect_uri = "https://8bec313c-42bc-492f-8514-71511295d06c.preview.emergentagent.com/auth/google/callback"
+        redirect_uri = "https://living-commons-dev.preview.emergentagent.com/auth/google/callback"
         
         # Build the OAuth URL with proper encoding
         auth_url = (
@@ -526,7 +526,7 @@ async def google_oauth_callback_get(request: Request):
                 <h2>🔱 The Ile Ubuntu</h2>
                 <p class="error">❌ OAuth Error: {error}</p>
                 <p>Please close this window and try again.</p>
-                <button onclick="window.location.href='https://8bec313c-42bc-492f-8514-71511295d06c.preview.emergentagent.com/'">
+                <button onclick="window.location.href='https://living-commons-dev.preview.emergentagent.com/'">
                     Return to App
                 </button>
             </body>
@@ -557,7 +557,7 @@ async def google_oauth_callback_get(request: Request):
                 <p>❌ No authorization code received</p>
                 <p>Callback URL was accessed but Google didn't send the expected code.</p>
                 <p>This suggests a configuration mismatch in Google Cloud Console.</p>
-                <button onclick="window.location.href='https://8bec313c-42bc-492f-8514-71511295d06c.preview.emergentagent.com/'">
+                <button onclick="window.location.href='https://living-commons-dev.preview.emergentagent.com/'">
                     Return to App
                 </button>
             </body>
@@ -619,7 +619,7 @@ async def google_oauth_callback_get(request: Request):
                 // Redirect back to the main app
                 setTimeout(function() {{
                     console.log('Redirecting to main app...');
-                    window.location.href = 'https://8bec313c-42bc-492f-8514-71511295d06c.preview.emergentagent.com/?google_oauth_complete=true';
+                    window.location.href = 'https://living-commons-dev.preview.emergentagent.com/?google_oauth_complete=true';
                 }}, 3000);
             </script>
         </body>
@@ -641,7 +641,7 @@ async def google_oauth_callback_get(request: Request):
         <body style="font-family: Arial, sans-serif; text-align: center; padding: 50px; background: #1e293b; color: white;">
             <h2>🔱 The Ile Ubuntu</h2>
             <p style="color: #ef4444;">System Error: {str(e)}</p>
-            <button onclick="window.location.href='https://8bec313c-42bc-492f-8514-71511295d06c.preview.emergentagent.com/'">
+            <button onclick="window.location.href='https://living-commons-dev.preview.emergentagent.com/'">
                 Return to App
             </button>
         </body>
@@ -820,8 +820,8 @@ async def test_google_config():
     return {
         "client_id": GOOGLE_CLIENT_ID,
         "project_id": os.environ.get('GOOGLE_PROJECT_ID'),
-        "redirect_uri": "https://8bec313c-42bc-492f-8514-71511295d06c.preview.emergentagent.com/auth/google/callback",
-        "test_auth_url": f"https://accounts.google.com/o/oauth2/v2/auth?client_id={GOOGLE_CLIENT_ID}&redirect_uri=https://8bec313c-42bc-492f-8514-71511295d06c.preview.emergentagent.com/auth/google/callback&response_type=code&scope=https://www.googleapis.com/auth/presentations&access_type=offline&prompt=consent"
+        "redirect_uri": "https://living-commons-dev.preview.emergentagent.com/auth/google/callback",
+        "test_auth_url": f"https://accounts.google.com/o/oauth2/v2/auth?client_id={GOOGLE_CLIENT_ID}&redirect_uri=https://living-commons-dev.preview.emergentagent.com/auth/google/callback&response_type=code&scope=https://www.googleapis.com/auth/presentations&access_type=offline&prompt=consent"
     }
 
 # Messaging endpoints

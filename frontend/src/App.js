@@ -924,7 +924,7 @@ function App() {
                     </p>
                     <div className="bg-black/30 p-4 rounded-lg mb-4">
                       <p className="text-gold-400 font-mono text-sm">
-                        https://8bec313c-42bc-492f-8514-71511295d06c.preview.emergentagent.com/auth/google/callback
+                        https://living-commons-dev.preview.emergentagent.com/auth/google/callback
                       </p>
                     </div>
                     <ol className="list-decimal list-inside space-y-2 text-sm">
