@@ -1,52 +1,53 @@
-const CACHE_NAME = 'ile-ubuntu-v2';
-const urlsToCache = [
-  '/',
-  '/static/js/bundle.js',
-  '/static/css/main.css',
-  '/manifest.json'
-];
+const CACHE_NAME = 'ile-ubuntu-v3';
 
-// Install event - cache resources
+// Install - activate immediately
 self.addEventListener('install', (event) => {
-  event.waitUntil(
-    caches.open(CACHE_NAME)
-      .then((cache) => {
-        console.log('Opened cache');
-        return cache.addAll(urlsToCache);
-      })
-      .catch((error) => {
-        console.log('Cache install failed:', error);
-      })
-  );
+  self.skipWaiting();
 });
 
-// Fetch event - serve cached content when offline
-self.addEventListener('fetch', (event) => {
-  event.respondWith(
-    caches.match(event.request)
-      .then((response) => {
-        // Return cached version or fetch from network
-        if (response) {
-          return response;
-        }
-        return fetch(event.request);
-      }
-    )
-  );
-});
-
-// Activate event - clean up old caches
+// Activate - claim clients and clear old caches
 self.addEventListener('activate', (event) => {
   event.waitUntil(
-    caches.keys().then((cacheNames) => {
-      return Promise.all(
-        cacheNames.map((cacheName) => {
-          if (cacheName !== CACHE_NAME) {
-            return caches.delete(cacheName);
-          }
+    caches.keys().then((names) =>
+      Promise.all(names.filter((n) => n !== CACHE_NAME).map((n) => caches.delete(n)))
+    ).then(() => self.clients.claim())
+  );
+});
+
+// Fetch - network-first for navigation, stale-while-revalidate for assets
+self.addEventListener('fetch', (event) => {
+  const { request } = event;
+
+  // Skip non-GET and cross-origin
+  if (request.method !== 'GET' || !request.url.startsWith(self.location.origin)) return;
+
+  // Navigation (HTML pages): always network-first
+  if (request.mode === 'navigate') {
+    event.respondWith(
+      fetch(request).catch(() => caches.match(request))
+    );
+    return;
+  }
+
+  // Static assets: stale-while-revalidate
+  if (request.url.includes('/static/')) {
+    event.respondWith(
+      caches.open(CACHE_NAME).then((cache) =>
+        cache.match(request).then((cached) => {
+          const fetched = fetch(request).then((response) => {
+            if (response.ok) cache.put(request, response.clone());
+            return response;
+          }).catch(() => cached);
+          return cached || fetched;
         })
-      );
-    })
+      )
+    );
+    return;
+  }
+
+  // Everything else: network-first
+  event.respondWith(
+    fetch(request).catch(() => caches.match(request))
   );
 });
 
