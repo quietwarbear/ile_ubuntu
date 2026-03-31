@@ -42,8 +42,23 @@ async def list_spaces(current_user: dict = Depends(get_current_user)):
     for s in all_spaces:
         if s["access_level"] == "public":
             visible.append(s)
-        elif s["access_level"] == "members" and current_user["id"] in s.get("members", []):
-            visible.append(s)
+        elif s["access_level"] == "members":
+            # Show members-only spaces to everyone (for discovery / request access)
+            # but strip protected content for non-members
+            if current_user["id"] in s.get("members", []) or s["owner_id"] == current_user["id"]:
+                visible.append(s)
+            else:
+                visible.append({
+                    "id": s["id"], "name": s["name"], "description": s["description"],
+                    "access_level": s["access_level"], "owner_id": s["owner_id"],
+                    "owner_name": s.get("owner_name", ""),
+                    "members": s.get("members", []),
+                    "pending_requests": [],
+                    "resources": [],
+                    "content": "",
+                    "created_at": s.get("created_at"),
+                    "updated_at": s.get("updated_at"),
+                })
         elif s["access_level"] == "faculty" and has_permission(current_user["role"], UserRole.FACULTY):
             visible.append(s)
         elif s["access_level"] == "elder" and has_permission(current_user["role"], UserRole.ELDER):

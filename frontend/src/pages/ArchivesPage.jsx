@@ -108,7 +108,7 @@ export default function ArchivesPage({ user }) {
                 </div>
                 <div className="flex items-center justify-between text-xs text-[#94A3B8]">
                   <span>by {archive.archived_by_name}</span>
-                  {isFaculty && user?.role === 'admin' && (
+                  {user?.role === 'admin' && (
                     <button onClick={() => handleDelete(archive.id)} className="text-red-400 hover:text-red-300" data-testid={`delete-archive-${archive.id}`}>Delete</button>
                   )}
                 </div>
