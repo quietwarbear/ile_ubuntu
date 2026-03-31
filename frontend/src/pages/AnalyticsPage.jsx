@@ -1,22 +1,27 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Badge } from '../components/ui/badge';
+import { Button } from '../components/ui/button';
 import {
   ChartBar, Users, BookOpenText, UsersThree, ShieldCheck,
   Archive, ChatCircle, VideoCamera, TrendUp, Trophy, Crown,
-  GraduationCap, Heartbeat,
+  GraduationCap, Heartbeat, Export,
 } from '@phosphor-icons/react';
-import { apiGet } from '../lib/api';
+import { apiGet, BACKEND_URL } from '../lib/api';
 
 export default function AnalyticsPage() {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [trends, setTrends] = useState([]);
 
   useEffect(() => {
-    apiGet('/api/analytics/dashboard')
-      .then(setData)
-      .catch(() => {})
-      .finally(() => setLoading(false));
+    Promise.all([
+      apiGet('/api/analytics/dashboard'),
+      apiGet('/api/analytics/enrollment-trends?days=14'),
+    ]).then(([d, t]) => {
+      setData(d);
+      setTrends(t || []);
+    }).catch(() => {}).finally(() => setLoading(false));
   }, []);
 
   if (loading) {
@@ -101,6 +106,50 @@ export default function AnalyticsPage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Enrollment Trend Chart (last 14 days) */}
+      {trends.length > 0 && (
+        <Card className="bg-[#0F172A] border-[#1E293B]">
+          <CardHeader className="pb-2">
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-sm text-[#F8FAFC] flex items-center gap-2" style={{ fontFamily: 'Cormorant Garamond, serif' }}>
+                <TrendUp size={16} weight="duotone" className="text-emerald-400" /> Enrollment Trend (14 days)
+              </CardTitle>
+              <Button
+                size="sm" variant="outline"
+                className="h-7 text-[10px] border-[#1E293B] text-[#94A3B8]"
+                onClick={() => {
+                  window.open(`${BACKEND_URL}/api/analytics/export/csv`, '_blank');
+                }}
+                data-testid="export-csv-btn"
+              >
+                <Export size={12} className="mr-1" /> Export CSV
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent data-testid="enrollment-trend-chart">
+            <div className="flex items-end gap-[3px] h-24">
+              {(() => {
+                const maxVal = Math.max(...trends.map(t => t.enrollments), 1);
+                return trends.map((t, i) => (
+                  <div key={i} className="flex-1 flex flex-col items-center gap-1 group relative">
+                    <div
+                      className="w-full bg-[#D4AF37]/80 rounded-t-sm transition-all hover:bg-[#D4AF37] min-h-[2px]"
+                      style={{ height: `${Math.max((t.enrollments / maxVal) * 80, 2)}px` }}
+                    />
+                    <span className="text-[7px] text-[#475569] group-hover:text-[#94A3B8]">
+                      {t.date.slice(5)}
+                    </span>
+                    <div className="absolute -top-5 bg-[#050814] border border-[#1E293B] rounded px-1.5 py-0.5 text-[8px] text-[#D4AF37] opacity-0 group-hover:opacity-100 pointer-events-none">
+                      {t.enrollments}
+                    </div>
+                  </div>
+                ));
+              })()}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Users by Role */}
       <Card className="bg-[#0F172A] border-[#1E293B]">

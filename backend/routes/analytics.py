@@ -125,3 +125,53 @@ async def get_analytics_dashboard(current_user: dict = Depends(get_current_user)
             "top_contributors": top_contributors,
         },
     }
+
+
+@router.get("/enrollment-trends")
+async def get_enrollment_trends(days: int = 30, current_user: dict = Depends(get_current_user)):
+    """Return daily enrollment counts for the last N days."""
+    if not has_permission(current_user["role"], UserRole.FACULTY):
+        return {"error": "Faculty+ required"}
+
+    now = datetime.now(timezone.utc)
+    trend_data = []
+    for i in range(days, -1, -1):
+        day_start = (now - timedelta(days=i)).replace(hour=0, minute=0, second=0, microsecond=0)
+        day_end = day_start + timedelta(days=1)
+        count = enrollments_col.count_documents({
+            "enrolled_at": {"$gte": day_start, "$lt": day_end}
+        })
+        trend_data.append({
+            "date": day_start.strftime("%Y-%m-%d"),
+            "enrollments": count,
+        })
+    return trend_data
+
+
+@router.get("/export/csv")
+async def export_analytics_csv(current_user: dict = Depends(get_current_user)):
+    """Export course performance as CSV data."""
+    if not has_permission(current_user["role"], UserRole.FACULTY):
+        return {"error": "Faculty+ required"}
+
+    from fastapi.responses import StreamingResponse
+    import io, csv
+
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow(["Course Title", "Status", "Enrolled", "Avg Progress", "Completions", "Lessons"])
+
+    courses = list(courses_col.find({}, {"_id": 0, "id": 1, "title": 1, "status": 1}))
+    for c in courses:
+        enrs = list(enrollments_col.find({"course_id": c["id"]}, {"_id": 0, "progress": 1, "status": 1}))
+        avg = round(sum(e.get("progress", 0) for e in enrs) / len(enrs), 1) if enrs else 0
+        completions = sum(1 for e in enrs if e.get("status") == "completed")
+        lesson_count = lessons_col.count_documents({"course_id": c["id"]})
+        writer.writerow([c["title"], c.get("status", "draft"), len(enrs), avg, completions, lesson_count])
+
+    output.seek(0)
+    return StreamingResponse(
+        iter([output.getvalue()]),
+        media_type="text/csv",
+        headers={"Content-Disposition": "attachment; filename=ile_ubuntu_analytics.csv"},
+    )

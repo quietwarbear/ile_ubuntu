@@ -15,6 +15,7 @@ import {
   ShieldCheck,
   ChartBar,
   Sparkle,
+  FilmSlate,
 } from '@phosphor-icons/react';
 import { clearCookie } from '../../lib/api';
 import SearchBar from './SearchBar';
@@ -23,6 +24,7 @@ const navItems = [
   { to: '/dashboard', label: 'Dashboard', icon: House },
   { to: '/courses', label: 'Courses', icon: BookOpenText },
   { to: '/live', label: 'Live Teaching', icon: VideoCamera },
+  { to: '/session-records', label: 'Session Records', icon: FilmSlate, facultyOnly: true },
   { to: '/cohorts', label: 'Cohorts', icon: UsersThree },
   { to: '/spaces', label: 'Spaces', icon: ShieldCheck },
   { to: '/community', label: 'Community', icon: Chats },

@@ -17,6 +17,7 @@ import CohortDetailPage from './pages/CohortDetailPage';
 import SpacesPage from './pages/SpacesPage';
 import AnalyticsPage from './pages/AnalyticsPage';
 import SubscriptionsPage from './pages/SubscriptionsPage';
+import SessionRecordsPage from './pages/SessionRecordsPage';
 import './App.css';
 
 function App() {
@@ -103,6 +104,7 @@ function App() {
           <Route path="/spaces" element={<SpacesPage user={user} />} />
           <Route path="/analytics" element={<AnalyticsPage user={user} />} />
           <Route path="/subscriptions" element={<SubscriptionsPage user={user} />} />
+          <Route path="/session-records" element={<SessionRecordsPage user={user} />} />
           <Route path="/community" element={<CommunityPage user={user} />} />
           <Route path="/archives" element={<ArchivesPage user={user} />} />
           <Route path="/messages" element={<MessagesPage user={user} />} />

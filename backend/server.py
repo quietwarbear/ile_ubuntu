@@ -35,6 +35,8 @@ from routes.spaces import router as spaces_router
 from routes.analytics import router as analytics_router
 from routes.search import router as search_router
 from routes.subscriptions import router as subscriptions_router
+from routes.email_notifications import router as email_router
+from routes.session_records import router as session_records_router
 
 app.include_router(auth_router)
 app.include_router(courses_router)
@@ -50,6 +52,8 @@ app.include_router(spaces_router)
 app.include_router(analytics_router)
 app.include_router(search_router)
 app.include_router(subscriptions_router)
+app.include_router(email_router)
+app.include_router(session_records_router)
 
 
 @app.get("/")

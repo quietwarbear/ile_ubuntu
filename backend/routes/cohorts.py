@@ -92,6 +92,19 @@ async def join_cohort(cohort_id: str, current_user: dict = Depends(get_current_u
         {"id": cohort_id},
         {"$addToSet": {"members": current_user["id"]}},
     )
+
+    # Send cohort join email (non-blocking)
+    try:
+        import asyncio
+        from routes.email_notifications import send_cohort_join_email
+        asyncio.create_task(send_cohort_join_email(
+            current_user.get("email", ""),
+            current_user.get("name", "Learner"),
+            cohort["name"],
+        ))
+    except Exception:
+        pass
+
     return {"success": True, "message": "Joined cohort"}
 
 
