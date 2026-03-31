@@ -4,14 +4,7 @@
 ### Original Problem Statement
 Build a "Living Learning Commons" platform called "The Ile Ubuntu" that holds courses, cohorts, community, archives, and protected knowledge spaces in one coherent environment. Supports differentiated access roles (elders, faculty, students, assistants, admin) and features a midnight blue, black, and gold design with Ankh symbol branding.
 
-### User Personas
-- **Elder**: Highest governance/oversight role, bypasses all tier restrictions
-- **Faculty**: Creates courses, manages cohorts, bypasses all tier restrictions
-- **Assistant**: Supports faculty, limited admin capabilities
-- **Student**: Learner, access gated by subscription tier
-- **Admin**: Platform administration, bypasses all tier restrictions
-
-### Subscription Tiers
+### Subscription Tiers (Enforced)
 | Feature | Explorer (Free) | Scholar ($19.99/mo) | Elder Circle ($49.99/mo) |
 |---|---|---|---|
 | Course enrollment | Max 2 | Unlimited | Unlimited |
@@ -24,38 +17,36 @@ Build a "Living Learning Commons" platform called "The Ile Ubuntu" that holds co
 
 ### Core Architecture
 - **Frontend**: React, React Router, Tailwind CSS, Shadcn/UI, @tailwindcss/typography, Phosphor Icons
-- **Backend**: FastAPI, modular routes, tier_gating.py middleware
+- **Backend**: FastAPI, modular routes + tier_gating.py middleware
 - **Database**: MongoDB
 - **Auth**: Emergent Auth
 - **Payments**: Stripe via emergentintegrations
+- **Email**: Resend (transactional emails with branded HTML)
 
-### Implementation Status
+### Implementation Complete
 
-#### Phase 1-4 (Feb-Mar 2026) — COMPLETE
-- Modular backend/frontend architecture, RBAC, Courses, Enrollment, Live Teaching (Jitsi), File Attachments, Google Slides/Docs Import, Cohorts, Spaces, Community, Archives
+#### Phase 1-4: Foundation + Core Features
+- Modular architecture, RBAC (5 roles), Courses, Enrollment, Live Teaching (Jitsi), File Attachments, Google Slides/Docs Import, Cohorts, Spaces, Community, Archives
 
-#### Phase 5 (Mar 2026) — COMPLETE
-- Cohort Progress Dashboard, Lesson Content Viewer (markdown + embeds), 9 Branded Backgrounds
+#### Phase 5: Dashboard + Content
+- Cohort Progress Dashboard (leaderboard), Lesson Content Viewer (markdown + embeds), 9 Branded Backgrounds
 
-#### Phase 6 (Mar 2026) — COMPLETE
-- Analytics Dashboard, Cross-Platform Search, Stripe Subscriptions, Course Edit/Delete Controls
+#### Phase 6: Analytics, Search, Payments
+- Analytics Dashboard, Cross-Platform Search, Stripe Subscriptions (3 tiers), Course Edit/Delete Controls
 
-#### Phase 7 (Mar 2026) — COMPLETE
-- **Subscription Tier Gating**: Enforced enrollment limits (Explorer=2), cohort join (Scholar+), space access (Scholar+), live session join (Elder Circle+), restricted archives (Elder Circle+)
-- **Faculty/Elder/Admin bypass**: BYPASS_ROLES in tier_gating.py
-- **UpgradePrompt component**: Modal with "View Plans"/"Maybe Later" on tier wall hits
-- **parseTierError() utility**: Frontend error format detection
-- **18 backend + 16 frontend tests passed (iteration 10, 100%)**
+#### Phase 7: Tier Gating
+- Enforced enrollment limits, cohort/space/live/archive access gating, UpgradePrompt modal, Faculty/Elder/Admin bypass
+
+#### Phase 8: P2 Features (Latest)
+- **Email Notifications**: Resend integration with branded HTML templates. Triggers on enrollment, cohort join. Test endpoint at POST /api/notifications/email/test
+- **Session Recording Management**: Metadata for ended sessions — notes, key takeaways, tags, attendee details. CSV export per session. Notes editing for faculty/host
+- **Advanced Analytics**: 14-day enrollment trend bar chart, CSV export of course performance data
+- Full test suite: 19 backend + 17 frontend tests passed (iteration 11)
 
 ### Prioritized Backlog
 
-#### P2
-- Email notifications (course updates, enrollment confirmations)
-- Session recording management
-- Advanced analytics: time-series charts, CSV export
-
 #### P3
-- Custom AI-generated branded backgrounds
+- Custom AI-generated branded backgrounds (when image gen quota resets)
 - Multi-language support
 - Mobile PWA push notifications
 - Advanced search with faceted filters
@@ -64,24 +55,25 @@ Build a "Living Learning Commons" platform called "The Ile Ubuntu" that holds co
 ```
 /app/backend/
   server.py, database.py, middleware.py, tier_gating.py
-  routes/ (auth, courses, cohorts, community, archives, files, messages, enrollments, live_sessions, google_integration, spaces, analytics, search, subscriptions)
+  routes/ (auth, courses, cohorts, community, archives, files, messages, enrollments, live_sessions, google_integration, spaces, analytics, search, subscriptions, email_notifications, session_records)
 /app/frontend/src/
-  App.js (React Router — 16 routes)
-  lib/ (api.js with parseTierError, backgrounds.js)
+  App.js (React Router — 17 routes)
+  lib/ (api.js, backgrounds.js)
   components/ (UpgradePrompt.jsx, LessonContentViewer.jsx, layout/Sidebar.jsx, layout/AppLayout.jsx, layout/SearchBar.jsx)
-  pages/ (Login, Dashboard, Courses, CourseDetail, Cohorts, CohortDetail, Spaces, Community, Archives, LiveSessions, LiveRoom, Messages, Settings, Analytics, Subscriptions)
+  pages/ (Login, Dashboard, Courses, CourseDetail, Cohorts, CohortDetail, Spaces, Community, Archives, LiveSessions, LiveRoom, Messages, Settings, Analytics, Subscriptions, SessionRecords)
 ```
 
 ### API Endpoints
 - Auth: POST /api/auth/profile, GET /api/auth/me, GET /api/auth/users, PUT /api/auth/users/{id}/role
-- Courses: GET/POST /api/courses, GET/PUT/DELETE /api/courses/{id}, GET/POST /api/courses/{id}/lessons
-- Enrollment: POST /api/courses/{id}/enroll (GATED: Explorer=2 max), POST /api/courses/{id}/unenroll, POST /api/courses/{id}/lessons/{lid}/complete
-- Cohorts: GET/POST /api/cohorts, POST /api/cohorts/{id}/join (GATED: Scholar+), POST /api/cohorts/{id}/leave, POST /api/cohorts/{id}/courses, GET /api/cohorts/{id}/detail
-- Spaces: GET/POST /api/spaces, POST /api/spaces/{id}/request-access (GATED: Scholar+), POST /api/spaces/{id}/approve/{uid}, POST /api/spaces/{id}/resources
-- Live: GET/POST /api/live-sessions, POST /api/live-sessions/{id}/join (GATED: Elder Circle+, host bypasses), PUT /api/live-sessions/{id}/start, PUT /api/live-sessions/{id}/end
-- Archives: GET /api/archives (GATED: restricted requires Elder Circle+ or faculty), POST /api/archives, GET/DELETE /api/archives/{id}
-- Community: GET/POST /api/community/posts, POST /api/community/posts/{id}/reply, POST /api/community/posts/{id}/like
-- Analytics: GET /api/analytics/dashboard (faculty+ only)
+- Courses: CRUD + lessons + enrollment (GATED: Explorer=2 max)
+- Cohorts: CRUD + join (GATED: Scholar+) + leave + course linking + detail
+- Spaces: CRUD + request-access (GATED: Scholar+) + approve + resources
+- Live: CRUD + join (GATED: Elder Circle+) + start + end
+- Archives: CRUD (GATED: restricted=Elder Circle+ or faculty)
+- Community: posts + replies + likes
+- Analytics: GET /api/analytics/dashboard, GET /api/analytics/enrollment-trends, GET /api/analytics/export/csv
 - Search: GET /api/search?q=term
-- Subscriptions: GET /api/subscriptions/tiers, GET /api/subscriptions/my-subscription, POST /api/subscriptions/checkout, GET /api/subscriptions/checkout/status/{id}, GET /api/subscriptions/transactions
+- Subscriptions: tiers, my-subscription, checkout, status, transactions
+- Email: POST /api/notifications/email/test
+- Session Records: GET/PUT /api/session-records, GET /api/session-records/{id}/export
 - Webhook: POST /api/webhook/stripe
