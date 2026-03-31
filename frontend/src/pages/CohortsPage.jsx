@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
@@ -9,6 +10,7 @@ import { UsersThree, Plus, UserPlus, SignOut as LeaveIcon } from '@phosphor-icon
 import { apiGet, apiPost, apiPut, apiDelete } from '../lib/api';
 
 export default function CohortsPage({ user }) {
+  const navigate = useNavigate();
   const [cohorts, setCohorts] = useState([]);
   const [createOpen, setCreateOpen] = useState(false);
   const [form, setForm] = useState({ name: '', description: '', max_members: 30 });
@@ -95,7 +97,7 @@ export default function CohortsPage({ user }) {
             const isMember = cohort.members?.includes(user?.id);
             const isOwner = cohort.instructor_id === user?.id;
             return (
-              <Card key={cohort.id} className="bg-[#0F172A] border-[#1E293B] hover:border-[#D4AF37]/20 transition-all" data-testid={`cohort-card-${cohort.id}`}>
+              <Card key={cohort.id} className="bg-[#0F172A] border-[#1E293B] hover:border-[#D4AF37]/20 transition-all cursor-pointer" onClick={() => navigate(`/cohorts/${cohort.id}`)} data-testid={`cohort-card-${cohort.id}`}>
                 <CardContent className="p-5 space-y-3">
                   <div className="flex items-start justify-between">
                     <div>
@@ -108,7 +110,7 @@ export default function CohortsPage({ user }) {
                     <span className="flex items-center gap-1"><UsersThree size={14} /> {cohort.members?.length || 0}/{cohort.max_members}</span>
                     <span>Led by {cohort.instructor_name}</span>
                   </div>
-                  <div className="flex gap-2 pt-1">
+                  <div className="flex gap-2 pt-1" onClick={e => e.stopPropagation()}>
                     {!isMember && !isOwner && (
                       <Button size="sm" onClick={() => handleJoin(cohort.id)} className="bg-[#D4AF37] text-[#050814] hover:bg-[#F3E5AB] text-xs flex-1" data-testid={`join-cohort-${cohort.id}`}>
                         <UserPlus size={14} className="mr-1" /> Join

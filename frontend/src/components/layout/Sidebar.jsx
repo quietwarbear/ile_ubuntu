@@ -12,6 +12,7 @@ import {
   List,
   X,
   VideoCamera,
+  ShieldCheck,
 } from '@phosphor-icons/react';
 import { clearCookie } from '../../lib/api';
 
@@ -20,6 +21,7 @@ const navItems = [
   { to: '/courses', label: 'Courses', icon: BookOpenText },
   { to: '/live', label: 'Live Teaching', icon: VideoCamera },
   { to: '/cohorts', label: 'Cohorts', icon: UsersThree },
+  { to: '/spaces', label: 'Spaces', icon: ShieldCheck },
   { to: '/community', label: 'Community', icon: Chats },
   { to: '/archives', label: 'Archives', icon: Archive },
   { to: '/messages', label: 'Messages', icon: Bell },
