@@ -5,65 +5,59 @@
 Build a "Living Learning Commons" platform called "The Ile Ubuntu" — courses, cohorts, community, archives, and protected knowledge spaces with differentiated access roles and a midnight blue/black/gold design with Ankh branding.
 
 ### Architecture
-- **Frontend**: React, React Router, Tailwind CSS, Shadcn/UI, @tailwindcss/typography, Phosphor Icons, i18n (EN/ES/YO)
-- **Backend**: FastAPI, modular routes, tier_gating.py
+- **Frontend**: React, React Router, Tailwind CSS, Shadcn/UI, Phosphor Icons, i18n (EN/ES/YO), PWA
+- **Backend**: FastAPI, modular routes, middleware (Auth + Tier Gating)
 - **Database**: MongoDB
 - **Integrations**: Emergent Auth, Stripe, Resend, Jitsi Meet, Google APIs
 
-### Implementation Complete (Phases 1-10)
+### Phases Complete
 
-#### Phase 1-4: Foundation + Core
-- Modular architecture, RBAC (5 roles), Courses, Enrollment, Live Teaching (Jitsi), File Attachments, Google Import, Cohorts, Spaces, Community, Archives
+#### Phase 1-9: Foundation through Onboarding
+- Modular architecture, RBAC (5 roles), Courses, Enrollment, Live Teaching (Jitsi), Cohorts, Spaces, Community, Archives
+- Analytics Dashboard with CSV export, Stripe Subscriptions (Explorer/Scholar/Elder Circle), Tier Gating
+- Email Notifications (Resend), Session Records, i18n (EN/ES/YO), Guided Onboarding Wizard
 
-#### Phase 5: Dashboard + Content
-- Cohort Progress Dashboard (leaderboard), Lesson Content Viewer (markdown + embeds), 9 Branded Backgrounds
+#### Phase 10: Certificates, Push Notifications, Search, Marketing (Feb 2026)
+- Course Completion Certificates (branded PDF via reportlab)
+- PWA Push Notifications (VAPID subscription management + Settings toggle)
+- Advanced Search Results Page with faceted filters
+- Marketing & Branding Page (one-pager + social media strategy + content calendar)
 
-#### Phase 6: Analytics, Search, Payments
-- Analytics Dashboard, Cross-Platform Search, Stripe Subscriptions (Explorer/Scholar/Elder Circle)
-
-#### Phase 7: Tier Gating
-- Enforced enrollment limits, cohort/space/live/archive gating, UpgradePrompt modal
-
-#### Phase 8: P2 Features
-- Email Notifications (Resend), Session Recording Management, Advanced Analytics (trend chart + CSV export)
-
-#### Phase 9: Onboarding, i18n, Marketing
-- Student Onboarding Wizard, Multi-language (EN/ES/YO), Marketing About Page
-
-#### Phase 10: Certificates, Push Notifications, Search, Marketing (Latest - Feb 2026)
-- **Course Completion Certificates**: Branded PDF generation via reportlab. Endpoints: /my-certificates, /check/{course_id}, /download/{course_id}. Dashboard "My Certificates" section with download links. CourseDetailPage download button.
-- **PWA Push Notifications**: Backend subscription management (VAPID keys, subscribe/unsubscribe/status). Service worker updated with JSON payload parsing and click-to-navigate. Settings page toggle for enable/disable.
-- **Advanced Search Results Page**: Full-page /search route with faceted filters (type, sort, access level). SearchBar "View all results" link to /search. Structured results by category.
-- **Marketing & Branding Page**: /marketing route (faculty+). Platform one-pager (16 features, brand identity, color palette, quick stats, tier comparison, tech stack). Social media strategy (Instagram/Twitter/LinkedIn copy-ready posts, brand voice guidelines, hashtag bank, 4-week content calendar). Print/Save PDF button.
-- **Tests**: 22 backend + all frontend passed (iteration 13, 100% success)
+#### Phase 11: Code Quality Refactoring (Feb 2026)
+- **CourseDetailPage split**: 811→240 lines. Extracted CourseHeader, LessonCard, EnrolledStudents, GoogleImportDialog
+- **React hook deps**: Fixed stale closure risks, added useCallback for data loaders
+- **Empty catches**: All now log errors via console.error
+- **Array index keys**: Replaced with stable IDs (lesson.id, file.id, etc.)
+- **useMemo**: Added for leaderboard sort (CohortDetailPage) and nav filter (Sidebar)
+- **Backend search.py**: Refactored into 5 service functions (_search_courses, etc.)
+- **Service worker**: Rewrote with network-first for navigation, stale-while-revalidate for assets (fixed blank deploy)
+- **ESLint**: Fixed incompatibility (ESLint 9 + CRA 5), added eslint-plugin-react-hooks@4.6.2
+- Tests: iteration_14.json — 22 backend + all frontend = 100% pass rate
 
 ### Subscription Tiers (Enforced)
 | Feature | Explorer (Free) | Scholar ($19.99/mo) | Elder Circle ($49.99/mo) |
 |---|---|---|---|
-| Course enrollment | Max 2 | Unlimited | Unlimited |
-| Cohort membership | No | Yes | Yes |
-| Knowledge Spaces | Public only | Public + Members | All |
+| Courses | Max 2 | Unlimited | Unlimited |
+| Cohorts | No | Yes | Yes |
+| Spaces | Public only | Public + Members | All |
 | Live Teaching | No | No | Yes |
-| Archives | Public only | Public only | Public + Restricted |
-*Faculty/Elder/Admin bypass ALL restrictions*
-
-### Backlog
-
-#### P2 (Remaining)
-- JaaS video recording integration (deferred for cost — currently metadata only)
-
-#### P3 (Future)
-- Custom AI-generated backgrounds (image gen quota exhausted)
+| Archives | Public only | Public only | All |
 
 ### Key Files
 ```
 /app/backend/
   server.py, database.py, middleware.py, tier_gating.py
-  routes/ (19 files: auth, courses, cohorts, community, archives, files, messages, enrollments, live_sessions, google_integration, spaces, analytics, search, subscriptions, email_notifications, session_records, certificates, push_notifications)
+  routes/ (19 route files)
 /app/frontend/src/
-  App.js (React Router, I18nProvider, onboarding logic — 21 routes)
-  i18n/ (index.js, en.js, es.js, yo.js)
-  lib/ (api.js, backgrounds.js)
-  components/ (OnboardingWizard.jsx, UpgradePrompt.jsx, LessonContentViewer.jsx, layout/Sidebar.jsx, layout/AppLayout.jsx, layout/SearchBar.jsx)
-  pages/ (19 pages: Login, Dashboard, Courses, CourseDetail, Cohorts, CohortDetail, Spaces, Community, Archives, LiveSessions, LiveRoom, Messages, Settings, Analytics, Subscriptions, SessionRecords, About, SearchResults, Marketing)
+  App.js (21 routes)
+  i18n/ (en.js, es.js, yo.js)
+  components/
+    course/ (CourseHeader, LessonCard, EnrolledStudents, GoogleImportDialog)
+    layout/ (Sidebar, AppLayout, SearchBar)
+    OnboardingWizard, UpgradePrompt, LessonContentViewer
+  pages/ (19 pages)
 ```
+
+### Backlog
+- P2: JaaS video recording (deferred for cost — metadata only)
+- P3: Custom AI backgrounds (image gen quota exhausted)
