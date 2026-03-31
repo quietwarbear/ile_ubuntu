@@ -53,6 +53,17 @@ Build a "Living Learning Commons" platform called "The Ile Ubuntu" that holds co
 - [x] Enrolled count tracking on courses (increments/decrements properly)
 - [x] Full test suite: 18 enrollment backend + 12 enrollment frontend tests passing
 
+### What's Been Implemented (Phase 2 - Live Teaching with Jitsi Meet - Feb 2026)
+- [x] Live Teaching system with embedded Jitsi Meet video conferencing (free, no API keys)
+- [x] Live session CRUD: create, schedule, start, join, end, delete
+- [x] Session state management: scheduled -> live -> ended
+- [x] Course-linked sessions (optional)
+- [x] Immersive live room page (/live/:sessionId) with hidden sidebar, full-screen Jitsi embed
+- [x] Session filters: All, Live Now, Upcoming, Past
+- [x] RBAC: Only faculty+ can create/start sessions, students can only join live sessions
+- [x] "Live Teaching" nav item in sidebar with VideoCamera icon
+- [x] Full test suite: 19 backend + 19 frontend tests passing
+
 ### Prioritized Backlog
 
 #### P0 (Next)
@@ -64,13 +75,14 @@ Build a "Living Learning Commons" platform called "The Ile Ubuntu" that holds co
 - Cohort-course linking (assign courses to cohorts)
 - Enhanced community with categories filtering
 - Lesson content viewer (rich text, embedded media)
+- Branded virtual backgrounds for Jitsi sessions
 
 #### P2
-- Live teaching capabilities (WebRTC evaluation)
 - Subscription/membership management
 - Advanced analytics dashboard
 - Search across courses, archives, community
 - Email notifications
+- Session recording management
 
 ### Key Files
 ```
