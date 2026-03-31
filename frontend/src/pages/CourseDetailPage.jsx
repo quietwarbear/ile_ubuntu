@@ -380,6 +380,18 @@ export default function CourseDetailPage({ user }) {
                 data-testid="progress-bar"
               />
             </div>
+            {progressPct >= 100 && (
+              <a
+                href={`${BACKEND_URL}/api/certificates/download/${courseId}`}
+                className="mt-3 inline-flex items-center gap-2 px-4 py-2 bg-[#D4AF37]/15 border border-[#D4AF37]/30 text-[#D4AF37] rounded-md text-xs font-medium hover:bg-[#D4AF37]/25 transition-all"
+                data-testid="download-certificate"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 256 256" fill="currentColor"><path d="M224,48H160a8,8,0,0,0-6.25,3L128,83.06,102.25,51A8,8,0,0,0,96,48H32A16,16,0,0,0,16,64V192a16,16,0,0,0,16,16H224a16,16,0,0,0,16-16V64A16,16,0,0,0,224,48Z" opacity="0.2"/><path d="M224,40H160a16,16,0,0,0-12.49,6l-25.6,32L96.49,46A16,16,0,0,0,84,40H32A24,24,0,0,0,8,64V192a24,24,0,0,0,24,24H224a24,24,0,0,0,24-24V64A24,24,0,0,0,224,40ZM232,192a8,8,0,0,1-8,8H32a8,8,0,0,1-8-8V64a8,8,0,0,1,8-8H84l29.7,37.13a8,8,0,0,0,12.48.12L157,56h67a8,8,0,0,1,8,8Z"/></svg>
+                Download Certificate
+              </a>
+            )}
           </CardContent>
         </Card>
       )}

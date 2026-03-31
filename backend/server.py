@@ -37,6 +37,8 @@ from routes.search import router as search_router
 from routes.subscriptions import router as subscriptions_router
 from routes.email_notifications import router as email_router
 from routes.session_records import router as session_records_router
+from routes.certificates import router as certificates_router
+from routes.push_notifications import router as push_router
 
 app.include_router(auth_router)
 app.include_router(courses_router)
@@ -54,6 +56,8 @@ app.include_router(search_router)
 app.include_router(subscriptions_router)
 app.include_router(email_router)
 app.include_router(session_records_router)
+app.include_router(certificates_router)
+app.include_router(push_router)
 
 
 @app.get("/")

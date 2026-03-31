@@ -10,8 +10,9 @@ import {
   ArrowRight,
   GraduationCap,
   Trophy,
+  Certificate,
 } from '@phosphor-icons/react';
-import { apiGet } from '../lib/api';
+import { apiGet, BACKEND_URL } from '../lib/api';
 
 const StatCard = ({ label, value, icon: Icon, color, to }) => {
   const navigate = useNavigate();
@@ -38,17 +39,19 @@ export default function DashboardPage({ user }) {
   const [stats, setStats] = useState({ courses: 0, cohorts: 0, posts: 0, archives: 0 });
   const [recentCourses, setRecentCourses] = useState([]);
   const [myEnrollments, setMyEnrollments] = useState([]);
+  const [certificates, setCertificates] = useState([]);
   const navigate = useNavigate();
 
   useEffect(() => {
     async function load() {
       try {
-        const [courses, cohorts, posts, archives, enrollments] = await Promise.all([
+        const [courses, cohorts, posts, archives, enrollments, certs] = await Promise.all([
           apiGet('/api/courses'),
           apiGet('/api/cohorts'),
           apiGet('/api/community/posts'),
           apiGet('/api/archives'),
           apiGet('/api/enrollments/my-courses'),
+          apiGet('/api/certificates/my-certificates'),
         ]);
         setStats({
           courses: courses.length,
@@ -57,6 +60,7 @@ export default function DashboardPage({ user }) {
           archives: archives.length,
         });
         setRecentCourses(courses.slice(0, 4));
+        setCertificates(certs || []);
         setMyEnrollments(enrollments.slice(0, 3));
       } catch (e) {
         console.error('Dashboard load error:', e);
@@ -220,6 +224,38 @@ export default function DashboardPage({ user }) {
           ))}
         </div>
       </div>
+      {/* My Certificates */}
+      {certificates.length > 0 && (
+        <div data-testid="my-certificates">
+          <div className="flex items-center gap-2 mb-3">
+            <Certificate size={16} weight="duotone" className="text-[#D4AF37]" />
+            <h2 className="text-xs tracking-[0.15em] uppercase text-[#D4AF37]">My Certificates</h2>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {certificates.map(cert => (
+              <Card key={cert.course_id} className="bg-[#0F172A] border-[#D4AF37]/20">
+                <CardContent className="p-4 flex items-center justify-between">
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs text-[#F8FAFC] truncate">{cert.course_title}</p>
+                    <p className="text-[9px] text-[#94A3B8] mt-0.5">
+                      Completed {cert.completed_at ? new Date(cert.completed_at).toLocaleDateString() : ''}
+                    </p>
+                  </div>
+                  <a
+                    href={`${BACKEND_URL}/api/certificates/download/${cert.course_id}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="ml-3 px-3 py-1.5 bg-[#D4AF37]/10 border border-[#D4AF37]/30 text-[#D4AF37] rounded text-[10px] hover:bg-[#D4AF37]/20 transition-all flex-shrink-0"
+                    data-testid={`cert-download-${cert.course_id}`}
+                  >
+                    Download
+                  </a>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
