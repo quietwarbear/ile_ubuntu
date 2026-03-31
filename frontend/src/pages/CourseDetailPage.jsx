@@ -1,7 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Button } from '../components/ui/button';
+import { Input } from '../components/ui/input';
+import { Textarea } from '../components/ui/textarea';
 import { Badge } from '../components/ui/badge';
 import {
   ArrowLeft,
@@ -11,20 +13,57 @@ import {
   UserPlus,
   SignOut,
   Users,
-  Clock,
   Trophy,
+  Plus,
+  Paperclip,
+  DownloadSimple,
+  Trash,
+  File as FileIcon,
+  FilePdf,
+  FileDoc,
+  FileXls,
+  FilePpt,
+  FileImage,
+  CaretDown,
+  CaretUp,
 } from '@phosphor-icons/react';
-import { apiGet, apiPost } from '../lib/api';
+import { apiGet, apiPost, apiUpload, apiDelete, BACKEND_URL } from '../lib/api';
+
+const FILE_ICONS = {
+  'application/pdf': FilePdf,
+  'application/msword': FileDoc,
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document': FileDoc,
+  'application/vnd.ms-powerpoint': FilePpt,
+  'application/vnd.openxmlformats-officedocument.presentationml.presentation': FilePpt,
+  'application/vnd.ms-excel': FileXls,
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': FileXls,
+  'image/jpeg': FileImage,
+  'image/png': FileImage,
+  'image/gif': FileImage,
+};
+
+function formatFileSize(bytes) {
+  if (bytes < 1024) return bytes + ' B';
+  if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
+  return (bytes / 1048576).toFixed(1) + ' MB';
+}
 
 export default function CourseDetailPage({ user }) {
   const { courseId } = useParams();
   const navigate = useNavigate();
+  const fileInputRef = useRef(null);
   const [course, setCourse] = useState(null);
   const [lessons, setLessons] = useState([]);
   const [enrollment, setEnrollment] = useState(null);
   const [progress, setProgress] = useState(null);
   const [enrollments, setEnrollments] = useState([]);
+  const [filesMap, setFilesMap] = useState({});
   const [loading, setLoading] = useState(true);
+  const [expandedLesson, setExpandedLesson] = useState(null);
+  const [uploadingFor, setUploadingFor] = useState(null);
+  const [uploading, setUploading] = useState(false);
+  const [showAddLesson, setShowAddLesson] = useState(false);
+  const [lessonForm, setLessonForm] = useState({ title: '', description: '', content: '' });
 
   const isFaculty = ['faculty', 'elder', 'admin'].includes(user?.role);
   const isInstructor = course?.instructor_id === user?.id;
@@ -45,6 +84,16 @@ export default function CourseDetailPage({ user }) {
       setLessons(lessonData);
       setEnrollment(enrollmentData);
       setProgress(progressData);
+
+      // Load files for all lessons
+      const filesResult = await apiGet(`/api/files?course_id=${courseId}`);
+      const fMap = {};
+      (filesResult.files || []).forEach(f => {
+        const lid = f.lesson_id || '_course';
+        if (!fMap[lid]) fMap[lid] = [];
+        fMap[lid].push(f);
+      });
+      setFilesMap(fMap);
 
       if (isFaculty && courseData.instructor_id === user?.id) {
         try {
@@ -81,6 +130,55 @@ export default function CourseDetailPage({ user }) {
     } catch (e) { alert(e.message); }
   };
 
+  const handleAddLesson = async () => {
+    if (!lessonForm.title.trim()) return;
+    try {
+      await apiPost(`/api/courses/${courseId}/lessons`, {
+        title: lessonForm.title,
+        description: lessonForm.description,
+        content: lessonForm.content,
+        order: lessons.length + 1,
+      });
+      setLessonForm({ title: '', description: '', content: '' });
+      setShowAddLesson(false);
+      loadCourseData();
+    } catch (e) { alert(e.message); }
+  };
+
+  const handleUploadClick = (lessonId) => {
+    setUploadingFor(lessonId);
+    fileInputRef.current?.click();
+  };
+
+  const handleFileSelected = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file || !uploadingFor) return;
+
+    setUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('lesson_id', uploadingFor);
+      formData.append('course_id', courseId);
+      await apiUpload('/api/files/upload', formData);
+      loadCourseData();
+    } catch (err) {
+      alert(err.message);
+    } finally {
+      setUploading(false);
+      setUploadingFor(null);
+      e.target.value = '';
+    }
+  };
+
+  const handleDeleteFile = async (fileId) => {
+    if (!window.confirm('Delete this file?')) return;
+    try {
+      await apiDelete(`/api/files/${fileId}`);
+      loadCourseData();
+    } catch (e) { alert(e.message); }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
@@ -107,6 +205,16 @@ export default function CourseDetailPage({ user }) {
 
   return (
     <div className="space-y-6 animate-fade-in-up" data-testid="course-detail-page">
+      {/* Hidden file input */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        className="hidden"
+        onChange={handleFileSelected}
+        accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.txt,.jpg,.jpeg,.png,.gif"
+        data-testid="file-upload-input"
+      />
+
       {/* Back button */}
       <button
         onClick={() => navigate('/courses')}
@@ -191,7 +299,7 @@ export default function CourseDetailPage({ user }) {
         </div>
       </div>
 
-      {/* Progress Bar (enrolled students) */}
+      {/* Progress Bar */}
       {isEnrolled && lessons.length > 0 && (
         <Card className="bg-[#0F172A] border-[#1E293B]" data-testid="progress-card">
           <CardContent className="p-5">
@@ -212,13 +320,58 @@ export default function CourseDetailPage({ user }) {
         </Card>
       )}
 
-      {/* Lessons */}
+      {/* Curriculum */}
       <div>
-        <h2
-          className="text-xs tracking-[0.15em] uppercase text-[#D4AF37] mb-4"
-        >
-          Curriculum
-        </h2>
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-xs tracking-[0.15em] uppercase text-[#D4AF37]">Curriculum</h2>
+          {isInstructor && (
+            <Button
+              size="sm"
+              onClick={() => setShowAddLesson(!showAddLesson)}
+              className="bg-[#D4AF37] text-[#050814] hover:bg-[#F3E5AB] text-xs"
+              data-testid="add-lesson-toggle"
+            >
+              <Plus size={14} className="mr-1" /> Add Lesson
+            </Button>
+          )}
+        </div>
+
+        {/* Add Lesson Form */}
+        {showAddLesson && isInstructor && (
+          <Card className="bg-[#0F172A] border-[#D4AF37]/30 mb-4">
+            <CardContent className="p-4 space-y-3">
+              <Input
+                placeholder="Lesson Title"
+                value={lessonForm.title}
+                onChange={e => setLessonForm({ ...lessonForm, title: e.target.value })}
+                className="bg-[#050814] border-[#1E293B] text-[#F8FAFC]"
+                data-testid="new-lesson-title"
+              />
+              <Input
+                placeholder="Brief description"
+                value={lessonForm.description}
+                onChange={e => setLessonForm({ ...lessonForm, description: e.target.value })}
+                className="bg-[#050814] border-[#1E293B] text-[#F8FAFC]"
+                data-testid="new-lesson-desc"
+              />
+              <Textarea
+                placeholder="Lesson content (instructions, notes, references...)"
+                value={lessonForm.content}
+                onChange={e => setLessonForm({ ...lessonForm, content: e.target.value })}
+                className="bg-[#050814] border-[#1E293B] text-[#F8FAFC] min-h-[80px]"
+                data-testid="new-lesson-content"
+              />
+              <div className="flex gap-2">
+                <Button onClick={handleAddLesson} size="sm" className="bg-[#D4AF37] text-[#050814] hover:bg-[#F3E5AB] text-xs" data-testid="submit-lesson-btn">
+                  Create Lesson
+                </Button>
+                <Button onClick={() => setShowAddLesson(false)} size="sm" variant="ghost" className="text-[#94A3B8] text-xs">
+                  Cancel
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {lessons.length === 0 ? (
           <Card className="bg-[#0F172A] border-[#1E293B]">
@@ -231,6 +384,9 @@ export default function CourseDetailPage({ user }) {
           <div className="space-y-2">
             {lessons.map((lesson, idx) => {
               const isLessonCompleted = completedLessons.includes(lesson.id);
+              const isExpanded = expandedLesson === lesson.id;
+              const lessonFiles = filesMap[lesson.id] || [];
+
               return (
                 <Card
                   key={lesson.id}
@@ -239,44 +395,153 @@ export default function CourseDetailPage({ user }) {
                   }`}
                   data-testid={`lesson-card-${lesson.id}`}
                 >
-                  <CardContent className="p-4 flex items-center gap-4">
-                    {/* Completion indicator */}
-                    <div className="flex-shrink-0">
-                      {isEnrolled ? (
-                        isLessonCompleted ? (
-                          <CheckCircle size={24} weight="fill" className="text-emerald-400" />
+                  <CardContent className="p-4">
+                    <div className="flex items-center gap-4">
+                      {/* Completion indicator */}
+                      <div className="flex-shrink-0">
+                        {isEnrolled ? (
+                          isLessonCompleted ? (
+                            <CheckCircle size={24} weight="fill" className="text-emerald-400" />
+                          ) : (
+                            <button
+                              onClick={() => handleCompleteLesson(lesson.id)}
+                              className="text-[#94A3B8] hover:text-[#D4AF37] transition-colors"
+                              data-testid={`complete-lesson-${lesson.id}`}
+                              title="Mark as complete"
+                            >
+                              <Circle size={24} weight="regular" />
+                            </button>
+                          )
                         ) : (
-                          <button
-                            onClick={() => handleCompleteLesson(lesson.id)}
-                            className="text-[#94A3B8] hover:text-[#D4AF37] transition-colors"
-                            data-testid={`complete-lesson-${lesson.id}`}
-                            title="Mark as complete"
-                          >
-                            <Circle size={24} weight="regular" />
-                          </button>
-                        )
-                      ) : (
-                        <div className="w-6 h-6 rounded-full bg-[#050814] border border-[#1E293B] flex items-center justify-center">
-                          <span className="text-[10px] text-[#94A3B8]">{idx + 1}</span>
+                          <div className="w-6 h-6 rounded-full bg-[#050814] border border-[#1E293B] flex items-center justify-center">
+                            <span className="text-[10px] text-[#94A3B8]">{idx + 1}</span>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Lesson info */}
+                      <div
+                        className="flex-1 min-w-0 cursor-pointer"
+                        onClick={() => setExpandedLesson(isExpanded ? null : lesson.id)}
+                      >
+                        <div className="flex items-center gap-2">
+                          <h3 className={`text-sm font-medium ${isLessonCompleted ? 'text-emerald-400' : 'text-[#F8FAFC]'}`}>
+                            {lesson.title}
+                          </h3>
+                          {lessonFiles.length > 0 && (
+                            <span className="flex items-center gap-0.5 text-[10px] text-[#94A3B8]">
+                              <Paperclip size={10} /> {lessonFiles.length}
+                            </span>
+                          )}
                         </div>
-                      )}
+                        {lesson.description && (
+                          <p className="text-xs text-[#94A3B8] mt-0.5 truncate">{lesson.description}</p>
+                        )}
+                      </div>
+
+                      {/* Right side */}
+                      <div className="flex items-center gap-2">
+                        {isLessonCompleted && (
+                          <Badge className="text-[10px] bg-emerald-500/10 text-emerald-400 border-emerald-500/20">
+                            Done
+                          </Badge>
+                        )}
+                        <button
+                          onClick={() => setExpandedLesson(isExpanded ? null : lesson.id)}
+                          className="text-[#94A3B8] hover:text-[#F8FAFC] p-1"
+                          data-testid={`expand-lesson-${lesson.id}`}
+                        >
+                          {isExpanded ? <CaretUp size={16} /> : <CaretDown size={16} />}
+                        </button>
+                      </div>
                     </div>
 
-                    {/* Lesson info */}
-                    <div className="flex-1 min-w-0">
-                      <h3 className={`text-sm font-medium ${isLessonCompleted ? 'text-emerald-400' : 'text-[#F8FAFC]'}`}>
-                        {lesson.title}
-                      </h3>
-                      {lesson.description && (
-                        <p className="text-xs text-[#94A3B8] mt-0.5 truncate">{lesson.description}</p>
-                      )}
-                    </div>
+                    {/* Expanded content */}
+                    {isExpanded && (
+                      <div className="mt-4 pt-4 border-t border-[#1E293B] space-y-4">
+                        {/* Lesson content */}
+                        {lesson.content && (
+                          <div className="p-3 bg-[#050814] rounded-md border border-[#1E293B]">
+                            <p className="text-sm text-[#94A3B8] leading-relaxed whitespace-pre-wrap">{lesson.content}</p>
+                          </div>
+                        )}
 
-                    {/* Status badge */}
-                    {isLessonCompleted && (
-                      <Badge className="text-[10px] bg-emerald-500/10 text-emerald-400 border-emerald-500/20">
-                        Done
-                      </Badge>
+                        {/* Files section */}
+                        <div>
+                          <div className="flex items-center justify-between mb-2">
+                            <span className="text-[10px] tracking-[0.15em] uppercase text-[#D4AF37] flex items-center gap-1">
+                              <Paperclip size={12} /> Materials ({lessonFiles.length})
+                            </span>
+                            {isInstructor && (
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => handleUploadClick(lesson.id)}
+                                className="text-[#D4AF37] hover:text-[#F3E5AB] text-[10px] h-7"
+                                disabled={uploading}
+                                data-testid={`upload-file-${lesson.id}`}
+                              >
+                                {uploading && uploadingFor === lesson.id ? (
+                                  <span className="flex items-center gap-1">
+                                    <span className="w-3 h-3 border border-[#D4AF37] border-t-transparent rounded-full animate-spin" />
+                                    Uploading...
+                                  </span>
+                                ) : (
+                                  <><Plus size={12} className="mr-1" /> Attach File</>
+                                )}
+                              </Button>
+                            )}
+                          </div>
+
+                          {lessonFiles.length > 0 ? (
+                            <div className="space-y-1.5">
+                              {lessonFiles.map(file => {
+                                const Icon = FILE_ICONS[file.mime_type] || FileIcon;
+                                return (
+                                  <div
+                                    key={file.id}
+                                    className="flex items-center gap-3 p-2.5 bg-[#050814] border border-[#1E293B] rounded-md hover:border-[#D4AF37]/20 transition-colors group"
+                                    data-testid={`file-${file.id}`}
+                                  >
+                                    <Icon size={18} weight="duotone" className="text-[#D4AF37] flex-shrink-0" />
+                                    <div className="flex-1 min-w-0">
+                                      <p className="text-xs text-[#F8FAFC] truncate">{file.original_filename}</p>
+                                      <p className="text-[10px] text-[#94A3B8]">{formatFileSize(file.file_size)}</p>
+                                    </div>
+                                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                      <a
+                                        href={`${BACKEND_URL}/api/files/${file.id}/download`}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="p-1 text-[#94A3B8] hover:text-[#D4AF37] transition-colors"
+                                        title="Download"
+                                        data-testid={`download-file-${file.id}`}
+                                        onClick={e => e.stopPropagation()}
+                                      >
+                                        <DownloadSimple size={14} />
+                                      </a>
+                                      {isInstructor && (
+                                        <button
+                                          onClick={() => handleDeleteFile(file.id)}
+                                          className="p-1 text-[#94A3B8] hover:text-red-400 transition-colors"
+                                          title="Delete"
+                                          data-testid={`delete-file-${file.id}`}
+                                        >
+                                          <Trash size={14} />
+                                        </button>
+                                      )}
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          ) : (
+                            <p className="text-[10px] text-[#94A3B8]">
+                              {isInstructor ? 'No files attached. Click "Attach File" to add materials.' : 'No materials attached to this lesson.'}
+                            </p>
+                          )}
+                        </div>
+                      </div>
                     )}
                   </CardContent>
                 </Card>

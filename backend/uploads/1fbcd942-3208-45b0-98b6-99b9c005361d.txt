@@ -1,0 +1,1 @@
+Download test content - this should be downloadable without auth

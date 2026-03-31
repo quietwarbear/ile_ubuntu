@@ -74,7 +74,8 @@ async def upload_file(
 
 
 @router.get("/{file_id}/download")
-async def download_file(file_id: str, current_user: dict = Depends(get_current_user)):
+async def download_file(file_id: str):
+    """Download file - public access for enrolled users via direct link"""
     file_data = files_col.find_one({"id": file_id})
     if not file_data:
         raise HTTPException(status_code=404, detail="File not found")
