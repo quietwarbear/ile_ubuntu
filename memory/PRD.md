@@ -64,6 +64,14 @@ Build a "Living Learning Commons" platform called "The Ile Ubuntu" that holds co
 - [x] "Live Teaching" nav item in sidebar with VideoCamera icon
 - [x] Full test suite: 19 backend + 19 frontend tests passing
 
+### What's Been Implemented (Phase 2b - Branded Virtual Backgrounds - Feb 2026)
+- [x] Pre-join screen with background picker before entering Jitsi sessions
+- [x] 5 curated branded backgrounds matching Ile Ubuntu aesthetic (Blue & Gold Abstract, Gold Ornate, Dark Metallic, Vintage Study, Ice & Gold)
+- [x] "None" and "Blur" background options
+- [x] Visual selection state with gold border and checkmark overlay
+- [x] Background auto-applied to Jitsi via executeCommand API on join
+- [x] Full test suite: 19 backend regression + 20 frontend tests passing
+
 ### Prioritized Backlog
 
 #### P0 (Next)
@@ -75,7 +83,7 @@ Build a "Living Learning Commons" platform called "The Ile Ubuntu" that holds co
 - Cohort-course linking (assign courses to cohorts)
 - Enhanced community with categories filtering
 - Lesson content viewer (rich text, embedded media)
-- Branded virtual backgrounds for Jitsi sessions
+- Custom branded backgrounds (AI-generated, pending rate limit reset)
 
 #### P2
 - Subscription/membership management
