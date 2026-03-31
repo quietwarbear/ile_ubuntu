@@ -13,8 +13,11 @@ import {
   X,
   VideoCamera,
   ShieldCheck,
+  ChartBar,
+  Sparkle,
 } from '@phosphor-icons/react';
 import { clearCookie } from '../../lib/api';
+import SearchBar from './SearchBar';
 
 const navItems = [
   { to: '/dashboard', label: 'Dashboard', icon: House },
@@ -25,6 +28,8 @@ const navItems = [
   { to: '/community', label: 'Community', icon: Chats },
   { to: '/archives', label: 'Archives', icon: Archive },
   { to: '/messages', label: 'Messages', icon: Bell },
+  { to: '/analytics', label: 'Analytics', icon: ChartBar, facultyOnly: true },
+  { to: '/subscriptions', label: 'Membership', icon: Sparkle },
 ];
 
 export default function Sidebar({ user, onLogout }) {
@@ -61,9 +66,16 @@ export default function Sidebar({ user, onLogout }) {
         </div>
       </div>
 
+      {/* Search */}
+      <div className="px-3 py-2 border-b border-[#1E293B]">
+        <SearchBar />
+      </div>
+
       {/* Nav */}
-      <nav className="flex-1 py-4 space-y-1">
-        {navItems.map((item) => (
+      <nav className="flex-1 py-4 space-y-1 overflow-y-auto">
+        {navItems
+          .filter(item => !item.facultyOnly || ['admin', 'elder', 'faculty'].includes(user?.role))
+          .map((item) => (
           <NavLink
             key={item.to}
             to={item.to}
