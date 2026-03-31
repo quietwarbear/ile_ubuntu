@@ -4,6 +4,7 @@ import uuid
 from database import spaces_col
 from middleware import get_current_user
 from models.user import has_permission, UserRole
+from tier_gating import require_tier
 
 router = APIRouter(prefix="/api/spaces", tags=["spaces"])
 
@@ -115,6 +116,9 @@ async def delete_space(space_id: str, current_user: dict = Depends(get_current_u
 
 @router.post("/{space_id}/request-access")
 async def request_access(space_id: str, current_user: dict = Depends(get_current_user)):
+    # Tier gating: Scholar+ required to request access to knowledge spaces
+    require_tier(current_user, "scholar", "space_access")
+
     space = spaces_col.find_one({"id": space_id})
     if not space:
         raise HTTPException(status_code=404, detail="Space not found")

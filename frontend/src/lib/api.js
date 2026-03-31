@@ -70,6 +70,19 @@ async function apiUpload(path, formData) {
   return res.json();
 }
 
+function parseTierError(errorMsg) {
+  if (!errorMsg) return null;
+  if (errorMsg.startsWith('tier_required:')) {
+    const parts = errorMsg.split(':');
+    return { type: 'tier_required', requiredTier: parts[1], feature: parts[2] };
+  }
+  if (errorMsg.startsWith('tier_limit:')) {
+    const parts = errorMsg.split(':');
+    return { type: 'tier_limit', feature: parts[1], tier: parts[2], limit: parseInt(parts[3]) };
+  }
+  return null;
+}
+
 export {
   BACKEND_URL,
   getCookie,
@@ -81,4 +94,5 @@ export {
   apiPut,
   apiDelete,
   apiUpload,
+  parseTierError,
 };

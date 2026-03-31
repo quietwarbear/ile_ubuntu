@@ -47,10 +47,27 @@ async def get_tiers():
 @router.get("/my-subscription")
 async def get_my_subscription(current_user: dict = Depends(get_current_user)):
     user = users_col.find_one({"id": current_user["id"]}, {"_id": 0})
+    tier = user.get("subscription_tier", "explorer")
+    is_bypassed = user.get("role") in ("faculty", "elder", "admin")
+
+    enrollment_count = 0
+    if not is_bypassed:
+        from database import enrollments_col
+        enrollment_count = enrollments_col.count_documents({"user_id": current_user["id"]})
+
+    limits = {
+        "explorer": {"max_enrollments": 2, "cohorts": False, "spaces": False, "live_sessions": False, "restricted_archives": False},
+        "scholar": {"max_enrollments": 999999, "cohorts": True, "spaces": True, "live_sessions": False, "restricted_archives": False},
+        "elder_circle": {"max_enrollments": 999999, "cohorts": True, "spaces": True, "live_sessions": True, "restricted_archives": True},
+    }
+
     return {
-        "tier": user.get("subscription_tier", "explorer"),
+        "tier": tier,
         "subscription_status": user.get("subscription_status", "active"),
         "subscribed_at": user.get("subscribed_at"),
+        "is_bypassed": is_bypassed,
+        "enrollment_count": enrollment_count,
+        "limits": limits.get(tier, limits["explorer"]),
     }
 
 

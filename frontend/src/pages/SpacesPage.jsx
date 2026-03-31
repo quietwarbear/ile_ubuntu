@@ -19,7 +19,8 @@ import {
   BookOpen,
   ArrowSquareOut,
 } from '@phosphor-icons/react';
-import { apiGet, apiPost, apiPut, apiDelete } from '../lib/api';
+import { apiGet, apiPost, apiPut, apiDelete, parseTierError } from '../lib/api';
+import UpgradePrompt from '../components/UpgradePrompt';
 
 export default function SpacesPage({ user }) {
   const [spaces, setSpaces] = useState([]);
@@ -47,9 +48,15 @@ export default function SpacesPage({ user }) {
     } catch (e) { alert(e.message); }
   };
 
+  const [upgradePrompt, setUpgradePrompt] = useState(null);
+
   const handleRequestAccess = async (spaceId) => {
     try { await apiPost(`/api/spaces/${spaceId}/request-access`, {}); loadSpaces(); }
-    catch (e) { alert(e.message); }
+    catch (e) {
+      const tierErr = parseTierError(e.message);
+      if (tierErr) setUpgradePrompt({ feature: 'space_access', requiredTier: 'scholar' });
+      else alert(e.message);
+    }
   };
 
   const handleApprove = async (spaceId, userId) => {
@@ -289,6 +296,14 @@ export default function SpacesPage({ user }) {
           )}
         </div>
       </div>
+
+      {upgradePrompt && (
+        <UpgradePrompt
+          feature={upgradePrompt.feature}
+          requiredTier={upgradePrompt.requiredTier}
+          onClose={() => setUpgradePrompt(null)}
+        />
+      )}
     </div>
   );
 }

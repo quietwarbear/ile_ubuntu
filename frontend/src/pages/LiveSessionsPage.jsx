@@ -17,7 +17,8 @@ import {
   Calendar,
   Circle,
 } from '@phosphor-icons/react';
-import { apiGet, apiPost, apiPut, apiDelete } from '../lib/api';
+import { apiGet, apiPost, apiPut, apiDelete, parseTierError } from '../lib/api';
+import UpgradePrompt from '../components/UpgradePrompt';
 
 export default function LiveSessionsPage({ user }) {
   const navigate = useNavigate();
@@ -79,11 +80,17 @@ export default function LiveSessionsPage({ user }) {
     catch (e) { alert(e.message); }
   };
 
+  const [upgradePrompt, setUpgradePrompt] = useState(null);
+
   const handleJoin = async (id) => {
     try {
       await apiPost(`/api/live-sessions/${id}/join`, {});
       navigate(`/live/${id}`);
-    } catch (e) { alert(e.message); }
+    } catch (e) {
+      const tierErr = parseTierError(e.message);
+      if (tierErr) setUpgradePrompt({ feature: 'live_session', requiredTier: 'elder_circle' });
+      else alert(e.message);
+    }
   };
 
   const filteredSessions = sessions.filter(s => {
@@ -320,6 +327,14 @@ export default function LiveSessionsPage({ user }) {
             );
           })}
         </div>
+      )}
+
+      {upgradePrompt && (
+        <UpgradePrompt
+          feature={upgradePrompt.feature}
+          requiredTier={upgradePrompt.requiredTier}
+          onClose={() => setUpgradePrompt(null)}
+        />
       )}
     </div>
   );

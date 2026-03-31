@@ -5,6 +5,7 @@ import hashlib
 from database import live_sessions_col, courses_col
 from middleware import get_current_user
 from models.user import has_permission, UserRole
+from tier_gating import require_tier
 
 router = APIRouter(prefix="/api/live-sessions", tags=["live-sessions"])
 
@@ -106,6 +107,10 @@ async def join_live_session(session_id: str, current_user: dict = Depends(get_cu
     session = live_sessions_col.find_one({"id": session_id})
     if not session:
         raise HTTPException(status_code=404, detail="Session not found")
+
+    # Tier gating: Elder Circle required to join live sessions (hosts bypass)
+    if session["host_id"] != current_user["id"]:
+        require_tier(current_user, "elder_circle", "live_session")
 
     if session["status"] != "live" and session["host_id"] != current_user["id"]:
         raise HTTPException(status_code=400, detail="Session is not live yet")

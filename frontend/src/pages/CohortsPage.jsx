@@ -7,7 +7,8 @@ import { Textarea } from '../components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '../components/ui/dialog';
 import { Badge } from '../components/ui/badge';
 import { UsersThree, Plus, UserPlus, SignOut as LeaveIcon } from '@phosphor-icons/react';
-import { apiGet, apiPost, apiPut, apiDelete } from '../lib/api';
+import { apiGet, apiPost, apiPut, apiDelete, parseTierError } from '../lib/api';
+import UpgradePrompt from '../components/UpgradePrompt';
 
 export default function CohortsPage({ user }) {
   const navigate = useNavigate();
@@ -32,9 +33,15 @@ export default function CohortsPage({ user }) {
     } catch (e) { alert(e.message); }
   };
 
+  const [upgradePrompt, setUpgradePrompt] = useState(null);
+
   const handleJoin = async (id) => {
     try { await apiPost(`/api/cohorts/${id}/join`, {}); loadCohorts(); }
-    catch (e) { alert(e.message); }
+    catch (e) {
+      const tierErr = parseTierError(e.message);
+      if (tierErr) setUpgradePrompt({ feature: 'cohort_join', requiredTier: 'scholar' });
+      else alert(e.message);
+    }
   };
 
   const handleLeave = async (id) => {
@@ -132,6 +139,14 @@ export default function CohortsPage({ user }) {
             );
           })}
         </div>
+      )}
+
+      {upgradePrompt && (
+        <UpgradePrompt
+          feature={upgradePrompt.feature}
+          requiredTier={upgradePrompt.requiredTier}
+          onClose={() => setUpgradePrompt(null)}
+        />
       )}
     </div>
   );

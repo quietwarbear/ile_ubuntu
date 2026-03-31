@@ -32,8 +32,9 @@ import {
   ArrowSquareOut,
 } from '@phosphor-icons/react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '../components/ui/dialog';
-import { apiGet, apiPost, apiUpload, apiDelete, BACKEND_URL } from '../lib/api';
+import { apiGet, apiPost, apiUpload, apiDelete, BACKEND_URL, parseTierError } from '../lib/api';
 import LessonContentViewer from '../components/LessonContentViewer';
+import UpgradePrompt from '../components/UpgradePrompt';
 
 const FILE_ICONS = {
   'application/pdf': FilePdf,
@@ -128,11 +129,20 @@ export default function CourseDetailPage({ user }) {
     }
   };
 
+  const [upgradePrompt, setUpgradePrompt] = useState(null);
+
   const handleEnroll = async () => {
     try {
       await apiPost(`/api/courses/${courseId}/enroll`, {});
       loadCourseData();
-    } catch (e) { alert(e.message); }
+    } catch (e) {
+      const tierErr = parseTierError(e.message);
+      if (tierErr) {
+        setUpgradePrompt({ feature: 'enrollment', requiredTier: tierErr.requiredTier || 'scholar' });
+      } else {
+        alert(e.message);
+      }
+    }
   };
 
   const handleUnenroll = async () => {
@@ -776,6 +786,14 @@ export default function CourseDetailPage({ user }) {
           </div>
         </DialogContent>
       </Dialog>
+
+      {upgradePrompt && (
+        <UpgradePrompt
+          feature={upgradePrompt.feature}
+          requiredTier={upgradePrompt.requiredTier}
+          onClose={() => setUpgradePrompt(null)}
+        />
+      )}
     </div>
   );
 }

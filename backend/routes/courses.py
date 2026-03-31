@@ -5,6 +5,7 @@ from database import courses_col, lessons_col, files_col, enrollments_col
 from middleware import get_current_user
 from models.user import has_permission, UserRole
 from models.course import CourseStatus
+from tier_gating import check_enrollment_limit
 
 router = APIRouter(prefix="/api/courses", tags=["courses"])
 
@@ -138,6 +139,9 @@ async def enroll_in_course(course_id: str, current_user: dict = Depends(get_curr
     existing = enrollments_col.find_one({"user_id": current_user["id"], "course_id": course_id})
     if existing:
         raise HTTPException(status_code=400, detail="Already enrolled")
+
+    # Tier gating: check enrollment limit
+    check_enrollment_limit(current_user)
 
     enrollment = {
         "id": str(uuid.uuid4()),

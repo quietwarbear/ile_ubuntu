@@ -4,6 +4,7 @@ import uuid
 from database import archives_col, courses_col
 from middleware import get_current_user
 from models.user import has_permission, UserRole
+from tier_gating import has_tier
 
 router = APIRouter(prefix="/api/archives", tags=["archives"])
 
@@ -44,7 +45,8 @@ async def list_archives(type: str = None, current_user: dict = Depends(get_curre
     query = {}
     if type:
         query["type"] = type
-    if not has_permission(current_user["role"], UserRole.FACULTY):
+    # Tier gating: restricted archives require Elder Circle or faculty+ role
+    if not has_permission(current_user["role"], UserRole.FACULTY) and not has_tier(current_user, "elder_circle"):
         query["access_level"] = "public"
 
     archives = list(archives_col.find(query, {"_id": 0}).sort("created_at", -1))
@@ -57,8 +59,9 @@ async def get_archive(archive_id: str, current_user: dict = Depends(get_current_
     if not archive:
         raise HTTPException(status_code=404, detail="Archive not found")
 
-    if archive.get("access_level") == "restricted" and not has_permission(current_user["role"], UserRole.FACULTY):
-        raise HTTPException(status_code=403, detail="Access denied")
+    if archive.get("access_level") == "restricted":
+        if not has_permission(current_user["role"], UserRole.FACULTY) and not has_tier(current_user, "elder_circle"):
+            raise HTTPException(status_code=403, detail="tier_required:elder_circle:restricted_archive")
 
     return archive
 

@@ -5,6 +5,7 @@ from database import cohorts_col, courses_col, enrollments_col
 from middleware import get_current_user
 from models.user import has_permission, UserRole
 from models.cohort import CohortStatus
+from tier_gating import require_tier
 
 router = APIRouter(prefix="/api/cohorts", tags=["cohorts"])
 
@@ -74,6 +75,9 @@ async def update_cohort(cohort_id: str, request: Request, current_user: dict = D
 
 @router.post("/{cohort_id}/join")
 async def join_cohort(cohort_id: str, current_user: dict = Depends(get_current_user)):
+    # Tier gating: Scholar+ required to join cohorts
+    require_tier(current_user, "scholar", "cohort_join")
+
     cohort = cohorts_col.find_one({"id": cohort_id})
     if not cohort:
         raise HTTPException(status_code=404, detail="Cohort not found")
