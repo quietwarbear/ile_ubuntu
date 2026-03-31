@@ -26,7 +26,12 @@ import {
   FileImage,
   CaretDown,
   CaretUp,
+  GoogleLogo,
+  Presentation,
+  Article,
+  ArrowSquareOut,
 } from '@phosphor-icons/react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '../components/ui/dialog';
 import { apiGet, apiPost, apiUpload, apiDelete, BACKEND_URL } from '../lib/api';
 
 const FILE_ICONS = {
@@ -64,13 +69,27 @@ export default function CourseDetailPage({ user }) {
   const [uploading, setUploading] = useState(false);
   const [showAddLesson, setShowAddLesson] = useState(false);
   const [lessonForm, setLessonForm] = useState({ title: '', description: '', content: '' });
+  const [googleConnected, setGoogleConnected] = useState(false);
+  const [importOpen, setImportOpen] = useState(null);
+  const [googleSlides, setGoogleSlides] = useState([]);
+  const [googleDocs, setGoogleDocs] = useState([]);
+  const [importTab, setImportTab] = useState('slides');
+  const [importing, setImporting] = useState(false);
 
   const isFaculty = ['faculty', 'elder', 'admin'].includes(user?.role);
   const isInstructor = course?.instructor_id === user?.id;
 
   useEffect(() => {
     loadCourseData();
+    checkGoogleStatus();
   }, [courseId]);
+
+  const checkGoogleStatus = async () => {
+    try {
+      const data = await apiGet('/api/google/status');
+      setGoogleConnected(data.connected);
+    } catch (e) { /* not connected */ }
+  };
 
   const loadCourseData = async () => {
     try {
@@ -177,6 +196,40 @@ export default function CourseDetailPage({ user }) {
       await apiDelete(`/api/files/${fileId}`);
       loadCourseData();
     } catch (e) { alert(e.message); }
+  };
+
+  const handleOpenImport = async (lessonId) => {
+    setImportOpen(lessonId);
+    try {
+      const [slidesData, docsData] = await Promise.all([
+        apiGet('/api/google/slides'),
+        apiGet('/api/google/docs'),
+      ]);
+      setGoogleSlides(slidesData.slides || []);
+      setGoogleDocs(docsData.docs || []);
+    } catch (e) {
+      alert('Failed to load Google content. Please reconnect in Settings.');
+    }
+  };
+
+  const handleImportSlide = async (slideId, lessonId) => {
+    setImporting(true);
+    try {
+      await apiPost(`/api/google/slides/${slideId}/import`, { lesson_id: lessonId, course_id: courseId });
+      setImportOpen(null);
+      loadCourseData();
+    } catch (e) { alert(e.message); }
+    finally { setImporting(false); }
+  };
+
+  const handleImportDoc = async (docId, lessonId) => {
+    setImporting(true);
+    try {
+      await apiPost(`/api/google/docs/${docId}/import`, { lesson_id: lessonId, course_id: courseId });
+      setImportOpen(null);
+      loadCourseData();
+    } catch (e) { alert(e.message); }
+    finally { setImporting(false); }
   };
 
   if (loading) {
@@ -473,23 +526,36 @@ export default function CourseDetailPage({ user }) {
                               <Paperclip size={12} /> Materials ({lessonFiles.length})
                             </span>
                             {isInstructor && (
-                              <Button
-                                size="sm"
-                                variant="ghost"
-                                onClick={() => handleUploadClick(lesson.id)}
-                                className="text-[#D4AF37] hover:text-[#F3E5AB] text-[10px] h-7"
-                                disabled={uploading}
-                                data-testid={`upload-file-${lesson.id}`}
-                              >
-                                {uploading && uploadingFor === lesson.id ? (
-                                  <span className="flex items-center gap-1">
-                                    <span className="w-3 h-3 border border-[#D4AF37] border-t-transparent rounded-full animate-spin" />
-                                    Uploading...
-                                  </span>
-                                ) : (
-                                  <><Plus size={12} className="mr-1" /> Attach File</>
+                              <div className="flex gap-1">
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  onClick={() => handleUploadClick(lesson.id)}
+                                  className="text-[#D4AF37] hover:text-[#F3E5AB] text-[10px] h-7"
+                                  disabled={uploading}
+                                  data-testid={`upload-file-${lesson.id}`}
+                                >
+                                  {uploading && uploadingFor === lesson.id ? (
+                                    <span className="flex items-center gap-1">
+                                      <span className="w-3 h-3 border border-[#D4AF37] border-t-transparent rounded-full animate-spin" />
+                                      Uploading...
+                                    </span>
+                                  ) : (
+                                    <><Plus size={12} className="mr-1" /> Attach File</>
+                                  )}
+                                </Button>
+                                {googleConnected && (
+                                  <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    onClick={() => handleOpenImport(lesson.id)}
+                                    className="text-[#94A3B8] hover:text-[#F3E5AB] text-[10px] h-7"
+                                    data-testid={`import-google-${lesson.id}`}
+                                  >
+                                    <GoogleLogo size={12} className="mr-1" /> Import
+                                  </Button>
                                 )}
-                              </Button>
+                              </div>
                             )}
                           </div>
 
@@ -541,6 +607,40 @@ export default function CourseDetailPage({ user }) {
                             </p>
                           )}
                         </div>
+
+                        {/* Google Resources */}
+                        {lesson.google_resources?.length > 0 && (
+                          <div>
+                            <span className="text-[10px] tracking-[0.15em] uppercase text-[#D4AF37] flex items-center gap-1 mb-2">
+                              <GoogleLogo size={12} /> Imported from Google
+                            </span>
+                            <div className="space-y-1.5">
+                              {lesson.google_resources.map((res, i) => (
+                                <a
+                                  key={i}
+                                  href={res.view_url || res.embed_url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="flex items-center gap-3 p-2.5 bg-[#050814] border border-[#1E293B] rounded-md hover:border-[#D4AF37]/20 transition-colors group"
+                                  data-testid={`google-resource-${res.google_id}`}
+                                >
+                                  {res.type === 'google_slide' ? (
+                                    <Presentation size={18} weight="duotone" className="text-[#D4AF37] flex-shrink-0" />
+                                  ) : (
+                                    <Article size={18} weight="duotone" className="text-[#D4AF37] flex-shrink-0" />
+                                  )}
+                                  <div className="flex-1 min-w-0">
+                                    <p className="text-xs text-[#F8FAFC] truncate">{res.title}</p>
+                                    <p className="text-[10px] text-[#94A3B8]">
+                                      {res.type === 'google_slide' ? `${res.slide_count} slides` : 'Google Doc'}
+                                    </p>
+                                  </div>
+                                  <ArrowSquareOut size={14} className="text-[#94A3B8] opacity-0 group-hover:opacity-100 transition-opacity" />
+                                </a>
+                              ))}
+                            </div>
+                          </div>
+                        )}
                       </div>
                     )}
                   </CardContent>
@@ -582,6 +682,99 @@ export default function CourseDetailPage({ user }) {
           </Card>
         </div>
       )}
+
+      {/* Google Import Dialog */}
+      <Dialog open={importOpen !== null} onOpenChange={(open) => { if (!open) setImportOpen(null); }}>
+        <DialogContent className="bg-[#0F172A] border-[#1E293B] max-w-lg max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-[#F8FAFC] flex items-center gap-2" style={{ fontFamily: 'Cormorant Garamond, serif' }}>
+              <GoogleLogo size={20} className="text-[#D4AF37]" /> Import from Google
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="flex gap-1 p-1 bg-[#050814] border border-[#1E293B] rounded-md mb-4">
+            <button
+              onClick={() => setImportTab('slides')}
+              className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-medium rounded transition-all ${
+                importTab === 'slides' ? 'bg-[#D4AF37] text-[#050814]' : 'text-[#94A3B8] hover:text-[#F8FAFC]'
+              }`}
+              data-testid="import-tab-slides"
+            >
+              <Presentation size={14} /> Slides
+            </button>
+            <button
+              onClick={() => setImportTab('docs')}
+              className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-medium rounded transition-all ${
+                importTab === 'docs' ? 'bg-[#D4AF37] text-[#050814]' : 'text-[#94A3B8] hover:text-[#F8FAFC]'
+              }`}
+              data-testid="import-tab-docs"
+            >
+              <Article size={14} /> Docs
+            </button>
+          </div>
+
+          <div className="space-y-2">
+            {importTab === 'slides' && (
+              googleSlides.length === 0 ? (
+                <p className="text-sm text-[#94A3B8] text-center py-4">No Google Slides found in your account.</p>
+              ) : (
+                googleSlides.map(slide => (
+                  <div
+                    key={slide.id}
+                    className="flex items-center gap-3 p-3 bg-[#050814] border border-[#1E293B] rounded-md hover:border-[#D4AF37]/20 transition-colors"
+                    data-testid={`import-slide-${slide.id}`}
+                  >
+                    <Presentation size={20} weight="duotone" className="text-[#D4AF37] flex-shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm text-[#F8FAFC] truncate">{slide.name}</p>
+                      <p className="text-[10px] text-[#94A3B8]">
+                        Modified {new Date(slide.modifiedTime).toLocaleDateString()}
+                      </p>
+                    </div>
+                    <Button
+                      size="sm"
+                      onClick={() => handleImportSlide(slide.id, importOpen)}
+                      className="bg-[#D4AF37] text-[#050814] hover:bg-[#F3E5AB] text-[10px]"
+                      disabled={importing}
+                    >
+                      {importing ? 'Importing...' : 'Import'}
+                    </Button>
+                  </div>
+                ))
+              )
+            )}
+            {importTab === 'docs' && (
+              googleDocs.length === 0 ? (
+                <p className="text-sm text-[#94A3B8] text-center py-4">No Google Docs found in your account.</p>
+              ) : (
+                googleDocs.map(doc => (
+                  <div
+                    key={doc.id}
+                    className="flex items-center gap-3 p-3 bg-[#050814] border border-[#1E293B] rounded-md hover:border-[#D4AF37]/20 transition-colors"
+                    data-testid={`import-doc-${doc.id}`}
+                  >
+                    <Article size={20} weight="duotone" className="text-[#D4AF37] flex-shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm text-[#F8FAFC] truncate">{doc.name}</p>
+                      <p className="text-[10px] text-[#94A3B8]">
+                        Modified {new Date(doc.modifiedTime).toLocaleDateString()}
+                      </p>
+                    </div>
+                    <Button
+                      size="sm"
+                      onClick={() => handleImportDoc(doc.id, importOpen)}
+                      className="bg-[#D4AF37] text-[#050814] hover:bg-[#F3E5AB] text-[10px]"
+                      disabled={importing}
+                    >
+                      {importing ? 'Importing...' : 'Import'}
+                    </Button>
+                  </div>
+                ))
+              )
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

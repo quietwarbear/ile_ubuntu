@@ -1,16 +1,56 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Button } from '../components/ui/button';
-import { Input } from '../components/ui/input';
 import { Badge } from '../components/ui/badge';
-import { UserCircle, Shield } from '@phosphor-icons/react';
-import { apiGet, apiPut } from '../lib/api';
+import {
+  Shield,
+  GoogleLogo,
+  CheckCircle,
+  LinkBreak,
+  Plugs,
+} from '@phosphor-icons/react';
+import { apiGet, apiPut, apiDelete } from '../lib/api';
 
 export default function SettingsPage({ user }) {
   const [users, setUsers] = useState([]);
   const [loaded, setLoaded] = useState(false);
+  const [googleConnected, setGoogleConnected] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(true);
+  const [searchParams] = useSearchParams();
 
   const isAdmin = ['admin', 'elder'].includes(user?.role);
+  const isFaculty = ['faculty', 'elder', 'admin'].includes(user?.role);
+
+  useEffect(() => {
+    checkGoogleStatus();
+    if (searchParams.get('google_connected') === 'true') {
+      setGoogleConnected(true);
+    }
+  }, [searchParams]);
+
+  const checkGoogleStatus = async () => {
+    try {
+      const data = await apiGet('/api/google/status');
+      setGoogleConnected(data.connected);
+    } catch (e) { console.error(e); }
+    finally { setGoogleLoading(false); }
+  };
+
+  const handleConnectGoogle = async () => {
+    try {
+      const data = await apiGet('/api/google/auth-url');
+      window.location.href = data.auth_url;
+    } catch (e) { alert(e.message); }
+  };
+
+  const handleDisconnectGoogle = async () => {
+    if (!window.confirm('Disconnect your Google account?')) return;
+    try {
+      await apiDelete('/api/google/disconnect');
+      setGoogleConnected(false);
+    } catch (e) { alert(e.message); }
+  };
 
   const loadUsers = async () => {
     try {
@@ -60,6 +100,54 @@ export default function SettingsPage({ user }) {
           </div>
         </CardContent>
       </Card>
+
+      {/* Google Account Connection (Faculty+) */}
+      {isFaculty && (
+        <Card className="bg-[#0F172A] border-[#1E293B]" data-testid="google-connection-card">
+          <CardHeader>
+            <CardTitle className="text-lg text-[#F8FAFC] flex items-center gap-2" style={{ fontFamily: 'Cormorant Garamond, serif' }}>
+              <Plugs size={20} weight="duotone" className="text-[#D4AF37]" />
+              Google Integration
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-xs text-[#94A3B8] mb-4">
+              Connect your Google account to import Slides and Docs directly into your courses.
+            </p>
+            {googleLoading ? (
+              <div className="flex items-center gap-2 text-sm text-[#94A3B8]">
+                <span className="w-4 h-4 border border-[#D4AF37] border-t-transparent rounded-full animate-spin" />
+                Checking connection...
+              </div>
+            ) : googleConnected ? (
+              <div className="flex items-center justify-between p-3 bg-[#050814] border border-emerald-500/20 rounded-md">
+                <div className="flex items-center gap-2">
+                  <CheckCircle size={18} weight="fill" className="text-emerald-400" />
+                  <span className="text-sm text-emerald-400">Google account connected</span>
+                </div>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={handleDisconnectGoogle}
+                  className="text-red-400 hover:text-red-300 text-xs"
+                  data-testid="disconnect-google-btn"
+                >
+                  <LinkBreak size={14} className="mr-1" /> Disconnect
+                </Button>
+              </div>
+            ) : (
+              <Button
+                onClick={handleConnectGoogle}
+                className="bg-white text-[#050814] hover:bg-gray-100 font-medium"
+                data-testid="connect-google-btn"
+              >
+                <GoogleLogo size={18} weight="bold" className="mr-2" />
+                Connect Google Account
+              </Button>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       {/* Role Management (Admin/Elder only) */}
       {isAdmin && (

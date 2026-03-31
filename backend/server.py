@@ -30,6 +30,7 @@ from routes.files import router as files_router
 from routes.messages import router as messages_router
 from routes.enrollments import router as enrollments_router
 from routes.live_sessions import router as live_sessions_router
+from routes.google_integration import router as google_router
 
 app.include_router(auth_router)
 app.include_router(courses_router)
@@ -40,6 +41,7 @@ app.include_router(files_router)
 app.include_router(messages_router)
 app.include_router(enrollments_router)
 app.include_router(live_sessions_router)
+app.include_router(google_router)
 
 
 @app.get("/")
