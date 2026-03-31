@@ -13,6 +13,10 @@ import {
   UserPlus,
   SignOut,
   Users,
+  Trophy,
+  ChartBar,
+  Crown,
+  Medal,
 } from '@phosphor-icons/react';
 import { apiGet, apiPost, apiDelete } from '../lib/api';
 
@@ -184,6 +188,128 @@ export default function CohortDetailPage({ user }) {
           </div>
         )}
       </div>
+
+      {/* Progress Dashboard — faculty/elder/owner only */}
+      {(isFaculty || isOwner) && (detail.enriched_members || []).length > 0 && (detail.linked_courses || []).length > 0 && (
+        <div data-testid="progress-dashboard">
+          <div className="flex items-center gap-2 mb-4">
+            <ChartBar size={16} weight="duotone" className="text-[#D4AF37]" />
+            <h2 className="text-xs tracking-[0.15em] uppercase text-[#D4AF37]">Progress Dashboard</h2>
+          </div>
+
+          {/* Leaderboard */}
+          <Card className="bg-[#0F172A] border-[#1E293B] mb-4">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm text-[#F8FAFC] flex items-center gap-2" style={{ fontFamily: 'Cormorant Garamond, serif' }}>
+                <Trophy size={16} weight="duotone" className="text-[#D4AF37]" /> Leaderboard
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              {[...detail.enriched_members]
+                .sort((a, b) => b.overall_progress - a.overall_progress)
+                .map((m, rank) => {
+                  const pct = Math.round(m.overall_progress);
+                  const barColor = rank === 0 ? 'bg-[#D4AF37]' : rank === 1 ? 'bg-[#C0C0C0]' : rank === 2 ? 'bg-[#CD7F32]' : 'bg-blue-400';
+                  const RankIcon = rank === 0 ? Crown : rank < 3 ? Medal : null;
+                  return (
+                    <div key={m.id} className="flex items-center gap-3 p-2 bg-[#050814] border border-[#1E293B] rounded-md" data-testid={`leaderboard-${m.id}`}>
+                      {/* Rank */}
+                      <div className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0" style={{
+                        background: rank === 0 ? 'rgba(212,175,55,0.15)' : rank === 1 ? 'rgba(192,192,192,0.12)' : rank === 2 ? 'rgba(205,127,50,0.12)' : 'rgba(96,165,250,0.1)',
+                        border: `1px solid ${rank === 0 ? 'rgba(212,175,55,0.3)' : 'rgba(30,41,59,1)'}`,
+                      }}>
+                        {RankIcon ? (
+                          <RankIcon size={14} weight="fill" className={rank === 0 ? 'text-[#D4AF37]' : rank === 1 ? 'text-[#C0C0C0]' : 'text-[#CD7F32]'} />
+                        ) : (
+                          <span className="text-[10px] text-[#94A3B8]">{rank + 1}</span>
+                        )}
+                      </div>
+                      {/* Avatar + Name */}
+                      <img src={m.picture || `https://ui-avatars.com/api/?name=${m.name}&background=0F172A&color=D4AF37`} alt="" className="w-7 h-7 rounded-full flex-shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="text-xs text-[#F8FAFC] truncate">{m.name}</span>
+                          <span className="text-[9px] text-[#D4AF37]">{m.role}</span>
+                        </div>
+                        {/* Bar chart */}
+                        <div className="flex items-center gap-2">
+                          <div className="flex-1 h-2.5 bg-[#0A1128] rounded-full overflow-hidden">
+                            <div
+                              className={`h-full ${barColor} rounded-full transition-all duration-700`}
+                              style={{ width: `${Math.max(pct, 2)}%` }}
+                            />
+                          </div>
+                          <span className={`text-[10px] font-medium w-8 text-right ${pct === 100 ? 'text-emerald-400' : 'text-[#94A3B8]'}`}>{pct}%</span>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+            </CardContent>
+          </Card>
+
+          {/* Per-Course Breakdown */}
+          <Card className="bg-[#0F172A] border-[#1E293B]">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm text-[#F8FAFC]" style={{ fontFamily: 'Cormorant Garamond, serif' }}>
+                Per-Course Breakdown
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {detail.linked_courses.map(course => {
+                  // Find all members' progress for this specific course
+                  const memberProgress = detail.enriched_members.map(m => {
+                    const enrollment = m.enrollments?.find(e => e.course_id === course.id);
+                    return {
+                      name: m.name,
+                      picture: m.picture,
+                      progress: enrollment ? Math.round(enrollment.progress || 0) : 0,
+                      enrolled: !!enrollment,
+                    };
+                  }).sort((a, b) => b.progress - a.progress);
+
+                  const avgProgress = memberProgress.length > 0
+                    ? Math.round(memberProgress.reduce((s, p) => s + p.progress, 0) / memberProgress.length)
+                    : 0;
+                  const enrolledCount = memberProgress.filter(p => p.enrolled).length;
+
+                  return (
+                    <div key={course.id} className="p-3 bg-[#050814] border border-[#1E293B] rounded-md" data-testid={`course-breakdown-${course.id}`}>
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-2">
+                          <BookOpenText size={14} weight="duotone" className="text-[#D4AF37]" />
+                          <span className="text-xs text-[#F8FAFC]">{course.title}</span>
+                        </div>
+                        <div className="flex items-center gap-3 text-[10px] text-[#94A3B8]">
+                          <span>{enrolledCount}/{memberProgress.length} enrolled</span>
+                          <span className="text-[#D4AF37]">avg {avgProgress}%</span>
+                        </div>
+                      </div>
+                      {/* Mini member bars */}
+                      <div className="space-y-1">
+                        {memberProgress.map((mp, i) => (
+                          <div key={i} className="flex items-center gap-2">
+                            <img src={mp.picture || `https://ui-avatars.com/api/?name=${mp.name}&background=050814&color=D4AF37&size=16`} alt="" className="w-4 h-4 rounded-full flex-shrink-0" />
+                            <span className="text-[9px] text-[#94A3B8] w-16 truncate">{mp.name.split(' ')[0]}</span>
+                            <div className="flex-1 h-1.5 bg-[#0A1128] rounded-full overflow-hidden">
+                              <div
+                                className={`h-full rounded-full transition-all ${mp.progress === 100 ? 'bg-emerald-400' : mp.enrolled ? 'bg-[#D4AF37]' : 'bg-[#1E293B]'}`}
+                                style={{ width: `${Math.max(mp.enrolled ? mp.progress : 0, 1)}%` }}
+                              />
+                            </div>
+                            <span className="text-[9px] text-[#94A3B8] w-6 text-right">{mp.enrolled ? `${mp.progress}%` : '—'}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
 
       {/* Members */}
       <div>

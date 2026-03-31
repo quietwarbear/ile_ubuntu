@@ -33,6 +33,7 @@ import {
 } from '@phosphor-icons/react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '../components/ui/dialog';
 import { apiGet, apiPost, apiUpload, apiDelete, BACKEND_URL } from '../lib/api';
+import LessonContentViewer from '../components/LessonContentViewer';
 
 const FILE_ICONS = {
   'application/pdf': FilePdf,
@@ -515,7 +516,7 @@ export default function CourseDetailPage({ user }) {
                         {/* Lesson content */}
                         {lesson.content && (
                           <div className="p-3 bg-[#050814] rounded-md border border-[#1E293B]">
-                            <p className="text-sm text-[#94A3B8] leading-relaxed whitespace-pre-wrap">{lesson.content}</p>
+                            <LessonContentViewer content={lesson.content} />
                           </div>
                         )}
 
