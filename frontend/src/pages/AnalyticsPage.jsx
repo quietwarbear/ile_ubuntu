@@ -131,8 +131,8 @@ export default function AnalyticsPage() {
             <div className="flex items-end gap-[3px] h-24">
               {(() => {
                 const maxVal = Math.max(...trends.map(t => t.enrollments), 1);
-                return trends.map((t, i) => (
-                  <div key={i} className="flex-1 flex flex-col items-center gap-1 group relative">
+                return trends.map((t) => (
+                  <div key={t.date} className="flex-1 flex flex-col items-center gap-1 group relative">
                     <div
                       className="w-full bg-[#D4AF37]/80 rounded-t-sm transition-all hover:bg-[#D4AF37] min-h-[2px]"
                       style={{ height: `${Math.max((t.enrollments / maxVal) * 80, 2)}px` }}
@@ -271,8 +271,8 @@ export default function AnalyticsPage() {
               <>
                 <p className="text-[9px] text-[#D4AF37] uppercase tracking-wider mb-2">Top Contributors</p>
                 <div className="space-y-1">
-                  {community.top_contributors.map((c, i) => (
-                    <div key={i} className="flex items-center justify-between p-1.5 bg-[#050814] border border-[#1E293B] rounded">
+                  {community.top_contributors.map((c) => (
+                    <div key={c.name} className="flex items-center justify-between p-1.5 bg-[#050814] border border-[#1E293B] rounded">
                       <span className="text-xs text-[#F8FAFC]">{c.name}</span>
                       <Badge className="bg-[#D4AF37]/10 text-[#D4AF37] border-[#D4AF37]/20 text-[9px]">{c.posts} posts</Badge>
                     </div>

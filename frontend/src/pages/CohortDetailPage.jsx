@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Button } from '../components/ui/button';
@@ -30,7 +30,12 @@ export default function CohortDetailPage({ user }) {
 
   const isFaculty = ['faculty', 'elder', 'admin'].includes(user?.role);
 
-  useEffect(() => { loadData(); }, [cohortId]);
+  const sortedLeaderboard = useMemo(() => {
+    if (!detail?.enriched_members) return [];
+    return [...detail.enriched_members].sort((a, b) => b.overall_progress - a.overall_progress);
+  }, [detail?.enriched_members]);
+
+  useEffect(() => { loadData(); }, [cohortId]); // eslint-disable-line -- load on route change
 
   const loadData = async () => {
     try {
@@ -205,9 +210,7 @@ export default function CohortDetailPage({ user }) {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-2">
-              {[...detail.enriched_members]
-                .sort((a, b) => b.overall_progress - a.overall_progress)
-                .map((m, rank) => {
+              {sortedLeaderboard.map((m, rank) => {
                   const pct = Math.round(m.overall_progress);
                   const barColor = rank === 0 ? 'bg-[#D4AF37]' : rank === 1 ? 'bg-[#C0C0C0]' : rank === 2 ? 'bg-[#CD7F32]' : 'bg-blue-400';
                   const RankIcon = rank === 0 ? Crown : rank < 3 ? Medal : null;
@@ -288,8 +291,8 @@ export default function CohortDetailPage({ user }) {
                       </div>
                       {/* Mini member bars */}
                       <div className="space-y-1">
-                        {memberProgress.map((mp, i) => (
-                          <div key={i} className="flex items-center gap-2">
+                        {memberProgress.map((mp) => (
+                          <div key={mp.id || mp.name} className="flex items-center gap-2">
                             <img src={mp.picture || `https://ui-avatars.com/api/?name=${mp.name}&background=050814&color=D4AF37&size=16`} alt="" className="w-4 h-4 rounded-full flex-shrink-0" />
                             <span className="text-[9px] text-[#94A3B8] w-16 truncate">{mp.name.split(' ')[0]}</span>
                             <div className="flex-1 h-1.5 bg-[#0A1128] rounded-full overflow-hidden">

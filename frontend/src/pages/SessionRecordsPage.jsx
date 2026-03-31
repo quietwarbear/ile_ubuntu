@@ -210,8 +210,8 @@ export default function SessionRecordsPage({ user }) {
                   {/* Tags */}
                   {!editingNotes && (detail.tags || []).length > 0 && (
                     <div className="flex flex-wrap gap-1 mb-3">
-                      {detail.tags.map((t, i) => (
-                        <Badge key={i} className="bg-violet-500/10 text-violet-400 border-violet-500/20 text-[8px]">
+                      {detail.tags.map((t) => (
+                        <Badge key={t} className="bg-violet-500/10 text-violet-400 border-violet-500/20 text-[8px]">
                           <Tag size={8} className="mr-0.5" />{t}
                         </Badge>
                       ))}
@@ -280,8 +280,8 @@ export default function SessionRecordsPage({ user }) {
                         <div className="mt-3">
                           <p className="text-[9px] text-[#D4AF37] uppercase tracking-wider mb-1">Key Takeaways</p>
                           <ul className="space-y-1">
-                            {detail.key_takeaways.map((t, i) => (
-                              <li key={i} className="text-xs text-[#94A3B8] flex items-start gap-2">
+                            {detail.key_takeaways.map((t) => (
+                              <li key={t} className="text-xs text-[#94A3B8] flex items-start gap-2">
                                 <span className="text-[#D4AF37] mt-0.5">&#9679;</span>{t}
                               </li>
                             ))}

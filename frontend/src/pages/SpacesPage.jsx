@@ -32,7 +32,7 @@ export default function SpacesPage({ user }) {
 
   const isFaculty = ['faculty', 'elder', 'admin'].includes(user?.role);
 
-  useEffect(() => { loadSpaces(); }, []);
+  useEffect(() => { loadSpaces(); }, []); // eslint-disable-line -- mount-only data fetch
 
   const loadSpaces = async () => {
     try { setSpaces(await apiGet('/api/spaces')); } catch (e) { console.error(e); }

@@ -67,7 +67,7 @@ export default function DashboardPage({ user }) {
       }
     }
     load();
-  }, []);
+  }, []); // eslint-disable-line -- mount-only data fetch
 
   const greeting = () => {
     const hour = new Date().getHours();

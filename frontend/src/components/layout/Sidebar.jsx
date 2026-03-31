@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import {
   House,
@@ -51,8 +51,13 @@ export default function Sidebar({ user, onLogout }) {
 
   const handleLangChange = async (newLang) => {
     setLang(newLang);
-    try { await apiPut('/api/auth/me/language', { language: newLang }); } catch (e) {}
+    try { await apiPut('/api/auth/me/language', { language: newLang }); } catch (e) { console.error('Language update failed:', e); }
   };
+
+  const visibleNavItems = useMemo(() =>
+    navItems.filter(item => !item.facultyOnly || ['admin', 'elder', 'faculty'].includes(user?.role)),
+    [user?.role]
+  );
 
   const linkClass = ({ isActive }) =>
     `flex items-center gap-3 px-4 py-3 text-sm font-medium transition-all duration-200 border-l-2 ${
@@ -85,9 +90,7 @@ export default function Sidebar({ user, onLogout }) {
 
       {/* Nav */}
       <nav className="flex-1 py-4 space-y-1 overflow-y-auto">
-        {navItems
-          .filter(item => !item.facultyOnly || ['admin', 'elder', 'faculty'].includes(user?.role))
-          .map((item) => (
+        {visibleNavItems.map((item) => (
           <NavLink
             key={item.to}
             to={item.to}

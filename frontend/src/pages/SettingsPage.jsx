@@ -33,7 +33,7 @@ export default function SettingsPage({ user }) {
     if (searchParams.get('google_connected') === 'true') {
       setGoogleConnected(true);
     }
-  }, [searchParams]);
+  }, [searchParams]); // eslint-disable-line -- mount-only init with searchParams trigger
 
   const checkPushStatus = async () => {
     if (!pushSupported) return;

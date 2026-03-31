@@ -67,7 +67,7 @@ export default function SubscriptionsPage({ user }) {
       // Clean URL
       window.history.replaceState({}, '', window.location.pathname);
     }
-  }, []); // Run once on mount
+  }, []); // eslint-disable-line -- mount-only checkout check
 
   const pollPaymentStatus = async (sessionId, attempts) => {
     const maxAttempts = 5;
@@ -210,8 +210,8 @@ export default function SubscriptionsPage({ user }) {
                 </div>
                 <p className="text-xs text-[#94A3B8] mb-3">{tier.description}</p>
                 <ul className="space-y-1.5 mb-4">
-                  {tier.features.map((f, i) => (
-                    <li key={i} className="flex items-start gap-2 text-[11px] text-[#94A3B8]">
+                  {tier.features.map((f) => (
+                    <li key={f} className="flex items-start gap-2 text-[11px] text-[#94A3B8]">
                       <Check size={12} weight="bold" className={accent} />
                       <span>{f}</span>
                     </li>

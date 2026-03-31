@@ -7,6 +7,66 @@ import re
 router = APIRouter(prefix="/api/search", tags=["search"])
 
 
+def _sort_key(sort: str, default_field="created_at"):
+    if sort == "popularity":
+        return [("enrolled_count", -1)]
+    if sort == "date":
+        return [("created_at", -1)]
+    return [(default_field, 1)]
+
+
+def _search_courses(pattern, sort, limit, status, is_faculty):
+    query = {"$or": [{"title": pattern}, {"description": pattern}, {"tags": pattern}]}
+    if status:
+        query["status"] = status
+    elif not is_faculty:
+        query["status"] = "active"
+    return list(courses_col.find(
+        query, {"_id": 0, "id": 1, "title": 1, "description": 1, "status": 1, "enrolled_count": 1, "tags": 1, "created_at": 1}
+    ).sort(_sort_key(sort, "title")).limit(limit))
+
+
+def _search_community(pattern, sort, limit):
+    query = {"$or": [{"title": pattern}, {"content": pattern}, {"category": pattern}]}
+    posts = list(posts_col.find(
+        query, {"_id": 0, "id": 1, "title": 1, "content": 1, "author_name": 1, "category": 1, "created_at": 1}
+    ).sort([("created_at", -1)]).limit(limit))
+    for p in posts:
+        if p.get("content") and len(p["content"]) > 150:
+            p["content"] = p["content"][:150] + "..."
+    return posts
+
+
+def _search_archives(pattern, sort, limit, access_level, is_faculty):
+    query = {"$or": [{"title": pattern}, {"description": pattern}, {"tags": pattern}]}
+    if access_level:
+        query["access_level"] = access_level
+    elif not is_faculty:
+        query["access_level"] = "public"
+    return list(archives_col.find(
+        query, {"_id": 0, "id": 1, "title": 1, "description": 1, "type": 1, "access_level": 1, "tags": 1, "created_at": 1}
+    ).sort([("created_at", -1)]).limit(limit))
+
+
+def _search_cohorts(pattern, sort, limit):
+    query = {"$or": [{"name": pattern}, {"description": pattern}]}
+    cohorts = list(cohorts_col.find(
+        query, {"_id": 0, "id": 1, "name": 1, "description": 1, "members": 1, "created_at": 1}
+    ).sort([("created_at", -1)]).limit(limit))
+    for ch in cohorts:
+        ch["member_count"] = len(ch.pop("members", []))
+    return cohorts
+
+
+def _search_spaces(pattern, sort, limit, access_level):
+    query = {"$or": [{"name": pattern}, {"description": pattern}]}
+    if access_level:
+        query["access_level"] = access_level
+    return list(spaces_col.find(
+        query, {"_id": 0, "id": 1, "name": 1, "description": 1, "access_level": 1, "created_at": 1}
+    ).sort([("created_at", -1)]).limit(limit))
+
+
 @router.get("")
 async def search_all(
     q: str = "",
@@ -25,60 +85,19 @@ async def search_all(
     results = {}
     total = 0
 
-    # Courses
-    if not type or type == "courses":
-        course_query = {"$or": [{"title": pattern}, {"description": pattern}, {"tags": pattern}]}
-        if status:
-            course_query["status"] = status
-        elif not is_faculty:
-            course_query["status"] = "active"
-        sort_field = [("enrolled_count", -1)] if sort == "popularity" else [("created_at", -1)] if sort == "date" else [("title", 1)]
-        courses = list(courses_col.find(course_query, {"_id": 0, "id": 1, "title": 1, "description": 1, "status": 1, "enrolled_count": 1, "tags": 1, "created_at": 1}).sort(sort_field).limit(limit))
-        results["courses"] = courses
-        total += len(courses)
+    searchers = {
+        "courses": lambda: _search_courses(pattern, sort, limit, status, is_faculty),
+        "community": lambda: _search_community(pattern, sort, limit),
+        "archives": lambda: _search_archives(pattern, sort, limit, access_level, is_faculty),
+        "cohorts": lambda: _search_cohorts(pattern, sort, limit),
+        "spaces": lambda: _search_spaces(pattern, sort, limit, access_level),
+    }
 
-    # Community posts
-    if not type or type == "community":
-        post_query = {"$or": [{"title": pattern}, {"content": pattern}, {"category": pattern}]}
-        sort_field = [("created_at", -1)] if sort == "date" else [("created_at", -1)]
-        posts = list(posts_col.find(post_query, {"_id": 0, "id": 1, "title": 1, "content": 1, "author_name": 1, "category": 1, "created_at": 1}).sort(sort_field).limit(limit))
-        for p in posts:
-            if p.get("content") and len(p["content"]) > 150:
-                p["content"] = p["content"][:150] + "..."
-        results["community"] = posts
-        total += len(posts)
-
-    # Archives
-    if not type or type == "archives":
-        archive_query = {"$or": [{"title": pattern}, {"description": pattern}, {"tags": pattern}]}
-        if access_level:
-            archive_query["access_level"] = access_level
-        elif not is_faculty:
-            archive_query["access_level"] = "public"
-        sort_field = [("created_at", -1)]
-        archives = list(archives_col.find(archive_query, {"_id": 0, "id": 1, "title": 1, "description": 1, "type": 1, "access_level": 1, "tags": 1, "created_at": 1}).sort(sort_field).limit(limit))
-        results["archives"] = archives
-        total += len(archives)
-
-    # Cohorts
-    if not type or type == "cohorts":
-        cohort_query = {"$or": [{"name": pattern}, {"description": pattern}]}
-        sort_field = [("created_at", -1)]
-        cohorts = list(cohorts_col.find(cohort_query, {"_id": 0, "id": 1, "name": 1, "description": 1, "members": 1, "created_at": 1}).sort(sort_field).limit(limit))
-        for ch in cohorts:
-            ch["member_count"] = len(ch.pop("members", []))
-        results["cohorts"] = cohorts
-        total += len(cohorts)
-
-    # Spaces
-    if not type or type == "spaces":
-        space_query = {"$or": [{"name": pattern}, {"description": pattern}]}
-        if access_level:
-            space_query["access_level"] = access_level
-        sort_field = [("created_at", -1)]
-        space_results = list(spaces_col.find(space_query, {"_id": 0, "id": 1, "name": 1, "description": 1, "access_level": 1, "created_at": 1}).sort(sort_field).limit(limit))
-        results["spaces"] = space_results
-        total += len(space_results)
+    for section, searcher in searchers.items():
+        if not type or type == section:
+            items = searcher()
+            results[section] = items
+            total += len(items)
 
     results["total"] = total
     return results
