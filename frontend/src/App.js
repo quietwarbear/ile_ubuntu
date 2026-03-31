@@ -11,6 +11,8 @@ import CommunityPage from './pages/CommunityPage';
 import ArchivesPage from './pages/ArchivesPage';
 import MessagesPage from './pages/MessagesPage';
 import SettingsPage from './pages/SettingsPage';
+import LiveSessionsPage from './pages/LiveSessionsPage';
+import LiveRoomPage from './pages/LiveRoomPage';
 import './App.css';
 
 function App() {
@@ -90,6 +92,8 @@ function App() {
           <Route path="/dashboard" element={<DashboardPage user={user} />} />
           <Route path="/courses" element={<CoursesPage user={user} />} />
           <Route path="/courses/:courseId" element={<CourseDetailPage user={user} />} />
+          <Route path="/live" element={<LiveSessionsPage user={user} />} />
+          <Route path="/live/:sessionId" element={<LiveRoomPage user={user} />} />
           <Route path="/cohorts" element={<CohortsPage user={user} />} />
           <Route path="/community" element={<CommunityPage user={user} />} />
           <Route path="/archives" element={<ArchivesPage user={user} />} />

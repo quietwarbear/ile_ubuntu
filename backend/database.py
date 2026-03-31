@@ -20,3 +20,4 @@ messages_col = db.messages
 notifications_col = db.notifications
 google_tokens_col = db.google_tokens
 enrollments_col = db.enrollments
+live_sessions_col = db.live_sessions

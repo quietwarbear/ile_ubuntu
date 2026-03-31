@@ -11,12 +11,14 @@ import {
   SignOut,
   List,
   X,
+  VideoCamera,
 } from '@phosphor-icons/react';
 import { clearCookie } from '../../lib/api';
 
 const navItems = [
   { to: '/dashboard', label: 'Dashboard', icon: House },
   { to: '/courses', label: 'Courses', icon: BookOpenText },
+  { to: '/live', label: 'Live Teaching', icon: VideoCamera },
   { to: '/cohorts', label: 'Cohorts', icon: UsersThree },
   { to: '/community', label: 'Community', icon: Chats },
   { to: '/archives', label: 'Archives', icon: Archive },
