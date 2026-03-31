@@ -72,18 +72,33 @@ Build a "Living Learning Commons" platform called "The Ile Ubuntu" that holds co
 - [x] Background auto-applied to Jitsi via executeCommand API on join
 - [x] Full test suite: 19 backend regression + 20 frontend tests passing
 
+### What's Been Implemented (Phase 3a - File Attachments - Feb 2026)
+- [x] File upload per lesson with type-specific icons (PDF, DOC, PPT, XLS, Image)
+- [x] Expandable lesson cards showing content text and attached materials
+- [x] Faculty can attach files, students can download materials
+- [x] File size display, hover-to-reveal download/delete controls
+- [x] "Add Lesson" button directly on course detail page for faculty
+- [x] Full test suite: 17 backend + all frontend tests passing
+
+### What's Been Implemented (Phase 3b - Google OAuth & Import - Feb 2026)
+- [x] Google OAuth 2.0 integration for Slides/Docs API access (connect/disconnect in Settings)
+- [x] "Import from Google" button on lesson expanded views (when Google connected)
+- [x] Import dialog with Slides and Docs tabs, lists user's files, one-click import
+- [x] Imported Google Slides show as embeddable resources on lessons
+- [x] Imported Google Docs extract content directly into lesson text
+- [x] Token refresh mechanism for long-lived Google access
+- [x] Full test suite: 25 backend + all frontend tests passing
+
 ### Prioritized Backlog
 
 #### P0 (Next)
-- Google OAuth fix for Google Slides/Docs import (callback loop issue)
-- File attachments on courses and lessons
+- (none - all P0s completed!)
 
-#### P1
-- Protected knowledge spaces with membership management
+#### P1 (Up Next)
 - Cohort-course linking (assign courses to cohorts)
-- Enhanced community with categories filtering
+- Protected knowledge spaces with membership management
 - Lesson content viewer (rich text, embedded media)
-- Custom branded backgrounds (AI-generated, pending rate limit reset)
+- Custom AI-generated backgrounds (when image gen quota resets)
 
 #### P2
 - Subscription/membership management
