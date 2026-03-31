@@ -42,18 +42,28 @@ Build a "Living Learning Commons" platform called "The Ile Ubuntu" that holds co
 - [x] Settings page with role management (admin/elder only)
 - [x] Full test suite: 39 backend + 9 frontend tests passing
 
+### What's Been Implemented (Phase 1b - Course Enrollment - Feb 2026)
+- [x] Course enrollment system: students browse and enroll in active courses
+- [x] Course detail page (/courses/:courseId) with enrollment CTA, curriculum, progress bar
+- [x] Lesson completion tracking: students mark lessons complete, progress auto-calculates
+- [x] "My Learning" tab on Courses page showing enrolled courses with SVG progress circles
+- [x] "My Learning" section on Dashboard with enrolled courses and progress
+- [x] Faculty can view enrolled students with individual progress on course detail page
+- [x] Course search/filter on browse view
+- [x] Enrolled count tracking on courses (increments/decrements properly)
+- [x] Full test suite: 18 enrollment backend + 12 enrollment frontend tests passing
+
 ### Prioritized Backlog
 
 #### P0 (Next)
 - Google OAuth fix for Google Slides/Docs import (callback loop issue)
-- Course enrollment/progress tracking for students
 - File attachments on courses and lessons
 
 #### P1
 - Protected knowledge spaces with membership management
-- Course detail page with lesson viewer
 - Cohort-course linking (assign courses to cohorts)
 - Enhanced community with categories filtering
+- Lesson content viewer (rich text, embedded media)
 
 #### P2
 - Live teaching capabilities (WebRTC evaluation)
@@ -80,6 +90,7 @@ Build a "Living Learning Commons" platform called "The Ile Ubuntu" that holds co
 ### API Endpoints
 - Auth: POST /api/auth/profile, GET /api/auth/me, GET /api/auth/users, PUT /api/auth/users/{id}/role
 - Courses: GET/POST /api/courses, GET/PUT/DELETE /api/courses/{id}, GET/POST /api/courses/{id}/lessons
+- Enrollment: POST /api/courses/{id}/enroll, POST /api/courses/{id}/unenroll, GET /api/courses/{id}/enrollment, GET /api/courses/{id}/progress, POST /api/courses/{id}/lessons/{lid}/complete, GET /api/courses/{id}/enrollments, GET /api/enrollments/my-courses
 - Cohorts: GET/POST /api/cohorts, GET/PUT/DELETE /api/cohorts/{id}, POST /api/cohorts/{id}/join, POST /api/cohorts/{id}/leave
 - Community: GET/POST /api/community/posts, GET/DELETE /api/community/posts/{id}, POST /api/community/posts/{id}/reply, POST /api/community/posts/{id}/like
 - Archives: GET/POST /api/archives, GET/DELETE /api/archives/{id}
