@@ -144,7 +144,7 @@ async def create_checkout(request: Request, current_user: dict = Depends(get_cur
 
 
 @router.get("/checkout/status/{session_id}")
-async def check_checkout_status(session_id: str, current_user: dict = Depends(get_current_user)):
+async def check_checkout_status(session_id: str, request: Request, current_user: dict = Depends(get_current_user)):
     if not STRIPE_API_KEY:
         raise HTTPException(status_code=500, detail="Payment system not configured")
 
@@ -158,7 +158,7 @@ async def check_checkout_status(session_id: str, current_user: dict = Depends(ge
             "already_processed": True,
         }
 
-    host_url = "https://localhost:8001"
+    host_url = str(request.base_url).rstrip("/")
     webhook_url = f"{host_url}/api/webhook/stripe"
     stripe_checkout = StripeCheckout(api_key=STRIPE_API_KEY, webhook_url=webhook_url)
 
