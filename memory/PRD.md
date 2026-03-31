@@ -19,7 +19,7 @@ Build a "Living Learning Commons" platform called "The Ile Ubuntu" that holds co
 - **Layout**: Fixed sidebar navigation (desktop), responsive mobile hamburger
 
 ### Core Architecture
-- **Frontend**: React with React Router, Tailwind CSS, Shadcn/UI, Phosphor Icons
+- **Frontend**: React with React Router, Tailwind CSS, Shadcn/UI, Phosphor Icons, @tailwindcss/typography
 - **Backend**: FastAPI (Python), modular route structure
 - **Database**: MongoDB
 - **Auth**: Emergent Auth (Google OAuth)
@@ -40,54 +40,26 @@ Build a "Living Learning Commons" platform called "The Ile Ubuntu" that holds co
 - [x] Dashboard with stats and quick actions
 - [x] All pages: Courses, Cohorts, Community, Archives, Messages, Settings
 - [x] Settings page with role management (admin/elder only)
-- [x] Full test suite: 39 backend + 9 frontend tests passing
 
 ### What's Been Implemented (Phase 1b - Course Enrollment - Feb 2026)
 - [x] Course enrollment system: students browse and enroll in active courses
-- [x] Course detail page (/courses/:courseId) with enrollment CTA, curriculum, progress bar
+- [x] Course detail page with enrollment CTA, curriculum, progress bar
 - [x] Lesson completion tracking: students mark lessons complete, progress auto-calculates
 - [x] "My Learning" tab on Courses page showing enrolled courses with SVG progress circles
-- [x] "My Learning" section on Dashboard with enrolled courses and progress
 - [x] Faculty can view enrolled students with individual progress on course detail page
-- [x] Course search/filter on browse view
-- [x] Enrolled count tracking on courses (increments/decrements properly)
-- [x] Full test suite: 18 enrollment backend + 12 enrollment frontend tests passing
 
-### What's Been Implemented (Phase 2 - Live Teaching with Jitsi Meet - Feb 2026)
+### What's Been Implemented (Phase 2 - Live Teaching - Feb 2026)
 - [x] Live Teaching system with embedded Jitsi Meet video conferencing (free, no API keys)
 - [x] Live session CRUD: create, schedule, start, join, end, delete
 - [x] Session state management: scheduled -> live -> ended
-- [x] Course-linked sessions (optional)
-- [x] Immersive live room page (/live/:sessionId) with hidden sidebar, full-screen Jitsi embed
-- [x] Session filters: All, Live Now, Upcoming, Past
-- [x] RBAC: Only faculty+ can create/start sessions, students can only join live sessions
-- [x] "Live Teaching" nav item in sidebar with VideoCamera icon
-- [x] Full test suite: 19 backend + 19 frontend tests passing
-
-### What's Been Implemented (Phase 2b - Branded Virtual Backgrounds - Feb 2026)
 - [x] Pre-join screen with background picker before entering Jitsi sessions
-- [x] 5 curated branded backgrounds matching Ile Ubuntu aesthetic
+- [x] 9 curated branded backgrounds matching Ile Ubuntu aesthetic
 - [x] "None" and "Blur" background options
-- [x] Visual selection state with gold border and checkmark overlay
-- [x] Background auto-applied to Jitsi via executeCommand API on join
-- [x] Full test suite: 19 backend regression + 20 frontend tests passing
 
-### What's Been Implemented (Phase 3a - File Attachments - Feb 2026)
+### What's Been Implemented (Phase 3 - File & Google Integration - Feb 2026)
 - [x] File upload per lesson with type-specific icons (PDF, DOC, PPT, XLS, Image)
-- [x] Expandable lesson cards showing content text and attached materials
-- [x] Faculty can attach files, students can download materials
-- [x] File size display, hover-to-reveal download/delete controls
-- [x] "Add Lesson" button directly on course detail page for faculty
-- [x] Full test suite: 17 backend + all frontend tests passing
-
-### What's Been Implemented (Phase 3b - Google OAuth & Import - Feb 2026)
-- [x] Google OAuth 2.0 integration for Slides/Docs API access (connect/disconnect in Settings)
-- [x] "Import from Google" button on lesson expanded views (when Google connected)
-- [x] Import dialog with Slides and Docs tabs, lists user's files, one-click import
-- [x] Imported Google Slides show as embeddable resources on lessons
-- [x] Imported Google Docs extract content directly into lesson text
-- [x] Token refresh mechanism for long-lived Google access
-- [x] Full test suite: 25 backend + all frontend tests passing
+- [x] Google OAuth 2.0 integration for Slides/Docs API access
+- [x] Import dialog with Slides and Docs tabs, one-click import
 
 ### What's Been Implemented (Phase 4 - Cohorts, Spaces, Community, Archives - Mar 2026)
 - [x] Cohort-Course linking: faculty link/unlink courses to cohorts
@@ -97,20 +69,23 @@ Build a "Living Learning Commons" platform called "The Ile Ubuntu" that holds co
 - [x] Access request/approval flow for members-only spaces
 - [x] Resource management within spaces (text, links, embeds)
 - [x] Community forums fully functional with posts, replies, likes, categories
-- [x] Archives with access-level filtering (public visible to all, restricted to faculty+)
-- [x] Sidebar navigation updated with all sections
-- [x] Fixed spaces visibility bug (non-members can now discover and request access)
-- [x] Fixed archives delete button condition (admin-only properly)
-- [x] Full test suite: 28 backend + 23 frontend tests passing (iteration 7)
+- [x] Archives with access-level filtering
+
+### What's Been Implemented (Phase 5 - Progress Dashboard, Content Viewer, Backgrounds - Mar 2026)
+- [x] Cohort Progress Dashboard: visual leaderboard with crown/medal icons for top performers
+- [x] Per-course breakdown showing individual member progress across linked courses
+- [x] Bar chart visualization of progress with gold/silver/bronze color coding
+- [x] Lesson Content Viewer with markdown rendering (headings, bold, italic, code blocks, lists, tables)
+- [x] Auto-detection and embedding of YouTube, Vimeo, Google Slides, and Google Docs URLs
+- [x] Rich text styling using @tailwindcss/typography with custom dark theme prose classes
+- [x] 4 new branded virtual backgrounds: Sacred Vault, Midnight Glow, Scholar's Den, Cosmic Dust
+- [x] Total 9 curated backgrounds for Live Teaching pre-join screen
+- [x] Full test suite: 19 backend + all frontend tests passing (iteration 8)
 
 ### Prioritized Backlog
 
-#### P0 (Next)
-- (none - all P0s completed!)
-
 #### P1 (Up Next)
-- Lesson content viewer (rich text, embedded media)
-- Custom AI-generated backgrounds (when image gen quota resets)
+- (none remaining from original P1 list!)
 
 #### P2
 - Edit/Delete course controls RBAC validation for faculty/elders
@@ -123,16 +98,14 @@ Build a "Living Learning Commons" platform called "The Ile Ubuntu" that holds co
 ### Key Files
 ```
 /app/backend/
-  server.py (FastAPI entry point, mounts routers)
-  database.py (MongoDB connection)
-  middleware.py (Auth middleware)
+  server.py, database.py, middleware.py
   models/ (user.py, course.py, cohort.py)
-  routes/ (auth.py, courses.py, cohorts.py, community.py, archives.py, files.py, messages.py, enrollments.py, live_sessions.py, google_integration.py, spaces.py)
+  routes/ (auth, courses, cohorts, community, archives, files, messages, enrollments, live_sessions, google_integration, spaces)
 /app/frontend/src/
   App.js (React Router)
-  lib/api.js (API client)
-  components/layout/ (Sidebar.jsx, AppLayout.jsx)
-  pages/ (LoginPage, DashboardPage, CoursesPage, CourseDetailPage, CohortsPage, CohortDetailPage, SpacesPage, CommunityPage, ArchivesPage, LiveSessionsPage, LiveRoomPage, MessagesPage, SettingsPage)
+  lib/ (api.js, backgrounds.js)
+  components/ (layout/Sidebar.jsx, layout/AppLayout.jsx, LessonContentViewer.jsx)
+  pages/ (Login, Dashboard, Courses, CourseDetail, Cohorts, CohortDetail, Spaces, Community, Archives, LiveSessions, LiveRoom, Messages, Settings)
 ```
 
 ### API Endpoints
