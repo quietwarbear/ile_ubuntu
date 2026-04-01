@@ -18,51 +18,39 @@ Build a "Living Learning Commons" platform called "The Ile Ubuntu" — courses, 
 - Email Notifications (Resend), Session Records, i18n (EN/ES/YO), Guided Onboarding Wizard
 
 #### Phase 10: Certificates, Push Notifications, Search, Marketing
-- Course Completion Certificates (branded PDF via reportlab)
-- PWA Push Notifications (VAPID subscription management + Settings toggle)
-- Advanced Search Results Page with faceted filters
-- Marketing & Branding Page (one-pager + social media strategy + content calendar)
+- Course Completion Certificates (branded PDF), Push Notifications (VAPID), Advanced Search, Marketing Page
 
 #### Phase 11: Code Quality Refactoring
-- CourseDetailPage split: 811→240 lines via 4 sub-components (CourseHeader, LessonCard, EnrolledStudents, GoogleImportDialog)
-- React hook deps fixed, empty catches now log errors, array index keys → stable IDs, useMemo for expensive computations
-- Backend search.py refactored into 5 service functions
-- Service worker rewritten (network-first for navigation) — fixed blank deploy screen
-- ESLint incompatibility resolved
+- CourseDetailPage 811→240 lines, service worker rewrite, backend search refactored, ESLint fix
 
-#### Phase 12: Public Landing Page (Latest - Feb 2026)
-- Mission-driven hero: "I am because we are" philosophy, Ubuntu imagery, stats (16+ features, 5 roles, 3 languages)
-- Philosophy section: 3 pillars (Governance Roles, Intergenerational, Free to Start) + African proverb
-- Feature showcase: 9 animated feature cards (scroll-triggered IntersectionObserver)
-- Testimonials: 4 placeholder testimonials with auto-rotating carousel (6s interval, manual prev/next)
-- How It Works: 4-step journey (Sign In → Explore → Join Cohort → Grow Role)
-- Final CTA: "Get Started — It's Free" with reassurance copy
-- Footer with About/Sign In links
-- Route: / for unauthenticated, /login still available
-- Tests: iteration_15.json — 22 backend + all frontend = 100% pass rate
+#### Phase 12: Public Landing Page
+- Mission-driven hero, philosophy, features (9 animated cards), testimonials carousel, How It Works, CTA
 
-### Subscription Tiers (Enforced)
-| Feature | Explorer (Free) | Scholar ($19.99/mo) | Elder Circle ($49.99/mo) |
-|---|---|---|---|
-| Courses | Max 2 | Unlimited | Unlimited |
-| Cohorts | No | Yes | Yes |
-| Spaces | Public only | Public + Members | All |
-| Live Teaching | No | No | Yes |
-| Archives | Public only | Public only | All |
+#### Phase 13: Blog & News Section (Latest - Feb 2026)
+- **Backend**: 12 endpoints in `/api/blog/` — CRUD for posts, comments, categories, public + auth endpoints
+- **Publishing**: Faculty, Elders, Admins can create/edit/delete posts. Students can comment only
+- **Visibility**: Authors choose "public" (SEO-visible, no auth) or "members" (auth required)
+- **Content**: Markdown with images/embeds, 7 categories, tags, cover images, auto-generated excerpts/slugs
+- **Comments**: Any auth user can comment. Author/admin can delete comments. Cascade delete on post removal
+- **Public blog**: `/blog` accessible without login. Category filters, "Sign in to see all content" CTA
+- **Landing integration**: "Latest from the Commons" section on landing page showing 3 recent public posts
+- **Sidebar**: Blog nav item with Newspaper icon for all authenticated users
+- **Tests**: iteration_16.json — 25 backend + all frontend = 100% pass rate
 
 ### Key Files
 ```
 /app/backend/
   server.py, database.py, middleware.py, tier_gating.py
-  routes/ (19 route files)
+  routes/ (20 route files including blog.py)
 /app/frontend/src/
-  App.js (22 routes)
-  i18n/ (en.js, es.js, yo.js)
+  App.js (26 routes)
+  pages/ (24 pages: Landing, Login, Dashboard, Courses, CourseDetail, Cohorts, CohortDetail,
+          Spaces, Community, Archives, LiveSessions, LiveRoom, Messages, Settings, Analytics,
+          Subscriptions, SessionRecords, About, SearchResults, Marketing, Blog, BlogPost,
+          BlogEditor, PublicBlog)
   components/
     course/ (CourseHeader, LessonCard, EnrolledStudents, GoogleImportDialog)
     layout/ (Sidebar, AppLayout, SearchBar)
-    OnboardingWizard, UpgradePrompt, LessonContentViewer
-  pages/ (20 pages: Landing, Login, Dashboard, Courses, CourseDetail, Cohorts, CohortDetail, Spaces, Community, Archives, LiveSessions, LiveRoom, Messages, Settings, Analytics, Subscriptions, SessionRecords, About, SearchResults, Marketing)
 ```
 
 ### Backlog
