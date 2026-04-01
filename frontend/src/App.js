@@ -23,6 +23,7 @@ import SessionRecordsPage from './pages/SessionRecordsPage';
 import AboutPage from './pages/AboutPage';
 import SearchResultsPage from './pages/SearchResultsPage';
 import MarketingPage from './pages/MarketingPage';
+import LandingPage from './pages/LandingPage';
 import './App.css';
 
 function App() {
@@ -98,7 +99,8 @@ function App() {
         <BrowserRouter>
           <Routes>
             <Route path="/about" element={<AboutPage />} />
-            <Route path="*" element={<LoginPage onLogin={handleLogin} />} />
+            <Route path="/login" element={<LoginPage onLogin={handleLogin} />} />
+            <Route path="*" element={<LandingPage onLogin={handleLogin} />} />
           </Routes>
         </BrowserRouter>
       </I18nProvider>
