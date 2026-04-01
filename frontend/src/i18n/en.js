@@ -12,6 +12,7 @@ const en = {
   analytics: 'Analytics',
   membership: 'Membership',
   marketing: 'Marketing',
+  blog: 'Blog',
   settings: 'Settings',
   sign_out: 'Sign Out',
 

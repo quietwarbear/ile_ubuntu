@@ -1,15 +1,18 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '../components/ui/button';
 import { Card, CardContent } from '../components/ui/card';
 import {
   BookOpenText, VideoCamera, UsersThree, ShieldCheck, Chats, Archive,
   ChartBar, GlobeSimple, Certificate, Rocket, ArrowRight, Quotes,
-  CaretLeft, CaretRight, Star, Lightning, UsersFour,
+  CaretLeft, CaretRight, Star, Lightning, UsersFour, CalendarBlank, Newspaper,
 } from '@phosphor-icons/react';
+import { Badge } from '../components/ui/badge';
 
 const HERO_IMG = 'https://images.unsplash.com/photo-1694286068561-3233c946e9be?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA1NTJ8MHwxfHNlYXJjaHwxfHxhZnJpY2FuJTIwY29tbXVuaXR5JTIwbGVhcm5pbmclMjB0b2dldGhlcnxlbnwwfHx8fDE3NzUwMDYyNjh8MA&ixlib=rb-4.1.0&q=85';
 const COMMUNITY_IMG = 'https://images.unsplash.com/photo-1695131497431-1ca16e3381e3?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA1NTJ8MHwxfHNlYXJjaHwzfHxhZnJpY2FuJTIwY29tbXVuaXR5JTIwbGVhcm5pbmclMjB0b2dldGhlcnxlbnwwfHx8fDE3NzUwMDYyNjh8MA&ixlib=rb-4.1.0&q=85';
 const LEARNING_IMG = 'https://images.pexels.com/photos/6684506/pexels-photo-6684506.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940';
+const API = process.env.REACT_APP_BACKEND_URL;
 
 const FEATURES = [
   { icon: BookOpenText, title: 'Structured Courses', desc: 'Rich multimedia lessons with progress tracking, file attachments, and completion certificates.' },
@@ -53,14 +56,23 @@ const PILLARS = [
 ];
 
 export default function LandingPage({ onLogin }) {
+  const navigate = useNavigate();
   const [currentTestimonial, setCurrentTestimonial] = useState(0);
   const [visibleFeatures, setVisibleFeatures] = useState(new Set());
+  const [latestPosts, setLatestPosts] = useState([]);
 
   useEffect(() => {
     const timer = setInterval(() => {
       setCurrentTestimonial(prev => (prev + 1) % TESTIMONIALS.length);
     }, 6000);
     return () => clearInterval(timer);
+  }, []);
+
+  useEffect(() => {
+    fetch(`${API}/api/blog/posts/public?limit=3`)
+      .then(r => r.json())
+      .then(d => setLatestPosts(d.posts || []))
+      .catch(() => {});
   }, []);
 
   useEffect(() => {
@@ -90,6 +102,7 @@ export default function LandingPage({ onLogin }) {
             </span>
           </div>
           <div className="flex items-center gap-4">
+            <a href="/blog" className="text-xs text-[#94A3B8] hover:text-[#D4AF37] transition-colors hidden sm:block">Blog</a>
             <a href="/about" className="text-xs text-[#94A3B8] hover:text-[#D4AF37] transition-colors hidden sm:block">About</a>
             <Button
               onClick={onLogin}
@@ -376,6 +389,61 @@ export default function LandingPage({ onLogin }) {
           </div>
         </div>
       </section>
+
+      {/* ===== LATEST FROM THE COMMONS (Blog) ===== */}
+      {latestPosts.length > 0 && (
+        <section className="py-24" data-testid="latest-posts-section">
+          <div className="max-w-6xl mx-auto px-6">
+            <div className="flex items-center justify-between mb-10">
+              <div>
+                <p className="text-xs tracking-[0.25em] uppercase text-[#D4AF37] mb-3">Latest from the Commons</p>
+                <h2 className="text-3xl sm:text-4xl font-light text-[#F8FAFC]" style={{ fontFamily: 'Cormorant Garamond, serif' }}>
+                  Stories & Insights
+                </h2>
+              </div>
+              <Button
+                variant="ghost"
+                onClick={() => navigate('/blog')}
+                className="text-[#D4AF37] hover:text-[#F3E5AB] text-xs"
+                data-testid="view-all-posts-btn"
+              >
+                View All <ArrowRight size={12} className="ml-1" />
+              </Button>
+            </div>
+
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {latestPosts.map(post => (
+                <Card
+                  key={post.id}
+                  className="bg-[#0F172A] border-[#1E293B] hover:border-[#D4AF37]/30 transition-all cursor-pointer group"
+                  onClick={onLogin}
+                  data-testid={`landing-post-${post.slug}`}
+                >
+                  {post.cover_image && (
+                    <div className="h-40 overflow-hidden rounded-t-lg">
+                      <img src={post.cover_image} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                    </div>
+                  )}
+                  <CardContent className={`p-4 ${post.cover_image ? '' : 'pt-5'}`}>
+                    {post.category && (
+                      <Badge className="text-[8px] bg-[#D4AF37]/10 text-[#D4AF37] border-[#D4AF37]/20 mb-2">{post.category}</Badge>
+                    )}
+                    <h3 className="text-sm text-[#F8FAFC] font-medium mb-1 line-clamp-2 group-hover:text-[#D4AF37] transition-colors">{post.title}</h3>
+                    <p className="text-[11px] text-[#94A3B8] line-clamp-2 mb-3">{post.excerpt}</p>
+                    <div className="flex items-center justify-between text-[10px] text-[#64748B]">
+                      <span>{post.author_name}</span>
+                      <span className="flex items-center gap-0.5">
+                        <CalendarBlank size={10} />
+                        {new Date(post.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                      </span>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* ===== FINAL CTA ===== */}
       <section className="py-24" data-testid="final-cta-section">

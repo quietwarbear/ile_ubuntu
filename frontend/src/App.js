@@ -24,6 +24,10 @@ import AboutPage from './pages/AboutPage';
 import SearchResultsPage from './pages/SearchResultsPage';
 import MarketingPage from './pages/MarketingPage';
 import LandingPage from './pages/LandingPage';
+import PublicBlogPage from './pages/PublicBlogPage';
+import BlogPage from './pages/BlogPage';
+import BlogPostPage from './pages/BlogPostPage';
+import BlogEditorPage from './pages/BlogEditorPage';
 import './App.css';
 
 function App() {
@@ -99,6 +103,7 @@ function App() {
         <BrowserRouter>
           <Routes>
             <Route path="/about" element={<AboutPage />} />
+            <Route path="/blog" element={<PublicBlogPage onLogin={handleLogin} />} />
             <Route path="/login" element={<LoginPage onLogin={handleLogin} />} />
             <Route path="*" element={<LandingPage onLogin={handleLogin} />} />
           </Routes>
@@ -135,6 +140,10 @@ function App() {
             <Route path="/settings" element={<SettingsPage user={user} />} />
             <Route path="/search" element={<SearchResultsPage user={user} />} />
             <Route path="/marketing" element={<MarketingPage />} />
+            <Route path="/blog" element={<BlogPage user={user} />} />
+            <Route path="/blog/new" element={<BlogEditorPage user={user} />} />
+            <Route path="/blog/edit/:postId" element={<BlogEditorPage user={user} />} />
+            <Route path="/blog/:slug" element={<BlogPostPage user={user} />} />
             <Route path="/about" element={<AboutPage />} />
             <Route path="*" element={<Navigate to="/dashboard" replace />} />
           </Routes>

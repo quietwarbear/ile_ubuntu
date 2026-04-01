@@ -12,6 +12,7 @@ const es = {
   analytics: 'Analítica',
   membership: 'Membresía',
   marketing: 'Marketing',
+  blog: 'Blog',
   settings: 'Configuración',
   sign_out: 'Cerrar Sesión',
 

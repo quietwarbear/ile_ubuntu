@@ -23,3 +23,5 @@ enrollments_col = db.enrollments
 live_sessions_col = db.live_sessions
 spaces_col = db.spaces
 payment_transactions_col = db.payment_transactions
+blog_posts_col = db.blog_posts
+blog_comments_col = db.blog_comments

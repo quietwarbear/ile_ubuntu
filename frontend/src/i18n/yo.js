@@ -12,6 +12,7 @@ const yo = {
   analytics: 'Ìtúpalẹ̀',
   membership: 'Ọmọ Ẹgbẹ́',
   marketing: 'Marketing',
+  blog: 'Blog',
   settings: 'Ètò',
   sign_out: 'Jáde',
 

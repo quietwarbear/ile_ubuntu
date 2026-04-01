@@ -39,6 +39,7 @@ from routes.email_notifications import router as email_router
 from routes.session_records import router as session_records_router
 from routes.certificates import router as certificates_router
 from routes.push_notifications import router as push_router
+from routes.blog import router as blog_router
 
 app.include_router(auth_router)
 app.include_router(courses_router)
@@ -58,6 +59,7 @@ app.include_router(email_router)
 app.include_router(session_records_router)
 app.include_router(certificates_router)
 app.include_router(push_router)
+app.include_router(blog_router)
 
 
 @app.get("/")
