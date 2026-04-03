@@ -4,6 +4,7 @@ import os
 import uuid
 import urllib.parse
 import requests
+from passlib.context import CryptContext
 from database import users_col, sessions_col
 from middleware import get_current_user
 from models.user import UserRole
@@ -299,6 +300,96 @@ router = APIRouter(prefix="/api/auth", tags=["auth"])
 GOOGLE_CLIENT_ID = os.environ.get("GOOGLE_CLIENT_ID", "")
 GOOGLE_CLIENT_SECRET = os.environ.get("GOOGLE_CLIENT_SECRET", "")
 
+# Password hashing
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
+
+def _create_session(user_id: str) -> dict:
+    """Create a session for a user and return session info."""
+    session_id = str(uuid.uuid4())
+    session_token = str(uuid.uuid4())
+    session_data = {
+        "session_id": session_id,
+        "user_id": user_id,
+        "session_token": session_token,
+        "expires_at": datetime.now(timezone.utc) + timedelta(days=7),
+    }
+    sessions_col.insert_one(session_data)
+    return {"session_id": session_id, "session_token": session_token}
+
+
+@router.post("/register")
+async def register(request: Request):
+    """Register a new user with email and password."""
+    data = await request.json()
+    email = data.get("email", "").strip().lower()
+    password = data.get("password", "")
+    name = data.get("name", "").strip()
+
+    if not email or not password:
+        raise HTTPException(status_code=400, detail="Email and password required")
+    if len(password) < 6:
+        raise HTTPException(status_code=400, detail="Password must be at least 6 characters")
+    if not name:
+        name = email.split("@")[0]
+
+    # Check if user already exists
+    existing = users_col.find_one({"email": email})
+    if existing:
+        raise HTTPException(status_code=409, detail="An account with this email already exists. Try signing in instead.")
+
+    user_data = {
+        "id": str(uuid.uuid4()),
+        "email": email,
+        "name": name,
+        "picture": "",
+        "role": UserRole.STUDENT,
+        "bio": "",
+        "auth_provider": "password",
+        "password_hash": pwd_context.hash(password),
+        "created_at": datetime.now(timezone.utc),
+    }
+    users_col.insert_one(user_data)
+
+    session = _create_session(user_data["id"])
+    return {
+        "success": True,
+        "user_id": user_data["id"],
+        **session,
+    }
+
+
+@router.post("/login")
+async def login(request: Request):
+    """Sign in with email and password."""
+    data = await request.json()
+    email = data.get("email", "").strip().lower()
+    password = data.get("password", "")
+
+    if not email or not password:
+        raise HTTPException(status_code=400, detail="Email and password required")
+
+    user = users_col.find_one({"email": email})
+    if not user:
+        raise HTTPException(status_code=401, detail="Invalid email or password")
+
+    # If user signed up via Google and has no password, tell them
+    if not user.get("password_hash"):
+        raise HTTPException(
+            status_code=401,
+            detail="This account uses Google sign-in. Please use the Google button or set a password in Settings."
+        )
+
+    if not pwd_context.verify(password, user["password_hash"]):
+        raise HTTPException(status_code=401, detail="Invalid email or password")
+
+    session = _create_session(user["id"])
+    return {
+        "success": True,
+        "user_id": user["id"],
+        **session,
+    }
+
 
 @router.get("/google/login-url")
 async def google_login_url(request: Request, redirect_uri: str = None):
@@ -375,6 +466,7 @@ async def google_callback(request: Request):
             "picture": picture,
             "role": UserRole.STUDENT,
             "bio": "",
+            "auth_provider": "google",
             "created_at": datetime.now(timezone.utc),
         }
         users_col.insert_one(user_data)
@@ -387,22 +479,11 @@ async def google_callback(request: Request):
             {"$set": {"picture": picture, "name": name}},
         )
 
-    # Create session
-    session_id = str(uuid.uuid4())
-    session_token = str(uuid.uuid4())
-    session_data = {
-        "session_id": session_id,
-        "user_id": user_id,
-        "session_token": session_token,
-        "expires_at": datetime.now(timezone.utc) + timedelta(days=7),
-    }
-    sessions_col.insert_one(session_data)
-
+    session = _create_session(user_id)
     return {
         "success": True,
         "user_id": user_id,
-        "session_id": session_id,
-        "session_token": session_token,
+        **session,
     }
 
 
