@@ -40,6 +40,7 @@ from routes.session_records import router as session_records_router
 from routes.certificates import router as certificates_router
 from routes.push_notifications import router as push_router
 from routes.blog import router as blog_router
+from routes.revenuecat_webhook import router as revenuecat_router
 
 app.include_router(auth_router)
 app.include_router(courses_router)
@@ -60,6 +61,7 @@ app.include_router(session_records_router)
 app.include_router(certificates_router)
 app.include_router(push_router)
 app.include_router(blog_router)
+app.include_router(revenuecat_router)
 
 
 @app.get("/")
@@ -71,7 +73,7 @@ async def root():
 async def stripe_webhook(request: Request):
     """Handle Stripe webhook events"""
     import os
-    from emergentintegrations.payments.stripe.checkout import StripeCheckout
+    import stripe as stripe_lib
     from database import payment_transactions_col, users_col
     from datetime import datetime, timezone
 
@@ -79,36 +81,44 @@ async def stripe_webhook(request: Request):
     stripe_signature = request.headers.get("Stripe-Signature")
 
     api_key = os.environ.get("STRIPE_API_KEY")
+    webhook_secret = os.environ.get("STRIPE_WEBHOOK_SECRET")
     if not api_key:
         return {"status": "error", "message": "Stripe not configured"}
 
-    host_url = str(request.base_url).rstrip("/")
-    webhook_url = f"{host_url}/api/webhook/stripe"
-    stripe_checkout = StripeCheckout(api_key=api_key, webhook_url=webhook_url)
+    stripe_lib.api_key = api_key
 
     try:
-        webhook_response = await stripe_checkout.handle_webhook(body, stripe_signature)
+        if webhook_secret and stripe_signature:
+            event = stripe_lib.Webhook.construct_event(body, stripe_signature, webhook_secret)
+        else:
+            import json
+            event = json.loads(body)
 
-        if webhook_response.payment_status == "paid":
-            txn = payment_transactions_col.find_one({"session_id": webhook_response.session_id})
-            if txn and txn.get("payment_status") != "paid":
-                payment_transactions_col.update_one(
-                    {"session_id": webhook_response.session_id},
-                    {"$set": {
-                        "payment_status": "paid",
-                        "status": "complete",
-                        "updated_at": datetime.now(timezone.utc).isoformat(),
-                    }},
-                )
-                tier_id = txn.get("tier_id", "scholar")
-                users_col.update_one(
-                    {"id": txn["user_id"]},
-                    {"$set": {
-                        "subscription_tier": tier_id,
-                        "subscription_status": "active",
-                        "subscribed_at": datetime.now(timezone.utc).isoformat(),
-                    }},
-                )
+        if event.get("type") == "checkout.session.completed":
+            session_data = event["data"]["object"]
+            session_id = session_data["id"]
+            payment_status = session_data.get("payment_status", "unpaid")
+
+            if payment_status == "paid":
+                txn = payment_transactions_col.find_one({"session_id": session_id})
+                if txn and txn.get("payment_status") != "paid":
+                    payment_transactions_col.update_one(
+                        {"session_id": session_id},
+                        {"$set": {
+                            "payment_status": "paid",
+                            "status": "complete",
+                            "updated_at": datetime.now(timezone.utc).isoformat(),
+                        }},
+                    )
+                    tier_id = txn.get("tier_id", "scholar")
+                    users_col.update_one(
+                        {"id": txn["user_id"]},
+                        {"$set": {
+                            "subscription_tier": tier_id,
+                            "subscription_status": "active",
+                            "subscribed_at": datetime.now(timezone.utc).isoformat(),
+                        }},
+                    )
 
         return {"status": "ok"}
     except Exception as e:

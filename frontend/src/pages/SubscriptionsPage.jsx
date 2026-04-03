@@ -3,9 +3,15 @@ import { Card, CardContent } from '../components/ui/card';
 import { Badge } from '../components/ui/badge';
 import {
   Crown, Star, ShieldCheck, Check,
-  CreditCard, Sparkle,
+  CreditCard, Sparkle, DeviceMobile, ArrowsClockwise,
 } from '@phosphor-icons/react';
 import { apiGet, apiPost } from '../lib/api';
+import {
+  isNative,
+  TIER_TO_PRODUCT_ID,
+  makePurchase,
+  restorePurchases,
+} from '../lib/revenuecat';
 
 const TIER_ICONS = {
   explorer: Star,
@@ -38,6 +44,10 @@ export default function SubscriptionsPage({ user }) {
   const [checkingPayment, setCheckingPayment] = useState(false);
   const [paymentResult, setPaymentResult] = useState(null);
   const [processingTier, setProcessingTier] = useState(null);
+  const [billingPeriod, setBillingPeriod] = useState('monthly'); // 'monthly' or 'annual'
+  const [restoringPurchases, setRestoringPurchases] = useState(false);
+
+  const onNativePlatform = isNative();
 
   const fetchData = useCallback(async () => {
     try {
@@ -58,13 +68,12 @@ export default function SubscriptionsPage({ user }) {
     fetchData();
   }, [fetchData]);
 
-  // Check for returning from Stripe checkout
+  // Check for returning from Stripe checkout (web only)
   useEffect(() => {
     const sessionId = getUrlParameter('session_id');
     if (sessionId) {
       setCheckingPayment(true);
       pollPaymentStatus(sessionId, 0);
-      // Clean URL
       window.history.replaceState({}, '', window.location.pathname);
     }
   }, []); // eslint-disable-line -- mount-only checkout check
@@ -82,14 +91,13 @@ export default function SubscriptionsPage({ user }) {
       if (res.payment_status === 'paid') {
         setPaymentResult({ status: 'success', message: 'Payment successful! Your membership has been upgraded.' });
         setCheckingPayment(false);
-        fetchData(); // Refresh subscription data
+        fetchData();
         return;
       } else if (res.status === 'expired') {
         setPaymentResult({ status: 'error', message: 'Payment session expired.' });
         setCheckingPayment(false);
         return;
       }
-      // Keep polling
       setTimeout(() => pollPaymentStatus(sessionId, attempts + 1), 2000);
     } catch (e) {
       setPaymentResult({ status: 'error', message: 'Error checking payment.' });
@@ -100,21 +108,76 @@ export default function SubscriptionsPage({ user }) {
   const handleSubscribe = async (tierId) => {
     setProcessingTier(tierId);
     try {
-      const originUrl = window.location.origin;
-      const res = await apiPost('/api/subscriptions/checkout', {
-        tier_id: tierId,
-        origin_url: originUrl,
-      });
-      if (res.free) {
-        fetchData();
-        setPaymentResult({ status: 'success', message: 'Switched to Explorer (free) tier.' });
-      } else if (res.url) {
-        window.location.href = res.url;
+      if (onNativePlatform && tierId !== 'explorer') {
+        // Native in-app purchase via RevenueCat
+        await handleNativePurchase(tierId);
+      } else {
+        // Web Stripe checkout
+        await handleWebCheckout(tierId);
       }
     } catch (e) {
       console.error(e);
+      setPaymentResult({ status: 'error', message: 'Something went wrong. Please try again.' });
     } finally {
       setProcessingTier(null);
+    }
+  };
+
+  const handleWebCheckout = async (tierId) => {
+    const originUrl = window.location.origin;
+    const res = await apiPost('/api/subscriptions/checkout', {
+      tier_id: tierId,
+      billing_period: billingPeriod,
+      origin_url: originUrl,
+    });
+    if (res.free) {
+      fetchData();
+      setPaymentResult({ status: 'success', message: 'Switched to Explorer (free) tier.' });
+    } else if (res.url) {
+      window.location.href = res.url;
+    }
+  };
+
+  const handleNativePurchase = async (tierId) => {
+    const productIds = TIER_TO_PRODUCT_ID[tierId];
+    if (!productIds) {
+      setPaymentResult({ status: 'error', message: 'Product not available.' });
+      return;
+    }
+
+    const productId = billingPeriod === 'annual' ? productIds.annual : productIds.monthly;
+    const result = await makePurchase(productId);
+
+    if (result.success) {
+      // Sync the subscription to our backend
+      await apiPost('/api/subscriptions/activate-mobile', {
+        product_id: productId,
+        tier_id: tierId,
+        platform: navigator.userAgent.includes('iPhone') ? 'ios' : 'android',
+      });
+      setPaymentResult({ status: 'success', message: 'Subscription activated! Welcome aboard.' });
+      fetchData();
+    } else if (result.cancelled) {
+      // User cancelled — no error message needed
+    } else {
+      setPaymentResult({ status: 'error', message: result.message || 'Purchase failed.' });
+    }
+  };
+
+  const handleRestorePurchases = async () => {
+    setRestoringPurchases(true);
+    try {
+      const customerInfo = await restorePurchases();
+      if (customerInfo?.entitlements?.active && Object.keys(customerInfo.entitlements.active).length > 0) {
+        setPaymentResult({ status: 'success', message: 'Purchases restored successfully!' });
+        fetchData();
+      } else {
+        setPaymentResult({ status: 'error', message: 'No active subscriptions found to restore.' });
+      }
+    } catch (e) {
+      setPaymentResult({ status: 'error', message: 'Failed to restore purchases.' });
+    } finally {
+      setRestoringPurchases(false);
     }
   };
 
@@ -127,7 +190,6 @@ export default function SubscriptionsPage({ user }) {
   }
 
   const currentTier = mySub?.tier || 'explorer';
-
   const tierIds = ['explorer', 'scholar', 'elder_circle'];
 
   return (
@@ -178,17 +240,46 @@ export default function SubscriptionsPage({ user }) {
         </CardContent>
       </Card>
 
+      {/* Billing Period Toggle */}
+      <div className="flex items-center justify-center gap-1 bg-[#0F172A] rounded-lg p-1 border border-[#1E293B]">
+        <button
+          onClick={() => setBillingPeriod('monthly')}
+          className={`flex-1 py-2 px-4 rounded-md text-xs font-medium transition-all ${
+            billingPeriod === 'monthly'
+              ? 'bg-[#D4AF37]/20 text-[#D4AF37] border border-[#D4AF37]/30'
+              : 'text-[#94A3B8] hover:text-[#F8FAFC]'
+          }`}
+        >
+          Monthly
+        </button>
+        <button
+          onClick={() => setBillingPeriod('annual')}
+          className={`flex-1 py-2 px-4 rounded-md text-xs font-medium transition-all ${
+            billingPeriod === 'annual'
+              ? 'bg-[#D4AF37]/20 text-[#D4AF37] border border-[#D4AF37]/30'
+              : 'text-[#94A3B8] hover:text-[#F8FAFC]'
+          }`}
+        >
+          Annual
+          <span className="ml-1 text-[9px] text-emerald-400">Save ~17%</span>
+        </button>
+      </div>
+
       {/* Tier Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4" data-testid="tier-cards">
         {tierIds.map((tierId) => {
-          const tier = tiers.find(t => t.name.toLowerCase().replace(/\s+/g, '_') === tierId)
-            || tiers.find(t => t.price === (tierId === 'explorer' ? 0 : tierId === 'scholar' ? 19.99 : 49.99));
+          const tier = tiers.find(t => t.id === tierId)
+            || tiers.find(t => t.name.toLowerCase().replace(/\s+/g, '_') === tierId);
 
           if (!tier) return null;
 
           const Icon = TIER_ICONS[tierId] || Star;
           const isActive = currentTier === tierId;
           const accent = TIER_ACCENT[tierId];
+          const price = billingPeriod === 'annual' ? tier.price_annual : tier.price;
+          const monthlyEquivalent = billingPeriod === 'annual' && tier.price_annual > 0
+            ? (tier.price_annual / 12).toFixed(2)
+            : null;
 
           return (
             <Card key={tierId} className={`bg-[#0F172A] ${isActive ? 'border-[#D4AF37] ring-1 ring-[#D4AF37]/20' : 'border-[#1E293B]'} ${TIER_COLORS[tierId]} relative overflow-hidden`} data-testid={`tier-${tierId}`}>
@@ -202,12 +293,22 @@ export default function SubscriptionsPage({ user }) {
                 <h3 className="text-base text-[#F8FAFC] mt-2" style={{ fontFamily: 'Cormorant Garamond, serif' }}>
                   {tier.name}
                 </h3>
-                <div className="flex items-baseline gap-1 mt-1 mb-2">
+                <div className="flex items-baseline gap-1 mt-1 mb-1">
                   <span className="text-2xl font-bold text-[#F8FAFC]">
-                    {tier.price === 0 ? 'Free' : `$${tier.price}`}
+                    {price === 0 ? 'Free' : `$${price}`}
                   </span>
-                  {tier.price > 0 && <span className="text-[10px] text-[#94A3B8]">/month</span>}
+                  {price > 0 && (
+                    <span className="text-[10px] text-[#94A3B8]">
+                      /{billingPeriod === 'annual' ? 'year' : 'month'}
+                    </span>
+                  )}
                 </div>
+                {monthlyEquivalent && (
+                  <p className="text-[10px] text-emerald-400 mb-2">
+                    ${monthlyEquivalent}/mo equivalent
+                  </p>
+                )}
+                {!monthlyEquivalent && <div className="mb-2" />}
                 <p className="text-xs text-[#94A3B8] mb-3">{tier.description}</p>
                 <ul className="space-y-1.5 mb-4">
                   {tier.features.map((f) => (
@@ -234,8 +335,12 @@ export default function SubscriptionsPage({ user }) {
                       <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
                     ) : (
                       <>
-                        <CreditCard size={14} weight="duotone" />
-                        {tier.price === 0 ? 'Switch to Free' : 'Subscribe'}
+                        {onNativePlatform && tier.price > 0 ? (
+                          <DeviceMobile size={14} weight="duotone" />
+                        ) : (
+                          <CreditCard size={14} weight="duotone" />
+                        )}
+                        {price === 0 ? 'Switch to Free' : 'Subscribe'}
                       </>
                     )}
                   </button>
@@ -245,6 +350,20 @@ export default function SubscriptionsPage({ user }) {
           );
         })}
       </div>
+
+      {/* Restore Purchases (native only) */}
+      {onNativePlatform && (
+        <div className="text-center pt-2">
+          <button
+            onClick={handleRestorePurchases}
+            disabled={restoringPurchases}
+            className="text-xs text-[#94A3B8] hover:text-[#D4AF37] transition-colors flex items-center justify-center gap-1 mx-auto"
+          >
+            <ArrowsClockwise size={12} weight={restoringPurchases ? 'bold' : 'regular'} className={restoringPurchases ? 'animate-spin' : ''} />
+            {restoringPurchases ? 'Restoring...' : 'Restore Purchases'}
+          </button>
+        </div>
+      )}
     </div>
   );
 }

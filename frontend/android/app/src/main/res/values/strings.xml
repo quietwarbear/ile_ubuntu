@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Ile Ubuntu</string>
+    <string name="title_activity_main">Ile Ubuntu</string>
+    <string name="package_name">com.ubuntumarket.ileubuntu</string>
+    <string name="custom_url_scheme">com.ubuntumarket.ileubuntu</string>
+</resources>

@@ -12,7 +12,7 @@ import uuid
 # Use public URL for testing
 BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', '').rstrip('/')
 if not BASE_URL:
-    BASE_URL = "https://living-commons-dev.preview.emergentagent.com"
+    BASE_URL = "http://localhost:8001"
 
 # MongoDB connection for test data setup
 MONGO_URL = os.environ.get('MONGO_URL', 'mongodb://localhost:27017')

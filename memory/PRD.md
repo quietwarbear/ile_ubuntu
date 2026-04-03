@@ -8,7 +8,7 @@ Build a "Living Learning Commons" platform called "The Ile Ubuntu" — courses, 
 - **Frontend**: React, React Router, Tailwind CSS, Shadcn/UI, Phosphor Icons, i18n (EN/ES/YO), PWA
 - **Backend**: FastAPI, modular routes, middleware (Auth + Tier Gating)
 - **Database**: MongoDB
-- **Integrations**: Emergent Auth, Stripe, Resend, Jitsi Meet, Google APIs
+- **Integrations**: Google OAuth, Stripe, Resend, Jitsi Meet, Google APIs, RevenueCat (mobile subscriptions)
 
 ### Phases Complete
 

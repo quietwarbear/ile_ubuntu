@@ -1,6 +1,8 @@
 from fastapi import APIRouter, HTTPException, Request, Depends
 from datetime import datetime, timezone, timedelta
+import os
 import uuid
+import urllib.parse
 import requests
 from database import users_col, sessions_col
 from middleware import get_current_user
@@ -8,31 +10,83 @@ from models.user import UserRole
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 
+GOOGLE_CLIENT_ID = os.environ.get("GOOGLE_CLIENT_ID", "")
+GOOGLE_CLIENT_SECRET = os.environ.get("GOOGLE_CLIENT_SECRET", "")
 
-@router.post("/profile")
-async def create_profile(request: Request):
+
+@router.get("/google/login-url")
+async def google_login_url(request: Request, redirect_uri: str = None):
+    """Generate Google OAuth URL for user login."""
+    if not GOOGLE_CLIENT_ID:
+        raise HTTPException(status_code=500, detail="Google OAuth not configured")
+
+    # Use the provided redirect_uri (frontend callback) or build from request
+    if not redirect_uri:
+        redirect_uri = str(request.base_url).rstrip("/") + "/api/auth/google/callback"
+
+    params = {
+        "client_id": GOOGLE_CLIENT_ID,
+        "redirect_uri": redirect_uri,
+        "scope": "openid email profile",
+        "response_type": "code",
+        "access_type": "offline",
+        "prompt": "select_account",
+    }
+    auth_url = f"https://accounts.google.com/o/oauth2/v2/auth?{urllib.parse.urlencode(params)}"
+    return {"auth_url": auth_url}
+
+
+@router.post("/google/callback")
+async def google_callback(request: Request):
+    """Exchange Google auth code for user session."""
     data = await request.json()
-    session_id = data.get("session_id")
-    if not session_id:
-        raise HTTPException(status_code=400, detail="Session ID required")
+    code = data.get("code")
+    redirect_uri = data.get("redirect_uri")
 
-    headers = {"X-Session-ID": session_id}
-    response = requests.get(
-        "https://demobackend.emergentagent.com/auth/v1/env/oauth/session-data",
-        headers=headers,
+    if not code:
+        raise HTTPException(status_code=400, detail="Authorization code required")
+
+    # Exchange code for tokens
+    token_response = requests.post(
+        "https://oauth2.googleapis.com/token",
+        data={
+            "client_id": GOOGLE_CLIENT_ID,
+            "client_secret": GOOGLE_CLIENT_SECRET,
+            "code": code,
+            "grant_type": "authorization_code",
+            "redirect_uri": redirect_uri,
+        },
     )
-    if response.status_code != 200:
-        raise HTTPException(status_code=401, detail="Invalid session")
 
-    auth_data = response.json()
-    existing_user = users_col.find_one({"email": auth_data["email"]})
+    if token_response.status_code != 200:
+        raise HTTPException(status_code=401, detail="Failed to exchange authorization code")
+
+    tokens = token_response.json()
+    access_token = tokens.get("access_token")
+
+    # Get user info from Google
+    userinfo_response = requests.get(
+        "https://www.googleapis.com/oauth2/v2/userinfo",
+        headers={"Authorization": f"Bearer {access_token}"},
+    )
+
+    if userinfo_response.status_code != 200:
+        raise HTTPException(status_code=401, detail="Failed to get user info")
+
+    google_user = userinfo_response.json()
+    email = google_user.get("email")
+    name = google_user.get("name", email)
+    picture = google_user.get("picture", "")
+
+    # Find or create user
+    existing_user = users_col.find_one({"email": email})
 
     if not existing_user:
         user_data = {
             "id": str(uuid.uuid4()),
-            "email": auth_data["email"],
-            "name": auth_data["name"],
-            "picture": auth_data["picture"],
+            "email": email,
+            "name": name,
+            "picture": picture,
             "role": UserRole.STUDENT,
             "bio": "",
             "created_at": datetime.now(timezone.utc),
@@ -41,22 +95,49 @@ async def create_profile(request: Request):
         user_id = user_data["id"]
     else:
         user_id = existing_user["id"]
+        # Update picture/name if changed
+        users_col.update_one(
+            {"id": user_id},
+            {"$set": {"picture": picture, "name": name}},
+        )
 
+    # Create session
+    session_id = str(uuid.uuid4())
+    session_token = str(uuid.uuid4())
     session_data = {
         "session_id": session_id,
         "user_id": user_id,
-        "session_token": auth_data["session_token"],
+        "session_token": session_token,
         "expires_at": datetime.now(timezone.utc) + timedelta(days=7),
     }
-    sessions_col.update_one(
-        {"session_id": session_id}, {"$set": session_data}, upsert=True
-    )
+    sessions_col.insert_one(session_data)
 
     return {
         "success": True,
         "user_id": user_id,
-        "session_token": auth_data["session_token"],
+        "session_id": session_id,
+        "session_token": session_token,
     }
+
+
+@router.post("/profile")
+async def create_profile(request: Request):
+    """Legacy profile endpoint — kept for backward compatibility."""
+    data = await request.json()
+    session_id = data.get("session_id")
+    if not session_id:
+        raise HTTPException(status_code=400, detail="Session ID required")
+
+    # Check if this is already a valid session (from Google OAuth flow)
+    session = sessions_col.find_one({"session_id": session_id})
+    if session:
+        return {
+            "success": True,
+            "user_id": session["user_id"],
+            "session_token": session.get("session_token", session_id),
+        }
+
+    raise HTTPException(status_code=401, detail="Invalid session")
 
 
 @router.get("/me")

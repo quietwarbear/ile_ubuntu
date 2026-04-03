@@ -6,7 +6,7 @@ import os
 from datetime import datetime
 
 class IleUbuntuAPITester:
-    def __init__(self, base_url="https://living-commons-dev.preview.emergentagent.com"):
+    def __init__(self, base_url="http://localhost:8001"):
         self.base_url = base_url
         self.session_id = None
         self.user_id = None

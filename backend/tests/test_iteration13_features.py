@@ -15,7 +15,7 @@ from dotenv import load_dotenv
 # Load environment variables
 load_dotenv()
 
-BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://living-commons-dev.preview.emergentagent.com').rstrip('/')
+BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'http://localhost:8001').rstrip('/')
 
 # MongoDB connection using same config as server
 from pymongo import MongoClient

@@ -1,8 +1,8 @@
 # Test Credentials for The Ile Ubuntu
 
-## Emergent Auth
-- Email: quiet927@gmail.com
-- Auth Method: Emergent Google OAuth (via https://auth.emergentagent.com)
+## Google OAuth
+- Auth Method: Google OAuth (direct via Google APIs)
+- Requires GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET env vars
 
 ## Roles
 - Default new user role: student

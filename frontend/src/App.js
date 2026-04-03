@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { getCookie, setCookie, apiPost, apiGet } from './lib/api';
 import { I18nProvider } from './i18n';
+import { initializeRevenueCat, syncRevenueCatUser, logOutRevenueCat } from './lib/revenuecat';
+import { applySafeAreaStyles, initializeNativePlugins } from './lib/platform';
 import AppLayout from './components/layout/AppLayout';
 import OnboardingWizard from './components/OnboardingWizard';
 import LoginPage from './pages/LoginPage';
@@ -36,6 +38,11 @@ function App() {
   const [showOnboarding, setShowOnboarding] = useState(false);
 
   useEffect(() => {
+    // Initialize native platform (Capacitor plugins, safe areas)
+    applySafeAreaStyles();
+    initializeNativePlugins();
+    initializeRevenueCat();
+
     checkAuth();
     handleAuthCallback();
   }, []);
@@ -46,6 +53,8 @@ function App() {
       try {
         const userData = await apiGet('/api/auth/me');
         setUser(userData);
+        // Sync RevenueCat with authenticated user
+        syncRevenueCatUser(userData.id);
         if (!userData.onboarding_complete) {
           setShowOnboarding(true);
         }
@@ -57,6 +66,33 @@ function App() {
   };
 
   const handleAuthCallback = async () => {
+    // Handle Google OAuth callback with ?code= parameter
+    const params = new URLSearchParams(window.location.search);
+    const code = params.get('code');
+    if (code) {
+      try {
+        const redirectUri = `${window.location.origin}/`;
+        const result = await apiPost('/api/auth/google/callback', {
+          code,
+          redirect_uri: redirectUri,
+        });
+        if (result.session_id) {
+          setCookie('session_id', result.session_id, 7);
+          // Clean up URL params
+          window.history.replaceState({}, '', '/');
+          const userData = await apiGet('/api/auth/me');
+          setUser(userData);
+          syncRevenueCatUser(userData.id);
+          if (!userData.onboarding_complete) {
+            setShowOnboarding(true);
+          }
+        }
+      } catch (e) {
+        console.error('Auth callback failed:', e);
+      }
+    }
+
+    // Legacy: handle hash-based session_id (backward compat)
     const hash = window.location.hash;
     if (hash && hash.includes('session_id=')) {
       const sessionId = hash.split('session_id=')[1];
@@ -66,21 +102,30 @@ function App() {
         window.location.hash = '';
         const userData = await apiGet('/api/auth/me');
         setUser(userData);
+        syncRevenueCatUser(userData.id);
         if (!userData.onboarding_complete) {
           setShowOnboarding(true);
         }
       } catch (e) {
-        console.error('Auth callback failed:', e);
+        console.error('Legacy auth callback failed:', e);
       }
     }
   };
 
-  const handleLogin = () => {
-    const currentUrl = window.location.origin;
-    window.location.href = `https://auth.emergentagent.com/?redirect=${encodeURIComponent(currentUrl)}`;
+  const handleLogin = async () => {
+    try {
+      const redirectUri = `${window.location.origin}/`;
+      const data = await apiGet(`/api/auth/google/login-url?redirect_uri=${encodeURIComponent(redirectUri)}`);
+      if (data.auth_url) {
+        window.location.href = data.auth_url;
+      }
+    } catch (e) {
+      console.error('Failed to get login URL:', e);
+    }
   };
 
   const handleLogout = () => {
+    logOutRevenueCat();
     setUser(null);
   };
 
