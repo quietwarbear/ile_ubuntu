@@ -112,6 +112,23 @@ function App() {
     }
   };
 
+  const handlePasswordLogin = async (data) => {
+    // Called by LoginPage after successful email/password login or register
+    if (data.session_id) {
+      setCookie('session_id', data.session_id, 7);
+      try {
+        const userData = await apiGet('/api/auth/me');
+        setUser(userData);
+        syncRevenueCatUser(userData.id);
+        if (!userData.onboarding_complete) {
+          setShowOnboarding(true);
+        }
+      } catch (e) {
+        console.error('Password login failed:', e);
+      }
+    }
+  };
+
   const handleLogin = async () => {
     try {
       const redirectUri = `${window.location.origin}/`;
@@ -149,7 +166,7 @@ function App() {
           <Routes>
             <Route path="/about" element={<AboutPage />} />
             <Route path="/blog" element={<PublicBlogPage onLogin={handleLogin} />} />
-            <Route path="/login" element={<LoginPage onLogin={handleLogin} />} />
+            <Route path="/login" element={<LoginPage onLogin={handleLogin} onPasswordLogin={handlePasswordLogin} />} />
             <Route path="*" element={<LandingPage onLogin={handleLogin} />} />
           </Routes>
         </BrowserRouter>
