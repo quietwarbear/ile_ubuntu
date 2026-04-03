@@ -38,7 +38,7 @@ export default function LoginPage({ onLogin, onPasswordLogin }) {
         return;
       }
 
-      // Success â store session and notify parent
+      // Success — store session and notify parent
       if (onPasswordLogin) {
         onPasswordLogin(data);
       }
@@ -73,7 +73,7 @@ export default function LoginPage({ onLogin, onPasswordLogin }) {
             Community Grows
           </h2>
           <p className="text-sm text-[#94A3B8] leading-relaxed">
-            Courses, cohorts, community, and archives â woven into one coherent
+            Courses, cohorts, community, and archives — woven into one coherent
             environment for learning that honors tradition and embraces the future.
           </p>
         </div>
@@ -209,7 +209,7 @@ export default function LoginPage({ onLogin, onPasswordLogin }) {
           {/* Mobile-only tagline */}
           <div className="lg:hidden text-center">
             <p className="text-sm text-[#94A3B8] leading-relaxed">
-              Courses, cohorts, community, and archives â woven into one coherent
+              Courses, cohorts, community, and archives — woven into one coherent
               environment for transformative learning.
             </p>
           </div>
