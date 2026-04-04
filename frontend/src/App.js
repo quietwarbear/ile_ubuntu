@@ -30,6 +30,9 @@ import PublicBlogPage from './pages/PublicBlogPage';
 import BlogPage from './pages/BlogPage';
 import BlogPostPage from './pages/BlogPostPage';
 import BlogEditorPage from './pages/BlogEditorPage';
+import TeacherDashboardPage from './pages/TeacherDashboardPage';
+import PrivacyPolicyPage from './pages/PrivacyPolicyPage';
+import TermsPage from './pages/TermsPage';
 import './App.css';
 
 function App() {
@@ -165,6 +168,8 @@ function App() {
         <BrowserRouter>
           <Routes>
             <Route path="/about" element={<AboutPage />} />
+            <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
+            <Route path="/terms" element={<TermsPage />} />
             <Route path="/blog" element={<PublicBlogPage onLogin={handleLogin} />} />
             <Route path="/login" element={<LoginPage onLogin={handleLogin} onPasswordLogin={handlePasswordLogin} />} />
             <Route path="*" element={<LandingPage onLogin={handleLogin} />} />
@@ -206,7 +211,10 @@ function App() {
             <Route path="/blog/new" element={<BlogEditorPage user={user} />} />
             <Route path="/blog/edit/:postId" element={<BlogEditorPage user={user} />} />
             <Route path="/blog/:slug" element={<BlogPostPage user={user} />} />
+            <Route path="/teacher-dashboard" element={<TeacherDashboardPage user={user} />} />
             <Route path="/about" element={<AboutPage />} />
+            <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
+            <Route path="/terms" element={<TermsPage />} />
             <Route path="*" element={<Navigate to="/dashboard" replace />} />
           </Routes>
         </AppLayout>
