@@ -95,6 +95,26 @@ def _validate_mobile_redirect_uri(redirect_uri: str) -> str:
     return redirect_uri
 
 
+def _external_base_url(request: Request) -> str:
+    """
+    Build the public-facing base URL behind a proxy like Railway.
+
+    Railway terminates TLS before forwarding to the app, so `request.base_url`
+    can look like `http://...` unless we honor forwarded headers.
+    """
+    forwarded_proto = (request.headers.get("x-forwarded-proto") or "").split(",")[0].strip()
+    forwarded_host = (request.headers.get("x-forwarded-host") or "").split(",")[0].strip()
+
+    if forwarded_proto and forwarded_host:
+        return f"{forwarded_proto}://{forwarded_host}"
+
+    public_base_url = os.environ.get("PUBLIC_BASE_URL", "").strip().rstrip("/")
+    if public_base_url:
+        return public_base_url
+
+    return str(request.base_url).rstrip("/")
+
+
 @router.post("/register")
 async def register(request: Request):
     """Register a new user with email and password."""
@@ -225,7 +245,7 @@ async def google_login_start(request: Request, redirect_uri: str = DEFAULT_MOBIL
         raise HTTPException(status_code=500, detail="Google OAuth is not configured.")
 
     app_redirect_uri = _validate_mobile_redirect_uri(redirect_uri)
-    oauth_callback_uri = str(request.base_url).rstrip("/") + "/api/auth/google/callback"
+    oauth_callback_uri = _external_base_url(request) + "/api/auth/google/callback"
 
     params = {
         "client_id": GOOGLE_CLIENT_ID,
@@ -250,7 +270,7 @@ async def google_login_callback(request: Request, code: str = None, state: str =
     if not code:
         return RedirectResponse(url=_append_query_value(app_redirect_uri, "google_error", "no_code"))
 
-    oauth_callback_uri = str(request.base_url).rstrip("/") + "/api/auth/google/callback"
+    oauth_callback_uri = _external_base_url(request) + "/api/auth/google/callback"
 
     token_response = requests.post(
         "https://oauth2.googleapis.com/token",
