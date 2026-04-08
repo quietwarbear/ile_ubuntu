@@ -7,6 +7,7 @@ import {
   Bell, Certificate, UsersFour, Rocket, Check, DownloadSimple,
 } from '@phosphor-icons/react';
 import { useNavigate } from 'react-router-dom';
+import BrandMark from '../components/brand/BrandMark';
 
 const BRAND = {
   primary: '#D4AF37',
@@ -215,7 +216,7 @@ export default function MarketingPage() {
           <CardContent className="p-5">
             <div className="flex items-center gap-4 mb-4">
               <div className="w-14 h-14 rounded-full bg-[#D4AF37]/10 border border-[#D4AF37]/30 flex items-center justify-center flex-shrink-0">
-                <span className="text-3xl text-[#D4AF37]">&#9775;</span>
+                <BrandMark className="w-10 h-10 object-contain" />
               </div>
               <div>
                 <h3 className="text-lg text-[#F8FAFC]" style={{ fontFamily: 'Cormorant Garamond, serif' }}>The Ile Ubuntu</h3>

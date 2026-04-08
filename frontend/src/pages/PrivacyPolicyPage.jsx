@@ -1,5 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import BrandMark from '../components/brand/BrandMark';
 
 export default function PrivacyPolicyPage() {
   const navigate = useNavigate();
@@ -16,7 +17,7 @@ export default function PrivacyPolicyPage() {
         </button>
         <div className="flex items-center gap-3 mb-6">
           <div className="w-10 h-10 rounded-full bg-[#D4AF37]/10 border border-[#D4AF37]/30 flex items-center justify-center">
-            <span className="text-xl text-[#D4AF37]">&#9775;</span>
+            <BrandMark className="w-6 h-6 object-contain" />
           </div>
           <span className="text-[#D4AF37] text-sm tracking-[0.15em] uppercase" style={{ fontFamily: 'Cormorant Garamond, serif' }}>
             The Ile Ubuntu
@@ -72,9 +73,10 @@ export default function PrivacyPolicyPage() {
 
             <h3 className="text-lg text-[#E2E8F0] mt-4 mb-2">Payment Information</h3>
             <p>
-              Subscription payments are processed by Apple (via the App Store for iOS) and Stripe (for web).
-              We do not store your credit card number or full payment details. We receive only transaction
-              confirmations, subscription status, and billing identifiers from these payment processors.
+              Subscription payments are processed by Apple (via the App Store for iOS), Google (via Google Play
+              for Android), and Stripe (for web). We do not store your credit card number or full payment details.
+              We receive only transaction confirmations, subscription status, and billing identifiers from these
+              payment processors.
             </p>
           </section>
 
@@ -149,10 +151,11 @@ export default function PrivacyPolicyPage() {
           <section>
             <h2 className="text-xl text-[#F8FAFC] mb-3" style={{ fontFamily: 'Cormorant Garamond, serif' }}>9. Third-Party Services</h2>
             <p>
-              Our Service integrates with third-party services including Google (authentication), Apple App Store
-              (subscriptions and payments), Stripe (web payments), RevenueCat (subscription management), Jitsi
-              (video conferencing), and Resend (email). Each of these services has its own privacy policy governing
-              the use of your information. We encourage you to review their policies.
+              Our Service integrates with third-party services including Google (authentication and Google Play
+              payments), Apple App Store (iOS subscriptions and payments), Stripe (web payments), RevenueCat
+              (subscription management), Jitsi (video conferencing), and Resend (email). Each of these services
+              has its own privacy policy governing the use of your information. We encourage you to review their
+              policies.
             </p>
           </section>
 

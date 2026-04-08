@@ -29,6 +29,14 @@ ALLOWED_MOBILE_GOOGLE_SCHEMES = {
     ).split(",")
     if scheme.strip()
 }
+ALLOWED_WEB_REDIRECT_ORIGINS = {
+    origin.strip().rstrip("/")
+    for origin in os.environ.get(
+        "GOOGLE_WEB_REDIRECT_ORIGINS",
+        "https://www.ile-ubuntu.org,https://ile-ubuntu.org",
+    ).split(",")
+    if origin.strip()
+}
 
 # Password hashing
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -93,6 +101,22 @@ def _validate_mobile_redirect_uri(redirect_uri: str) -> str:
     if not parsed.netloc:
         raise HTTPException(status_code=400, detail="Mobile redirect URI must include a host.")
     return redirect_uri
+
+
+def _validate_redirect_uri(redirect_uri: str) -> str:
+    """Validate a redirect URI for both mobile (custom scheme) and web (HTTPS)."""
+    parsed = urllib.parse.urlparse(redirect_uri)
+    # Allow mobile custom schemes
+    if parsed.scheme in ALLOWED_MOBILE_GOOGLE_SCHEMES:
+        if not parsed.netloc:
+            raise HTTPException(status_code=400, detail="Mobile redirect URI must include a host.")
+        return redirect_uri
+    # Allow whitelisted web origins
+    if parsed.scheme == "https":
+        origin = f"{parsed.scheme}://{parsed.netloc}".rstrip("/")
+        if origin in ALLOWED_WEB_REDIRECT_ORIGINS:
+            return redirect_uri
+    raise HTTPException(status_code=400, detail="Unsupported redirect URI.")
 
 
 def _external_base_url(request: Request) -> str:
@@ -233,6 +257,34 @@ async def google_session_login(payload: GoogleSessionRequest):
     }
 
 
+@router.get("/google/login-url")
+async def google_login_url(request: Request, redirect_uri: str = "https://www.ile-ubuntu.org/"):
+    """
+    Return the Google OAuth URL as JSON for the web frontend.
+
+    The web frontend fetches this URL, then redirects the browser to Google.
+    After auth, Google redirects back to our /api/auth/google/callback which
+    then redirects the user back to the web app with the session_id.
+    """
+    if not GOOGLE_CLIENT_ID or not GOOGLE_CLIENT_SECRET:
+        raise HTTPException(status_code=500, detail="Google OAuth is not configured.")
+
+    app_redirect_uri = _validate_redirect_uri(redirect_uri)
+    oauth_callback_uri = _external_base_url(request) + "/api/auth/google/callback"
+
+    params = {
+        "client_id": GOOGLE_CLIENT_ID,
+        "redirect_uri": oauth_callback_uri,
+        "scope": "openid email profile",
+        "response_type": "code",
+        "access_type": "online",
+        "prompt": "select_account",
+        "state": app_redirect_uri,
+    }
+    auth_url = f"https://accounts.google.com/o/oauth2/v2/auth?{urllib.parse.urlencode(params)}"
+    return {"url": auth_url}
+
+
 @router.get("/google/start")
 async def google_login_start(request: Request, redirect_uri: str = DEFAULT_MOBILE_GOOGLE_REDIRECT):
     """
@@ -262,7 +314,7 @@ async def google_login_start(request: Request, redirect_uri: str = DEFAULT_MOBIL
 
 @router.get("/google/callback")
 async def google_login_callback(request: Request, code: str = None, state: str = None, error: str = None):
-    app_redirect_uri = _validate_mobile_redirect_uri(state or DEFAULT_MOBILE_GOOGLE_REDIRECT)
+    app_redirect_uri = _validate_redirect_uri(state or DEFAULT_MOBILE_GOOGLE_REDIRECT)
 
     if error:
         return RedirectResponse(url=_append_query_value(app_redirect_uri, "google_error", error))

@@ -1,6 +1,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useI18n } from '../i18n';
+import BrandMark from '../components/brand/BrandMark';
 import {
   BookOpenText, UsersThree, VideoCamera, ShieldCheck, Chats, Archive,
   ChartBar, MagnifyingGlass, CreditCard, Envelope, FilmSlate,
@@ -50,7 +51,7 @@ export default function AboutPage() {
         }} />
         <div className="max-w-4xl mx-auto px-6 py-20 text-center relative">
           <div className="w-20 h-20 rounded-full bg-[#D4AF37]/10 border border-[#D4AF37]/30 flex items-center justify-center mx-auto mb-6">
-            <span className="text-4xl text-[#D4AF37]">&#9775;</span>
+            <BrandMark className="w-12 h-12 object-contain" />
           </div>
           <h1 className="text-4xl sm:text-5xl text-[#F8FAFC] mb-3" style={{ fontFamily: 'Cormorant Garamond, serif' }}>
             The Ile Ubuntu

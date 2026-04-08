@@ -1,5 +1,6 @@
 import React from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import BrandMark from '../components/brand/BrandMark';
 
 export default function TermsPage() {
   const navigate = useNavigate();
@@ -16,7 +17,7 @@ export default function TermsPage() {
         </button>
         <div className="flex items-center gap-3 mb-6">
           <div className="w-10 h-10 rounded-full bg-[#D4AF37]/10 border border-[#D4AF37]/30 flex items-center justify-center">
-            <span className="text-xl text-[#D4AF37]">&#9775;</span>
+            <BrandMark className="w-6 h-6 object-contain" />
           </div>
           <span className="text-[#D4AF37] text-sm tracking-[0.15em] uppercase" style={{ fontFamily: 'Cormorant Garamond, serif' }}>
             The Ile Ubuntu
@@ -108,7 +109,8 @@ export default function TermsPage() {
             <ul className="list-disc pl-6 space-y-2 text-[#94A3B8] mt-3">
               <li>
                 <strong className="text-[#E2E8F0]">Payment:</strong> Payment is charged to your Apple ID account
-                (for iOS) or your payment method on file (for web via Stripe) at confirmation of purchase.
+                (for iOS), your Google Play account (for Android), or your payment method on file (for web via
+                Stripe) at confirmation of purchase.
               </li>
               <li>
                 <strong className="text-[#E2E8F0]">Auto-Renewal:</strong> Subscriptions automatically renew unless
@@ -117,8 +119,9 @@ export default function TermsPage() {
               </li>
               <li>
                 <strong className="text-[#E2E8F0]">Managing Subscriptions:</strong> You can manage and cancel your
-                subscription at any time. On iOS, go to Settings &gt; [Your Name] &gt; Subscriptions on your device.
-                On web, manage your subscription through your account settings or contact us at support@ubuntu-village.org.
+                subscription at any time. On iOS, go to Settings &gt; [Your Name] &gt; Subscriptions. On Android,
+                go to Google Play Store &gt; Menu &gt; Subscriptions. On web, manage your subscription through
+                your account settings or contact us at support@ubuntu-village.org.
               </li>
               <li>
                 <strong className="text-[#E2E8F0]">Cancellation:</strong> If you cancel your subscription, you will

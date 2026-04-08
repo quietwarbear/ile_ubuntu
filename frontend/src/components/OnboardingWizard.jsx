@@ -6,6 +6,7 @@ import {
 } from '@phosphor-icons/react';
 import { apiGet, apiPost, apiPut } from '../lib/api';
 import { useI18n } from '../i18n';
+import BrandMark from './brand/BrandMark';
 
 const INTEREST_TAGS = [
   'African Studies', 'History', 'Language & Culture', 'Philosophy',
@@ -92,7 +93,7 @@ export default function OnboardingWizard({ user, onComplete }) {
           {currentStep === 'welcome' && (
             <div className="flex-1 flex flex-col items-center justify-center text-center animate-fade-in" data-testid="onboarding-step-welcome">
               <div className="w-16 h-16 rounded-full bg-[#D4AF37]/10 border border-[#D4AF37]/30 flex items-center justify-center mb-4">
-                <span className="text-3xl text-[#D4AF37]">&#9775;</span>
+                <BrandMark className="w-10 h-10 object-contain" />
               </div>
               <h1 className="text-2xl text-[#F8FAFC] mb-2" style={{ fontFamily: 'Cormorant Garamond, serif' }}>
                 {t('onboard_welcome')}
