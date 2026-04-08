@@ -262,27 +262,89 @@ async def google_login_url(request: Request, redirect_uri: str = "https://www.il
     """
     Return the Google OAuth URL as JSON for the web frontend.
 
-    The web frontend fetches this URL, then redirects the browser to Google.
-    After auth, Google redirects back to our /api/auth/google/callback which
-    then redirects the user back to the web app with the session_id.
+    Flow: frontend fetches this URL → redirects browser to Google →
+    Google redirects back to the FRONTEND with ?code= → frontend
+    POSTs code to /api/auth/google/callback → backend exchanges code,
+    returns session JSON.
     """
     if not GOOGLE_CLIENT_ID or not GOOGLE_CLIENT_SECRET:
         raise HTTPException(status_code=500, detail="Google OAuth is not configured.")
 
     app_redirect_uri = _validate_redirect_uri(redirect_uri)
-    oauth_callback_uri = _external_base_url(request) + "/api/auth/google/callback"
 
     params = {
         "client_id": GOOGLE_CLIENT_ID,
-        "redirect_uri": oauth_callback_uri,
+        "redirect_uri": app_redirect_uri,
         "scope": "openid email profile",
         "response_type": "code",
         "access_type": "online",
         "prompt": "select_account",
-        "state": app_redirect_uri,
     }
     auth_url = f"https://accounts.google.com/o/oauth2/v2/auth?{urllib.parse.urlencode(params)}"
-    return {"url": auth_url}
+    return {"auth_url": auth_url}
+
+
+class GoogleCallbackRequest(BaseModel):
+    code: str
+    redirect_uri: str
+
+
+@router.post("/google/callback")
+async def google_callback_web(payload: GoogleCallbackRequest):
+    """
+    Web frontend posts the Google auth code here after the redirect.
+
+    Exchanges the code for tokens, upserts the user, creates a session.
+    """
+    if not GOOGLE_CLIENT_ID or not GOOGLE_CLIENT_SECRET:
+        raise HTTPException(status_code=500, detail="Google OAuth is not configured.")
+
+    _validate_redirect_uri(payload.redirect_uri)
+
+    token_response = requests.post(
+        "https://oauth2.googleapis.com/token",
+        data={
+            "client_id": GOOGLE_CLIENT_ID,
+            "client_secret": GOOGLE_CLIENT_SECRET,
+            "code": payload.code,
+            "grant_type": "authorization_code",
+            "redirect_uri": payload.redirect_uri,
+        },
+        timeout=20,
+    )
+
+    if token_response.status_code != 200:
+        try:
+            error_detail = token_response.json().get("error_description", "token_exchange_failed")
+        except Exception:
+            error_detail = "token_exchange_failed"
+        raise HTTPException(status_code=400, detail=error_detail)
+
+    tokens = token_response.json()
+    id_token_value = tokens.get("id_token")
+    if not id_token_value:
+        raise HTTPException(status_code=400, detail="Missing id_token from Google.")
+
+    try:
+        idinfo = id_token.verify_oauth2_token(
+            id_token_value,
+            GoogleRequest(),
+            GOOGLE_CLIENT_ID,
+        )
+        user_id = _upsert_google_user({
+            "email": idinfo.get("email", ""),
+            "name": idinfo.get("name", ""),
+            "picture": idinfo.get("picture", ""),
+        })
+    except Exception:
+        raise HTTPException(status_code=400, detail="Google token validation failed.")
+
+    session = _create_session(user_id)
+    return {
+        "success": True,
+        "user_id": user_id,
+        **session,
+    }
 
 
 @router.get("/google/start")
