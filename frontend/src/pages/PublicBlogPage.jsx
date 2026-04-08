@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import BrandMark from '../components/brand/BrandMark';
 import { Card, CardContent } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
@@ -49,7 +50,7 @@ export default function PublicBlogPage({ onLogin }) {
         <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3 cursor-pointer" onClick={() => navigate('/')}>
             <div className="w-9 h-9 rounded-md bg-[#D4AF37]/10 border border-[#D4AF37]/20 flex items-center justify-center">
-              <span className="text-[#D4AF37] text-lg" style={{ fontFamily: 'Cormorant Garamond, serif' }}>&#9765;</span>
+              <BrandMark className="w-6 h-6 object-contain" />
             </div>
             <span className="text-[#F8FAFC] text-lg tracking-wide" style={{ fontFamily: 'Cormorant Garamond, serif' }}>
               The Ile Ubuntu

@@ -95,7 +95,7 @@ export default function LandingPage({ onLogin }) {
         <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-md bg-[#D4AF37]/10 border border-[#D4AF37]/20 flex items-center justify-center">
-              <span className="text-[#D4AF37] text-lg" style={{ fontFamily: 'Cormorant Garamond, serif' }}>&#9765;</span>
+              <BrandMark className="w-6 h-6 object-contain" />
             </div>
             <span className="text-[#F8FAFC] text-lg tracking-wide" style={{ fontFamily: 'Cormorant Garamond, serif' }}>
               The Ile Ubuntu
@@ -449,7 +449,7 @@ export default function LandingPage({ onLogin }) {
       <section className="py-24" data-testid="final-cta-section">
         <div className="max-w-3xl mx-auto px-6 text-center">
           <div className="w-16 h-16 mx-auto rounded-lg bg-[#D4AF37]/10 border border-[#D4AF37]/20 flex items-center justify-center mb-8">
-            <span className="text-[#D4AF37] text-3xl" style={{ fontFamily: 'Cormorant Garamond, serif' }}>&#9765;</span>
+            <BrandMark className="w-10 h-10 object-contain" />
           </div>
 
           <h2
@@ -484,7 +484,7 @@ export default function LandingPage({ onLogin }) {
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
             <div className="flex items-center gap-3">
               <div className="w-8 h-8 rounded-md bg-[#D4AF37]/10 border border-[#D4AF37]/20 flex items-center justify-center">
-                <span className="text-[#D4AF37] text-sm" style={{ fontFamily: 'Cormorant Garamond, serif' }}>&#9765;</span>
+                <BrandMark className="w-5 h-5 object-contain" />
               </div>
               <span className="text-sm text-[#94A3B8]" style={{ fontFamily: 'Cormorant Garamond, serif' }}>
                 The Ile Ubuntu

@@ -5,6 +5,7 @@ import { I18nProvider } from './i18n';
 import { initializeRevenueCat, syncRevenueCatUser, logOutRevenueCat } from './lib/revenuecat';
 import { applySafeAreaStyles, initializeNativePlugins } from './lib/platform';
 import AppLayout from './components/layout/AppLayout';
+import BrandMark from './components/brand/BrandMark';
 import OnboardingWizard from './components/OnboardingWizard';
 import LoginPage from './pages/LoginPage';
 import DashboardPage from './pages/DashboardPage';
@@ -154,7 +155,7 @@ function App() {
       <div className="min-h-screen bg-[#050814] flex items-center justify-center">
         <div className="text-center">
           <div className="w-12 h-12 mx-auto rounded-lg bg-[#D4AF37]/10 border border-[#D4AF37]/20 flex items-center justify-center mb-4 animate-pulse">
-            <span className="text-[#D4AF37] text-2xl" style={{ fontFamily: 'Cormorant Garamond, serif' }}>&#9765;</span>
+            <BrandMark className="w-8 h-8 object-contain" />
           </div>
           <p className="text-xs tracking-[0.2em] uppercase text-[#94A3B8]">Loading...</p>
         </div>

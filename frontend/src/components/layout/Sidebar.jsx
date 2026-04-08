@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
+import BrandMark from '../brand/BrandMark';
 import {
   House,
   BookOpenText,
@@ -74,7 +75,7 @@ export default function Sidebar({ user, onLogout }) {
       <div className="px-5 py-6 border-b border-[#1E293B]">
         <div className="flex items-center gap-3">
           <div className="w-9 h-9 rounded-md bg-[#D4AF37]/10 flex items-center justify-center">
-            <span className="text-[#D4AF37] font-bold text-lg" style={{ fontFamily: 'Cormorant Garamond, serif' }}>&#9765;</span>
+            <BrandMark className="w-6 h-6 object-contain" />
           </div>
           <div>
             <h1 className="text-base font-semibold text-[#F8FAFC]" style={{ fontFamily: 'Cormorant Garamond, serif' }}>

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Button } from '../components/ui/button';
+import BrandMark from '../components/brand/BrandMark';
 import { SignIn, GoogleLogo, EnvelopeSimple, Eye, EyeSlash, UserPlus } from '@phosphor-icons/react';
 
 const API = process.env.REACT_APP_API_URL || '';
@@ -85,12 +86,7 @@ export default function LoginPage({ onLogin, onPasswordLogin }) {
           {/* Logo */}
           <div className="text-center">
             <div className="w-16 h-16 mx-auto rounded-lg bg-[#D4AF37]/10 border border-[#D4AF37]/20 flex items-center justify-center mb-6">
-              <span
-                className="text-[#D4AF37] text-3xl"
-                style={{ fontFamily: 'Cormorant Garamond, serif' }}
-              >
-                &#9765;
-              </span>
+              <BrandMark className="w-10 h-10 object-contain" />
             </div>
             <h1
               className="text-3xl font-light text-[#F8FAFC] mb-1"

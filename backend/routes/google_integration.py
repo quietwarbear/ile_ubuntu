@@ -20,12 +20,22 @@ SCOPES = [
 ]
 
 
+def _external_base_url(request: Request) -> str:
+    """Build the public-facing base URL honoring proxy headers (Railway)."""
+    forwarded_proto = (request.headers.get("x-forwarded-proto") or "").split(",")[0].strip()
+    forwarded_host = (request.headers.get("x-forwarded-host") or "").split(",")[0].strip()
+    if forwarded_proto and forwarded_host:
+        return f"{forwarded_proto}://{forwarded_host}"
+    public_base_url = os.environ.get("PUBLIC_BASE_URL", "").strip().rstrip("/")
+    if public_base_url:
+        return public_base_url
+    return str(request.base_url).rstrip("/")
+
+
 @router.get("/auth-url")
 async def get_google_auth_url(request: Request, current_user: dict = Depends(get_current_user)):
     """Generate Google OAuth URL for connecting Google account."""
-    # REMINDER: DO NOT HARDCODE THE URL, OR ADD ANY FALLBACKS OR REDIRECT URLS, THIS BREAKS THE AUTH
-    # Build redirect URI from the request origin
-    redirect_uri = str(request.base_url).rstrip("/") + "/api/google/callback"
+    redirect_uri = _external_base_url(request) + "/api/google/callback"
 
     params = {
         "client_id": GOOGLE_CLIENT_ID,
@@ -52,8 +62,7 @@ async def google_callback(request: Request, code: str = None, state: str = None,
 
     user_id = state
 
-    # REMINDER: DO NOT HARDCODE THE URL, OR ADD ANY FALLBACKS OR REDIRECT URLS, THIS BREAKS THE AUTH
-    redirect_uri = str(request.base_url).rstrip("/") + "/api/google/callback"
+    redirect_uri = _external_base_url(request) + "/api/google/callback"
 
     # Exchange code for tokens
     token_response = http_requests.post(
