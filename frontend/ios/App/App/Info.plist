@@ -47,5 +47,9 @@
 	</array>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<true/>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Ile Ubuntu needs access to your photo library to upload profile pictures and share images in courses and community posts.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>Ile Ubuntu needs access to your camera to take photos for your profile, courses, and community posts.</string>
 </dict>
 </plist>
