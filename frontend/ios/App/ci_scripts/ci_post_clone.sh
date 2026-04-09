@@ -14,7 +14,7 @@ cd $CI_PRIMARY_REPOSITORY_PATH/frontend
 npm install --legacy-peer-deps
 
 # Patch RevenueCat SPM to accept capacitor-swift-pm 8.x (it ships requiring 7.x)
-sed -i '' 's/from: "7.0.0"/from: "8.0.0"/' node_modules/@revenuecat/purchases-capacitor/ios/Plugin/Package.swift
+sed -i '' 's/from: "7.0.0"/from: "8.0.0"/' node_modules/@revenuecat/purchases-capacitor/Package.swift
 
 GENERATE_SOURCEMAP=false CI=false npm run build
 npx cap sync ios
