@@ -70,8 +70,35 @@ function App() {
   };
 
   const handleAuthCallback = async () => {
-    // Handle Google OAuth callback with ?code= parameter
     const params = new URLSearchParams(window.location.search);
+
+    // Handle Apple OAuth callback with ?session_id= or ?apple_error= parameters
+    const appleSessionId = params.get('session_id');
+    const appleError = params.get('apple_error');
+    if (appleSessionId) {
+      try {
+        setCookie('session_id', appleSessionId, 7);
+        // Clean up URL params
+        window.history.replaceState({}, '', '/');
+        const userData = await apiGet('/api/auth/me');
+        setUser(userData);
+        syncRevenueCatUser(userData.id);
+        if (!userData.onboarding_complete) {
+          setShowOnboarding(true);
+        }
+        return;
+      } catch (e) {
+        console.error('Apple auth callback failed:', e);
+      }
+    }
+    if (appleError) {
+      console.error('Apple Sign In error:', appleError);
+      // Clean up URL params
+      window.history.replaceState({}, '', '/');
+      return;
+    }
+
+    // Handle Google OAuth callback with ?code= parameter
     const code = params.get('code');
     if (code) {
       try {

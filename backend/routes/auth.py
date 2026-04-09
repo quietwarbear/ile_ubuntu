@@ -5,10 +5,14 @@ import os
 import uuid
 import urllib.parse
 import requests
+import json
 from pydantic import BaseModel
 from passlib.context import CryptContext
 from google.auth.transport.requests import Request as GoogleRequest
 from google.oauth2 import id_token
+import jwt as pyjwt
+from cryptography.hazmat.primitives.asymmetric.rsa import RSAPublicNumbers
+from cryptography.hazmat.backends import default_backend
 from database import users_col, sessions_col
 from middleware import get_current_user
 from models.user import UserRole
@@ -38,8 +42,79 @@ ALLOWED_WEB_REDIRECT_ORIGINS = {
     if origin.strip()
 }
 
+# Apple Sign In configuration
+APPLE_BUNDLE_ID = os.environ.get("APPLE_BUNDLE_ID", "com.ubuntumarket.ileubuntu")
+APPLE_SERVICE_ID = os.environ.get("APPLE_SERVICE_ID", "com.ubuntumarket.ileubuntu.signin")
+APPLE_MOBILE_REDIRECT_URI = os.environ.get("APPLE_MOBILE_REDIRECT_URI", "ileubuntu://auth/apple/callback")
+APPLE_JWKS_CACHE = {}
+APPLE_JWKS_CACHE_TIME = 0
+
 # Password hashing
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
+
+def _get_apple_public_keys():
+    """Fetch and cache Apple's public JWKS."""
+    global APPLE_JWKS_CACHE, APPLE_JWKS_CACHE_TIME
+    now = datetime.now(timezone.utc).timestamp()
+
+    # Cache for 1 hour
+    if APPLE_JWKS_CACHE and (now - APPLE_JWKS_CACHE_TIME) < 3600:
+        return APPLE_JWKS_CACHE
+
+    try:
+        response = requests.get("https://appleid.apple.com/auth/keys", timeout=10)
+        response.raise_for_status()
+        APPLE_JWKS_CACHE = response.json()
+        APPLE_JWKS_CACHE_TIME = now
+        return APPLE_JWKS_CACHE
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail="Failed to fetch Apple public keys.") from exc
+
+
+def _apple_public_key_from_jwks(kid: str):
+    """Extract RSA public key from JWKS by kid."""
+    keys = _get_apple_public_keys()
+    for key in keys.get("keys", []):
+        if key.get("kid") == kid:
+            if key.get("kty") != "RSA":
+                raise HTTPException(status_code=400, detail="Unsupported key type.")
+            try:
+                n = int.from_bytes(__import__("base64").urlsafe_b64decode(key["n"] + "=="), "big")
+                e = int.from_bytes(__import__("base64").urlsafe_b64decode(key["e"] + "=="), "big")
+                public_numbers = RSAPublicNumbers(e, n)
+                return public_numbers.public_key(default_backend())
+            except Exception as exc:
+                raise HTTPException(status_code=400, detail="Failed to construct public key.") from exc
+    raise HTTPException(status_code=400, detail="Key ID not found in Apple JWKS.")
+
+
+def _verify_apple_id_token(token: str):
+    """Verify Apple id_token using RS256 with audience and issuer checks."""
+    try:
+        header = pyjwt.get_unverified_header(token)
+        kid = header.get("kid")
+        if not kid:
+            raise HTTPException(status_code=400, detail="Missing 'kid' in token header.")
+
+        # Accept tokens from both the native bundle ID and the web Services ID
+        valid_audiences = [APPLE_BUNDLE_ID]
+        if APPLE_SERVICE_ID:
+            valid_audiences.append(APPLE_SERVICE_ID)
+
+        public_key = _apple_public_key_from_jwks(kid)
+        payload = pyjwt.decode(
+            token,
+            public_key,
+            algorithms=["RS256"],
+            audience=valid_audiences,
+            issuer="https://appleid.apple.com",
+        )
+        return payload
+    except pyjwt.InvalidTokenError as exc:
+        raise HTTPException(status_code=401, detail="Invalid Apple token.") from exc
+    except Exception as exc:
+        raise HTTPException(status_code=400, detail="Apple token verification failed.") from exc
 
 
 def _create_session(user_id: str) -> dict:
@@ -83,6 +158,38 @@ def _upsert_google_user(google_user: dict) -> str:
     users_col.update_one(
         {"id": user_id},
         {"$set": {"picture": picture, "name": name}},
+    )
+    return user_id
+
+
+def _upsert_apple_user(email: str, name: str = None, picture: str = "") -> str:
+    """Upsert a user authenticated via Apple Sign In."""
+    email = (email or "").strip().lower()
+    if not email:
+        raise HTTPException(status_code=400, detail="Apple account did not return a usable email.")
+
+    if not name:
+        name = email.split("@")[0]
+
+    existing_user = users_col.find_one({"email": email})
+    if not existing_user:
+        user_data = {
+            "id": str(uuid.uuid4()),
+            "email": email,
+            "name": name,
+            "picture": picture or "",
+            "role": UserRole.STUDENT,
+            "bio": "",
+            "auth_provider": "apple",
+            "created_at": datetime.now(timezone.utc),
+        }
+        users_col.insert_one(user_data)
+        return user_data["id"]
+
+    user_id = existing_user["id"]
+    users_col.update_one(
+        {"id": user_id},
+        {"$set": {"picture": picture or "", "name": name}},
     )
     return user_id
 
@@ -428,6 +535,121 @@ async def google_login_callback(request: Request, code: str = None, state: str =
 
     session = _create_session(user_id)
     return RedirectResponse(url=_append_query_value(app_redirect_uri, "session_id", session["session_id"]))
+
+
+class AppleSessionRequest(BaseModel):
+    id_token: str
+
+
+@router.post("/apple/session")
+async def apple_session_login(payload: AppleSessionRequest):
+    """
+    Validate Apple Sign In ID token and log the user in.
+
+    Web popup flow: client obtains an id_token from Apple's JS SDK and POSTs it here.
+    We verify the token server-side, upsert the user, and issue a local session.
+    """
+    try:
+        apple_user_info = _verify_apple_id_token(payload.id_token)
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(status_code=400, detail="Apple token verification failed.") from exc
+
+    email = apple_user_info.get("email", "").strip().lower()
+    if not email:
+        raise HTTPException(status_code=400, detail="Apple account did not return a usable email.")
+
+    # Apple may provide name in the token (for web popup flow)
+    name = apple_user_info.get("name") or email.split("@")[0]
+
+    user_id = _upsert_apple_user(email, name)
+    session = _create_session(user_id)
+
+    return {
+        "success": True,
+        "user_id": user_id,
+        **session,
+    }
+
+
+@router.get("/apple/start")
+async def apple_login_start(request: Request, redirect_uri: str = APPLE_MOBILE_REDIRECT_URI):
+    """
+    Start the native Apple login flow.
+
+    Redirects to Apple's authorize endpoint. Apple redirects back to our backend
+    HTTPS callback, which then deep-links into the app.
+    """
+    oauth_callback_uri = _external_base_url(request) + "/api/auth/apple/callback"
+
+    # Build Apple OAuth URL — request id_token via form_post so Apple
+    # POSTs the token directly to our callback (no code-exchange needed).
+    params = {
+        "client_id": APPLE_SERVICE_ID,
+        "redirect_uri": oauth_callback_uri,
+        "response_type": "code id_token",
+        "scope": "name email",
+        "response_mode": "form_post",
+        "state": redirect_uri,
+    }
+    auth_url = f"https://appleid.apple.com/auth/authorize?{urllib.parse.urlencode(params)}"
+    return RedirectResponse(url=auth_url)
+
+
+@router.post("/apple/callback")
+async def apple_login_callback(request: Request):
+    """
+    Handle Apple's form_post callback after user authorizes.
+
+    Apple sends id_token, code, state, and optionally user info via POST.
+    We verify the id_token directly (no code exchange needed) and redirect
+    to the app with a session token.
+    """
+    import json as _json
+
+    form = await request.form()
+    id_token_str = form.get("id_token", "")
+    state = form.get("state", APPLE_MOBILE_REDIRECT_URI)
+    error_val = form.get("error", "")
+
+    # Parse user info (Apple sends JSON string on first auth only)
+    user_json = form.get("user", "")
+    apple_name = ""
+    apple_email = ""
+    if user_json:
+        try:
+            user_data = _json.loads(user_json)
+            name_parts = user_data.get("name", {})
+            apple_name = f"{name_parts.get('firstName', '')} {name_parts.get('lastName', '')}".strip()
+            apple_email = user_data.get("email", "")
+        except Exception:
+            pass
+
+    # Validate state/redirect_uri
+    try:
+        app_redirect_uri = _validate_mobile_redirect_uri(state)
+    except HTTPException:
+        app_redirect_uri = APPLE_MOBILE_REDIRECT_URI
+
+    if error_val:
+        return RedirectResponse(url=_append_query_value(app_redirect_uri, "apple_error", error_val))
+
+    if not id_token_str:
+        return RedirectResponse(url=_append_query_value(app_redirect_uri, "apple_error", "no_id_token"))
+
+    try:
+        claims = _verify_apple_id_token(id_token_str)
+        email = claims.get("email") or apple_email or ""
+        name = apple_name or email.split("@")[0]
+        user_id = _upsert_apple_user(email, name)
+        session = _create_session(user_id)
+    except Exception:
+        return RedirectResponse(url=_append_query_value(app_redirect_uri, "apple_error", "validation_failed"))
+
+    redirect_url = _append_query_value(app_redirect_uri, "apple_success", "1")
+    redirect_url = _append_query_value(redirect_url, "session_id", session["session_id"])
+    return RedirectResponse(url=redirect_url)
 
 
 @router.post("/profile")

@@ -1,11 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '../components/ui/button';
 import BrandMark from '../components/brand/BrandMark';
-import { SignIn, GoogleLogo, EnvelopeSimple, Eye, EyeSlash, UserPlus } from '@phosphor-icons/react';
+import { SignIn, GoogleLogo, AppleLogo, EnvelopeSimple, Eye, EyeSlash, UserPlus } from '@phosphor-icons/react';
 
 const API = process.env.REACT_APP_API_URL || '';
 
 export default function LoginPage({ onLogin, onPasswordLogin }) {
+  const [appleSDKReady, setAppleSDKReady] = useState(false);
+  const [isNative, setIsNative] = useState(false);
   const [mode, setMode] = useState('login'); // 'login' or 'register'
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -13,6 +15,91 @@ export default function LoginPage({ onLogin, onPasswordLogin }) {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    // Detect if running in native app
+    try {
+      if (window.Capacitor) {
+        setIsNative(true);
+      }
+    } catch (e) {
+      // Not in native app
+    }
+
+    // Load Apple JS SDK for web-based Sign in with Apple
+    if (!window.AppleID) {
+      const script = document.createElement('script');
+      script.src = 'https://appleid.cdn-apple.com/appleauth/static/jsapi/appleid/1/en_US/appleid.auth.js';
+      script.onload = () => {
+        if (window.AppleID) {
+          setAppleSDKReady(true);
+          try {
+            window.AppleID.auth.init({
+              clientId: 'com.ubuntumarket.ileubuntu.signin',
+              teamId: process.env.REACT_APP_APPLE_TEAM_ID || '',
+              redirectURI: `${window.location.origin}/`,
+              scope: 'name email',
+              redirectMethod: 'POST',
+              usePopup: true,
+            });
+          } catch (e) {
+            console.warn('Apple ID SDK initialization warning:', e);
+          }
+        }
+      };
+      script.onerror = () => {
+        console.warn('Failed to load Apple ID SDK');
+      };
+      document.body.appendChild(script);
+    } else {
+      setAppleSDKReady(true);
+    }
+  }, []);
+
+  const handleAppleSignIn = async () => {
+    if (isNative) {
+      // Native mobile flow: redirect to backend endpoint
+      try {
+        const redirectUri = `ileubuntu://auth/apple/callback`;
+        window.location.href = `${API}/api/auth/apple/start?redirect_uri=${encodeURIComponent(redirectUri)}`;
+      } catch (e) {
+        setError('Failed to start Apple Sign In. Please try again.');
+        console.error('Apple Sign In error:', e);
+      }
+    } else {
+      // Web popup flow: use Apple JS SDK
+      if (appleSDKReady && window.AppleID) {
+        try {
+          const response = await window.AppleID.auth.signIn();
+          const idToken = response.authorization.id_token;
+
+          // POST id_token to backend
+          const res = await fetch(`${API}/api/auth/apple/session`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id_token: idToken }),
+          });
+
+          const data = await res.json();
+
+          if (!res.ok) {
+            setError(data.detail || 'Apple sign in failed');
+            return;
+          }
+
+          // Success — store session and notify parent
+          if (data.session_id && onPasswordLogin) {
+            onPasswordLogin(data);
+          }
+        } catch (err) {
+          setError('Apple Sign In failed. Please try again.');
+          console.error('Apple Sign In error:', err);
+        }
+      } else {
+        setError('Apple Sign In is not available. Please try again.');
+      }
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -183,6 +270,16 @@ export default function LoginPage({ onLogin, onPasswordLogin }) {
           >
             <GoogleLogo size={18} weight="bold" className="mr-2" />
             Continue with Google
+          </Button>
+
+          {/* Apple Sign In */}
+          <Button
+            onClick={handleAppleSignIn}
+            variant="outline"
+            className="w-full border-[#1E293B] text-[#94A3B8] hover:bg-[#0F1629] hover:text-[#F8FAFC] py-3 transition-all duration-200"
+          >
+            <AppleLogo size={18} weight="bold" className="mr-2" />
+            Continue with Apple
           </Button>
 
           {/* Toggle mode */}
