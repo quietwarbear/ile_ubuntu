@@ -161,6 +161,13 @@ function App() {
   };
 
   const handleLogin = async () => {
+    // On native iOS/Android, navigate to the login page which has proper
+    // native sign-in flows (Apple Sign In, Google via Capacitor Browser).
+    if (window.Capacitor && window.Capacitor.isNativePlatform()) {
+      window.location.href = '/login';
+      return;
+    }
+    // On web, redirect directly to Google OAuth
     try {
       const redirectUri = `${window.location.origin}/`;
       const data = await apiGet(`/api/auth/google/login-url?redirect_uri=${encodeURIComponent(redirectUri)}`);

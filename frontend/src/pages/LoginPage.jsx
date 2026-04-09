@@ -3,7 +3,7 @@ import { Button } from '../components/ui/button';
 import BrandMark from '../components/brand/BrandMark';
 import { SignIn, GoogleLogo, AppleLogo, EnvelopeSimple, Eye, EyeSlash, UserPlus } from '@phosphor-icons/react';
 
-const API = process.env.REACT_APP_API_URL || '';
+const API = process.env.REACT_APP_BACKEND_URL || process.env.REACT_APP_API_URL || 'https://www.ile-ubuntu.org';
 
 export default function LoginPage({ onLogin, onPasswordLogin }) {
   const [appleSDKReady, setAppleSDKReady] = useState(false);
