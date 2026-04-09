@@ -50,6 +50,7 @@
     "react-markdown": "^10.1.0",
     "react-resizable-panels": "^3.0.1",
     "react-router-dom": "^7.13.2",
+    "ajv": "^8.18.0",
     "react-scripts": "5.0.1",
     "remark-gfm": "^4.0.1",
     "sonner": "^2.0.3",
