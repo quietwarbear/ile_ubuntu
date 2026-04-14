@@ -13,7 +13,7 @@ import BrandMark from '../components/brand/BrandMark';
 const HERO_IMG = 'https://images.unsplash.com/photo-1694286068561-3233c946e9be?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA1NTJ8MHwxfHNlYXJjaHwxfHxhZnJpY2FuJTIwY29tbXVuaXR5JTIwbGVhcm5pbmclMjB0b2dldGhlcnxlbnwwfHx8fDE3NzUwMDYyNjh8MA&ixlib=rb-4.1.0&q=85';
 const COMMUNITY_IMG = 'https://images.unsplash.com/photo-1695131497431-1ca16e3381e3?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA1NTJ8MHwxfHNlYXJjaHwzfHxhZnJpY2FuJTIwY29tbXVuaXR5JTIwbGVhcm5pbmclMjB0b2dldGhlcnxlbnwwfHx8fDE3NzUwMDYyNjh8MA&ixlib=rb-4.1.0&q=85';
 const LEARNING_IMG = 'https://images.pexels.com/photos/6684506/pexels-photo-6684506.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940';
-const API = process.env.REACT_APP_BACKEND_URL || "https://www.ile-ubuntu.org";
+const API = process.env.REACT_APP_BACKEND_URL || "https://ileubuntu-production.up.railway.app";
 
 const FEATURES = [
   { icon: BookOpenText, title: 'Structured Courses', desc: 'Rich multimedia lessons with progress tracking, file attachments, and completion certificates.' },
@@ -493,6 +493,8 @@ export default function LandingPage({ onLogin }) {
             </div>
             <div className="flex items-center gap-6">
               <a href="/about" className="text-xs text-[#64748B] hover:text-[#D4AF37] transition-colors">About</a>
+              <a href="/privacy-policy" className="text-xs text-[#64748B] hover:text-[#D4AF37] transition-colors">Privacy Policy</a>
+              <a href="/terms" className="text-xs text-[#64748B] hover:text-[#D4AF37] transition-colors">Terms</a>
               <button onClick={onLogin} className="text-xs text-[#64748B] hover:text-[#D4AF37] transition-colors">Sign In</button>
             </div>
             <p className="text-[10px] text-[#475569]">
