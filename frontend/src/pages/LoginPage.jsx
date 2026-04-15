@@ -17,9 +17,9 @@ export default function LoginPage({ onLogin, onPasswordLogin }) {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    // Detect if running in native app
+    // Detect if running in native app (real device), not just Capacitor JS being present
     try {
-      if (window.Capacitor) {
+      if (window.Capacitor && typeof window.Capacitor.isNativePlatform === 'function' && window.Capacitor.isNativePlatform()) {
         setIsNative(true);
       }
     } catch (e) {
