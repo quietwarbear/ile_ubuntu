@@ -3,7 +3,7 @@ import { Button } from '../components/ui/button';
 import BrandMark from '../components/brand/BrandMark';
 import { SignIn, GoogleLogo, AppleLogo, EnvelopeSimple, Eye, EyeSlash, UserPlus } from '@phosphor-icons/react';
 
-const API = process.env.REACT_APP_BACKEND_URL || process.env.REACT_APP_API_URL || 'https://www.ile-ubuntu.org';
+const API = process.env.REACT_APP_BACKEND_URL || process.env.REACT_APP_API_URL || 'https://ileubuntu-production.up.railway.app';
 
 export default function LoginPage({ onLogin, onPasswordLogin }) {
   const [appleSDKReady, setAppleSDKReady] = useState(false);
@@ -57,11 +57,50 @@ export default function LoginPage({ onLogin, onPasswordLogin }) {
   }, []);
 
   const handleAppleSignIn = async () => {
-    if (isNative) {
-      // Native mobile flow: redirect to backend endpoint
+    // Apple Sign In is only natively available on iOS. On Android, fall back
+    // to the web-based OAuth redirect flow (opens appleid.apple.com, which
+    // redirects back to the app via the ileubuntu:// custom URL scheme).
+    const isIOS = isNative && window.Capacitor?.getPlatform?.() === 'ios';
+    if (isNative && !isIOS) {
+      // Android native: use web redirect via backend /api/auth/apple/start
       try {
-        const redirectUri = `ileubuntu://auth/apple/callback`;
+        const redirectUri = 'ileubuntu://auth/apple/callback';
         window.location.href = `${API}/api/auth/apple/start?redirect_uri=${encodeURIComponent(redirectUri)}`;
+      } catch (e) {
+        setError('Failed to start Apple Sign In. Please try again.');
+        console.error('Apple Sign In error (Android):', e);
+      }
+      return;
+    }
+    if (isIOS) {
+      // iOS native: use the Capacitor SignInWithApple plugin
+      try {
+        const { SignInWithApple } = await import('@capacitor-community/apple-sign-in');
+        const options = {
+          clientId: 'com.ubuntumarket.ileubuntu.signin',
+          redirectURI: 'ileubuntu://auth/apple/callback',
+          scopes: 'email name',
+          state: Math.random().toString(36).slice(2),
+        };
+        const result = await SignInWithApple.authorize(options);
+        const idToken = result?.response?.identityToken;
+        if (!idToken) {
+          setError('Apple Sign In did not return an identity token.');
+          return;
+        }
+        const res = await fetch(`${API}/api/auth/apple/session`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id_token: idToken }),
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          setError(data.detail || 'Apple sign in failed');
+          return;
+        }
+        if (data.session_id && onPasswordLogin) {
+          onPasswordLogin(data);
+        }
       } catch (e) {
         setError('Failed to start Apple Sign In. Please try again.');
         console.error('Apple Sign In error:', e);

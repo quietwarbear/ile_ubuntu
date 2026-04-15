@@ -8,7 +8,7 @@ import {
   ChatDots, CalendarBlank, FunnelSimple, ArrowLeft, ArrowRight, Newspaper,
 } from '@phosphor-icons/react';
 
-const API = process.env.REACT_APP_BACKEND_URL || "https://www.ile-ubuntu.org";
+const API = process.env.REACT_APP_BACKEND_URL || "https://ileubuntu-production.up.railway.app";
 const CATEGORIES = ['Announcements', 'Teaching', 'Community', 'Culture', 'Research', 'Events', 'Reflections'];
 
 export default function PublicBlogPage({ onLogin }) {

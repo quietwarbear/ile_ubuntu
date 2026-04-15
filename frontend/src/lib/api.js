@@ -1,4 +1,4 @@
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || "https://www.ile-ubuntu.org";
+const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || "https://ileubuntu-production.up.railway.app";
 
 function getCookie(name) {
   const value = `; ${document.cookie}`;
