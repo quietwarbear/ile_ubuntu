@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import { getCookie, setCookie, apiPost, apiGet } from './lib/api';
 import { I18nProvider } from './i18n';
 import { initializeRevenueCat, syncRevenueCatUser, logOutRevenueCat } from './lib/revenuecat';
@@ -35,6 +35,86 @@ import TeacherDashboardPage from './pages/TeacherDashboardPage';
 import PrivacyPolicyPage from './pages/PrivacyPolicyPage';
 import TermsPage from './pages/TermsPage';
 import './App.css';
+
+// Unauthenticated routes. This sits INSIDE <BrowserRouter> so it can use
+// useNavigate() — which is required because Capacitor's iOS webview does NOT
+// reliably navigate via `window.location.href = '/login'`. Apple rejected
+// iOS 1.0 (Guideline 2.1 App Completeness) because every "Sign In / Begin
+// Your Journey / Join" button was unresponsive due to that bug.
+function PublicRoutes({ handlePasswordLogin }) {
+  const navigate = useNavigate();
+
+  // Entry point from Landing/Blog "Sign In" buttons. Always route to the
+  // LoginPage first — on BOTH web and native — so the user can choose between
+  // email/password, Google, or Apple. Previously web skipped LoginPage and
+  // went straight to Google OAuth, which hid the Apple option.
+  const handleLogin = () => {
+    navigate('/login');
+  };
+
+  // Called from the LoginPage "Continue with Google" button. On web, redirects
+  // to the backend's Google OAuth start URL. On native, runs the Capacitor
+  // GoogleAuth plugin and POSTs the idToken to /api/auth/google/session.
+  const handleGoogleFromLogin = async () => {
+    if (!(window.Capacitor && window.Capacitor.isNativePlatform())) {
+      // Web: redirect to backend's Google OAuth flow
+      try {
+        const redirectUri = `${window.location.origin}/`;
+        const data = await apiGet(`/api/auth/google/login-url?redirect_uri=${encodeURIComponent(redirectUri)}`);
+        if (data.auth_url) {
+          window.location.href = data.auth_url;
+        }
+      } catch (e) {
+        console.error('Failed to get login URL:', e);
+      }
+      return;
+    }
+    // Native: run the Capacitor GoogleAuth flow
+    return handleGoogleLogin();
+  };
+
+  // Called from the LoginPage "Continue with Google" button. Runs the native
+  // Capacitor GoogleAuth flow, then POSTs the idToken to the backend.
+  const handleGoogleLogin = async () => {
+    if (!(window.Capacitor && window.Capacitor.isNativePlatform())) {
+      return handleLogin();
+    }
+    try {
+      const { GoogleAuth } = await import('@codetrix-studio/capacitor-google-auth');
+      try { await GoogleAuth.initialize(); } catch (e) { /* already initialized */ }
+      const result = await GoogleAuth.signIn();
+      console.log('GoogleAuth result:', result);
+      const idToken = result?.authentication?.idToken;
+      if (!idToken) {
+        console.error('GoogleAuth returned no idToken', result);
+        alert('Google sign-in did not return a token. Check console.');
+        return;
+      }
+      const data = await apiPost('/api/auth/google/session', { credential: idToken });
+      console.log('Backend session response:', data);
+      if (data?.session_id) {
+        setCookie('session_id', data.session_id, 7);
+        window.location.href = '/';
+      } else {
+        alert('Backend accepted token but returned no session_id.');
+      }
+    } catch (e) {
+      console.error('Native Google sign-in failed:', e);
+      alert('Google sign-in failed: ' + (e?.message || e));
+    }
+  };
+
+  return (
+    <Routes>
+      <Route path="/about" element={<AboutPage />} />
+      <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
+      <Route path="/terms" element={<TermsPage />} />
+      <Route path="/blog" element={<PublicBlogPage onLogin={handleLogin} />} />
+      <Route path="/login" element={<LoginPage onLogin={handleGoogleFromLogin} onPasswordLogin={handlePasswordLogin} />} />
+      <Route path="*" element={<LandingPage onLogin={handleLogin} />} />
+    </Routes>
+  );
+}
 
 function App() {
   const [user, setUser] = useState(null);
@@ -160,25 +240,6 @@ function App() {
     }
   };
 
-  const handleLogin = async () => {
-    // On native iOS/Android, navigate to the login page which has proper
-    // native sign-in flows (Apple Sign In, Google via Capacitor Browser).
-    if (window.Capacitor && window.Capacitor.isNativePlatform()) {
-      window.location.href = '/login';
-      return;
-    }
-    // On web, redirect directly to Google OAuth
-    try {
-      const redirectUri = `${window.location.origin}/`;
-      const data = await apiGet(`/api/auth/google/login-url?redirect_uri=${encodeURIComponent(redirectUri)}`);
-      if (data.auth_url) {
-        window.location.href = data.auth_url;
-      }
-    } catch (e) {
-      console.error('Failed to get login URL:', e);
-    }
-  };
-
   const handleLogout = () => {
     logOutRevenueCat();
     setUser(null);
@@ -201,14 +262,7 @@ function App() {
     return (
       <I18nProvider defaultLang="en">
         <BrowserRouter>
-          <Routes>
-            <Route path="/about" element={<AboutPage />} />
-            <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
-            <Route path="/terms" element={<TermsPage />} />
-            <Route path="/blog" element={<PublicBlogPage onLogin={handleLogin} />} />
-            <Route path="/login" element={<LoginPage onLogin={handleLogin} onPasswordLogin={handlePasswordLogin} />} />
-            <Route path="*" element={<LandingPage onLogin={handleLogin} />} />
-          </Routes>
+          <PublicRoutes handlePasswordLogin={handlePasswordLogin} />
         </BrowserRouter>
       </I18nProvider>
     );
