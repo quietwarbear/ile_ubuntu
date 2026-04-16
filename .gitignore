@@ -28,10 +28,10 @@ next-env.d.ts
 # Production builds
 /build
 dist/
-dist
 
-# Environment files (comprehensive coverage)
-
+# Environment files
+*.env
+*.env.*
 *token.json*
 *credentials.json*
 client_secret_*
@@ -77,43 +77,21 @@ agenthub/agents/youtube/db
 # Build caches
 .cache/
 
-# Mobile development
-android-sdk/ frontend/node_modules/.cache/default-development/1.pack
-frontend/node_modules/.cache/default-development/1.pack
-frontend/node_modules/.cache/default-development/0.pack
--e 
-# Environment files
-*.env
-*.env.*
--e 
-# Environment files
-*.env
-*.env.*
--e 
-# Environment files
-*.env
-*.env.*
--e 
-# Environment files
-*.env
-*.env.*
--e 
-# Environment files
-*.env
-*.env.*
--e 
-# Environment files
-*.env
-*.env.*
-frontend/node_modules/.cache/default-development/4.pack
-frontend/node_modules/.cache/default-development/2.pack
--e 
-# Environment files
-*.env
-*.env.*
-frontend/node_modules/.cache/default-development/5.pack
--e 
-# Environment files
-*.env
-*.env.*
-frontend/node_modules/.cache/default-development/7.pack
+# Mobile development — keystores (sensitive)
+*.keystore
+*.keystore.WRONG.bak
+*.jks
+
+# Temp/working folders
+ile_ubuntu_broken/
+images/
+store_assets_temp/
+*_FIXED/
+migrations/
+
+# iOS generated
+frontend/ios/App/App.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/
+frontend/ios/App/App/config 2.xml
+
+# Package lock (using yarn.lock instead)
+frontend/package-lock.json
