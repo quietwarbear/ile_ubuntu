@@ -13,6 +13,21 @@ router = APIRouter(prefix="/api/subscriptions", tags=["subscriptions"])
 
 STRIPE_API_KEY = os.environ.get("STRIPE_API_KEY")
 
+# Owner/admin emails that always receive top-tier ("elder_circle") access
+ADMIN_EMAILS = {
+    "hodari@ubuntu-village.org",
+    "shy@ubuntu-village.org",
+    "quiet927@gmail.com",
+}
+
+
+def _is_admin_email(email: str | None) -> bool:
+    """Return True if the email belongs to an admin/owner."""
+    if not email:
+        return False
+    email = email.lower().strip()
+    return email in ADMIN_EMAILS or email.endswith("@ubuntu-village.org")
+
 # Membership tiers — amounts defined server-side only
 MEMBERSHIP_TIERS = {
     "explorer": {
@@ -69,6 +84,25 @@ async def get_tiers():
 @router.get("/my-subscription")
 async def get_my_subscription(current_user: dict = Depends(get_current_user)):
     user = users_col.find_one({"id": current_user["id"]}, {"_id": 0})
+
+    # Admin/owner email override — always top tier
+    email = (current_user.get("email") or user.get("email") or "").lower()
+    if _is_admin_email(email):
+        top_tier = "elder_circle"
+        limits = {
+            "explorer": {"max_enrollments": 2, "cohorts": False, "spaces": False, "live_sessions": False, "restricted_archives": False},
+            "scholar": {"max_enrollments": 999999, "cohorts": True, "spaces": True, "live_sessions": False, "restricted_archives": False},
+            "elder_circle": {"max_enrollments": 999999, "cohorts": True, "spaces": True, "live_sessions": True, "restricted_archives": True},
+        }
+        return {
+            "tier": top_tier,
+            "subscription_status": "active",
+            "subscribed_at": user.get("subscribed_at"),
+            "is_bypassed": True,
+            "enrollment_count": 0,
+            "limits": limits[top_tier],
+        }
+
     tier = user.get("subscription_tier", "explorer")
     is_bypassed = user.get("role") in ("faculty", "elder", "admin")
 
