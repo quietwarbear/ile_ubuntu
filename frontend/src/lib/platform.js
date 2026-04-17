@@ -85,6 +85,33 @@ export const initializeNativePlugins = async () => {
         App.exitApp();
       }
     });
+
+    // Deep link handler — OAuth callbacks return here via ileubuntu:// scheme
+    App.addListener("appUrlOpen", ({ url }) => {
+      console.log("[IleUbuntu] Deep link received:", url);
+      try {
+        const parsed = new URL(url);
+        const sessionId = parsed.searchParams.get("session_id");
+        const error = parsed.searchParams.get("error");
+
+        if (error) {
+          console.error("[IleUbuntu] OAuth callback error:", error);
+          return;
+        }
+
+        if (sessionId) {
+          console.log("[IleUbuntu] Got session_id from deep link");
+          // Store in localStorage (primary) and cookie (fallback)
+          try { localStorage.setItem("session_id", sessionId); } catch (e) { /* noop */ }
+          const expires = new Date(Date.now() + 7 * 864e5).toUTCString();
+          document.cookie = `session_id=${sessionId}; expires=${expires}; path=/`;
+          // Reload app — checkAuth in App.js will pick up the session
+          window.location.href = "/";
+        }
+      } catch (e) {
+        console.error("[IleUbuntu] Failed to parse deep link URL:", e);
+      }
+    });
   } catch (e) {
     console.warn("[IleUbuntu] App plugin error:", e);
   }

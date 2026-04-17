@@ -56,21 +56,34 @@ function PublicRoutes({ handlePasswordLogin }) {
   // to the backend's Google OAuth start URL. On native, runs the Capacitor
   // GoogleAuth plugin and POSTs the idToken to /api/auth/google/session.
   const handleGoogleFromLogin = async () => {
-    if (!(window.Capacitor && window.Capacitor.isNativePlatform())) {
-      // Web: redirect to backend's Google OAuth flow
-      try {
-        const redirectUri = `${window.location.origin}/`;
-        const data = await apiGet(`/api/auth/google/login-url?redirect_uri=${encodeURIComponent(redirectUri)}`);
-        if (data.auth_url) {
-          window.location.href = data.auth_url;
-        }
-      } catch (e) {
-        console.error('Failed to get login URL:', e);
-      }
+    const isNativePlatform = window.Capacitor && window.Capacitor.isNativePlatform();
+    const isAndroid = isNativePlatform && window.Capacitor.getPlatform() === 'android';
+    const isIOS = isNativePlatform && window.Capacitor.getPlatform() === 'ios';
+
+    if (isIOS) {
+      // iOS native: use server-side OAuth flow via /api/auth/google/start
+      // (GoogleAuth Capacitor plugin needs CocoaPods, not available with SPM)
+      const API = process.env.REACT_APP_BACKEND_URL || 'https://ileubuntu-production.up.railway.app';
+      const redirectUri = 'ileubuntu://auth/google/callback';
+      window.location.href = `${API}/api/auth/google/start?redirect_uri=${encodeURIComponent(redirectUri)}`;
       return;
     }
-    // Native: run the Capacitor GoogleAuth flow
-    return handleGoogleLogin();
+
+    if (isAndroid) {
+      // Android native: run the Capacitor GoogleAuth flow
+      return handleGoogleLogin();
+    }
+
+    // Web: use backend's Google OAuth redirect flow
+    try {
+      const redirectUri = `${window.location.origin}/`;
+      const data = await apiGet(`/api/auth/google/login-url?redirect_uri=${encodeURIComponent(redirectUri)}`);
+      if (data.auth_url) {
+        window.location.href = data.auth_url;
+      }
+    } catch (e) {
+      console.error('Failed to get login URL:', e);
+    }
   };
 
   // Called from the LoginPage "Continue with Google" button. Runs the native

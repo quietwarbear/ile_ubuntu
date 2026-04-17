@@ -29,7 +29,7 @@ ALLOWED_MOBILE_GOOGLE_SCHEMES = {
     scheme.strip()
     for scheme in os.environ.get(
         "GOOGLE_MOBILE_REDIRECT_SCHEMES",
-        "ileubuntu,com.ubuntumarket.ileubuntu",
+        "ileubuntu,com.ubuntumarket.ileubuntu,capacitor",
     ).split(",")
     if scheme.strip()
 }
