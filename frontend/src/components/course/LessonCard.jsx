@@ -1,14 +1,17 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent } from '../../components/ui/card';
 import { Badge } from '../../components/ui/badge';
 import { Button } from '../../components/ui/button';
 import {
   CheckCircle, Circle, Paperclip, CaretDown, CaretUp,
   DownloadSimple, Trash, Plus, GoogleLogo, Presentation, Article, ArrowSquareOut,
-  File as FileIcon, FilePdf, FileDoc, FileXls, FilePpt, FileImage,
+  File as FileIcon, FilePdf, FileDoc, FileXls, FilePpt, FileImage, Eye, X,
 } from '@phosphor-icons/react';
 import { BACKEND_URL } from '../../lib/api';
 import LessonContentViewer from '../LessonContentViewer';
+import { LessonVideoPlayer } from './LessonVideoPlayer';
+import { LessonQuiz } from './LessonQuiz';
+import { LessonComments } from './LessonComments';
 
 const FILE_ICONS = {
   'application/pdf': FilePdf,
@@ -33,7 +36,10 @@ export function LessonCard({
   lesson, idx, isEnrolled, isLessonCompleted, isExpanded, isInstructor,
   lessonFiles, googleConnected, uploading, uploadingFor,
   onToggleExpand, onComplete, onUploadClick, onDeleteFile, onOpenImport,
+  courseId, user, onReloadCourse,
 }) {
+  const [viewingPdf, setViewingPdf] = useState(null);
+
   return (
     <Card
       className={`bg-[#0F172A] border-[#1E293B] transition-all ${
@@ -143,39 +149,59 @@ export function LessonCard({
                 <div className="space-y-1.5">
                   {lessonFiles.map(file => {
                     const Icon = FILE_ICONS[file.mime_type] || FileIcon;
+                    const isPdf = file.mime_type === 'application/pdf';
+                    const isPdfOpen = viewingPdf === file.id;
                     return (
-                      <div
-                        key={file.id}
-                        className="flex items-center gap-3 p-2.5 bg-[#050814] border border-[#1E293B] rounded-md hover:border-[#D4AF37]/20 transition-colors group"
-                        data-testid={`file-${file.id}`}
-                      >
-                        <Icon size={18} weight="duotone" className="text-[#D4AF37] flex-shrink-0" />
-                        <div className="flex-1 min-w-0">
-                          <p className="text-xs text-[#F8FAFC] truncate">{file.original_filename}</p>
-                          <p className="text-[10px] text-[#94A3B8]">{formatFileSize(file.file_size)}</p>
-                        </div>
-                        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                          <a
-                            href={`${BACKEND_URL}/api/files/${file.id}/download`}
-                            target="_blank" rel="noopener noreferrer"
-                            className="p-1 text-[#94A3B8] hover:text-[#D4AF37] transition-colors"
-                            title="Download"
-                            data-testid={`download-file-${file.id}`}
-                            onClick={e => e.stopPropagation()}
-                          >
-                            <DownloadSimple size={14} />
-                          </a>
-                          {isInstructor && (
-                            <button
-                              onClick={() => onDeleteFile(file.id)}
-                              className="p-1 text-[#94A3B8] hover:text-red-400 transition-colors"
-                              title="Delete"
-                              data-testid={`delete-file-${file.id}`}
+                      <div key={file.id} data-testid={`file-${file.id}`}>
+                        <div
+                          className="flex items-center gap-3 p-2.5 bg-[#050814] border border-[#1E293B] rounded-md hover:border-[#D4AF37]/20 transition-colors group"
+                        >
+                          <Icon size={18} weight="duotone" className="text-[#D4AF37] flex-shrink-0" />
+                          <div className="flex-1 min-w-0">
+                            <p className="text-xs text-[#F8FAFC] truncate">{file.original_filename}</p>
+                            <p className="text-[10px] text-[#94A3B8]">{formatFileSize(file.file_size)}</p>
+                          </div>
+                          <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                            {isPdf && (
+                              <button
+                                onClick={() => setViewingPdf(isPdfOpen ? null : file.id)}
+                                className={`p-1 transition-colors ${isPdfOpen ? 'text-[#D4AF37]' : 'text-[#94A3B8] hover:text-[#D4AF37]'}`}
+                                title={isPdfOpen ? 'Close PDF' : 'View PDF'}
+                              >
+                                {isPdfOpen ? <X size={14} /> : <Eye size={14} />}
+                              </button>
+                            )}
+                            <a
+                              href={`${BACKEND_URL}/api/files/${file.id}/download`}
+                              target="_blank" rel="noopener noreferrer"
+                              className="p-1 text-[#94A3B8] hover:text-[#D4AF37] transition-colors"
+                              title="Download"
+                              data-testid={`download-file-${file.id}`}
+                              onClick={e => e.stopPropagation()}
                             >
-                              <Trash size={14} />
-                            </button>
-                          )}
+                              <DownloadSimple size={14} />
+                            </a>
+                            {isInstructor && (
+                              <button
+                                onClick={() => onDeleteFile(file.id)}
+                                className="p-1 text-[#94A3B8] hover:text-red-400 transition-colors"
+                                title="Delete"
+                                data-testid={`delete-file-${file.id}`}
+                              >
+                                <Trash size={14} />
+                              </button>
+                            )}
+                          </div>
                         </div>
+                        {isPdf && isPdfOpen && (
+                          <div className="mt-1 rounded-md overflow-hidden border border-[#1E293B]">
+                            <iframe
+                              src={`${BACKEND_URL}/api/files/${file.id}/download`}
+                              className="w-full h-[600px] bg-white"
+                              title={file.original_filename}
+                            />
+                          </div>
+                        )}
                       </div>
                     );
                   })}
@@ -217,6 +243,36 @@ export function LessonCard({
                   ))}
                 </div>
               </div>
+            )}
+
+            {/* Video Player */}
+            {(lesson.video_url || lesson.video_file_id || isInstructor) && (
+              <LessonVideoPlayer
+                lesson={lesson}
+                courseId={courseId}
+                isInstructor={isInstructor}
+                onUpdate={onReloadCourse}
+              />
+            )}
+
+            {/* Quiz */}
+            {(isEnrolled || isInstructor) && (
+              <LessonQuiz
+                courseId={courseId}
+                lessonId={lesson.id}
+                user={user}
+                isInstructor={isInstructor}
+              />
+            )}
+
+            {/* Discussion / Comments */}
+            {(isEnrolled || isInstructor) && (
+              <LessonComments
+                courseId={courseId}
+                lessonId={lesson.id}
+                user={user}
+                isInstructor={isInstructor}
+              />
             )}
           </div>
         )}

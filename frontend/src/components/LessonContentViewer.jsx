@@ -11,6 +11,8 @@ function extractEmbeds(content) {
   const imageRegex = /!\[([^\]]*)\]\((https?:\/\/[^\s)]+)\)/g;
   const slidesRegex = /(?:https?:\/\/)?docs\.google\.com\/presentation\/d\/([\w-]+)(?:\/[^\s)]*)?/g;
   const docsRegex = /(?:https?:\/\/)?docs\.google\.com\/document\/d\/([\w-]+)(?:\/[^\s)]*)?/g;
+  const pdfUrlRegex = /(https?:\/\/[^\s)]+\.pdf(?:\?[^\s)]*)?)/gi;
+  const driveFileRegex = /(?:https?:\/\/)?drive\.google\.com\/file\/d\/([\w-]+)(?:\/[^\s)]*)?/g;
 
   let text = content;
 
@@ -30,6 +32,18 @@ function extractEmbeds(content) {
   // Extract Google Docs
   while ((match = docsRegex.exec(content)) !== null) {
     embeds.push({ type: 'google_docs', id: match[1], raw: match[0] });
+  }
+  // Extract Google Drive files (PDFs etc)
+  while ((match = driveFileRegex.exec(content)) !== null) {
+    embeds.push({ type: 'google_drive', id: match[1], raw: match[0] });
+  }
+  // Extract direct PDF URLs
+  while ((match = pdfUrlRegex.exec(content)) !== null) {
+    // Skip if already captured as a Google Drive link
+    const alreadyCaptured = embeds.some(e => match[0].includes(e.raw) || e.raw.includes(match[0]));
+    if (!alreadyCaptured) {
+      embeds.push({ type: 'pdf', url: match[1], raw: match[0] });
+    }
   }
 
   return { text, embeds };
@@ -100,6 +114,21 @@ export default function LessonContentViewer({ content }) {
                   src={`https://docs.google.com/document/d/${embed.id}/preview`}
                   className="w-full h-[500px]"
                   title="Google Doc"
+                />
+              )}
+              {embed.type === 'google_drive' && (
+                <iframe
+                  src={`https://drive.google.com/file/d/${embed.id}/preview`}
+                  className="w-full h-[600px]"
+                  allow="autoplay"
+                  title="Google Drive file"
+                />
+              )}
+              {embed.type === 'pdf' && (
+                <iframe
+                  src={embed.url}
+                  className="w-full h-[600px]"
+                  title="PDF document"
                 />
               )}
             </div>

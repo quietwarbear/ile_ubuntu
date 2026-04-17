@@ -25,3 +25,8 @@ spaces_col = db.spaces
 payment_transactions_col = db.payment_transactions
 blog_posts_col = db.blog_posts
 blog_comments_col = db.blog_comments
+
+# Course feature collections
+lesson_comments_col = db.lesson_comments
+quizzes_col = db.quizzes
+quiz_attempts_col = db.quiz_attempts

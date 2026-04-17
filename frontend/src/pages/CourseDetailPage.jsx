@@ -266,6 +266,9 @@ export default function CourseDetailPage({ user }) {
                 onUploadClick={handleUploadClick}
                 onDeleteFile={handleDeleteFile}
                 onOpenImport={handleOpenImport}
+                courseId={courseId}
+                user={user}
+                onReloadCourse={loadCourseData}
               />
             ))}
           </div>

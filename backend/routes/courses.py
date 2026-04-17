@@ -106,8 +106,11 @@ async def create_lesson(course_id: str, request: Request, current_user: dict = D
         "title": data["title"],
         "description": data.get("description", ""),
         "content": data.get("content", ""),
+        "video_url": data.get("video_url", ""),
+        "video_file_id": data.get("video_file_id", ""),
         "order": data.get("order", 0),
         "files": [],
+        "has_quiz": False,
         "created_by": current_user["id"],
         "created_at": datetime.now(timezone.utc),
         "updated_at": datetime.now(timezone.utc),
@@ -120,6 +123,43 @@ async def create_lesson(course_id: str, request: Request, current_user: dict = D
         {"$addToSet": {"lessons": lesson["id"]}, "$set": {"updated_at": datetime.now(timezone.utc)}},
     )
     return lesson
+
+
+@router.put("/{course_id}/lessons/{lesson_id}")
+async def update_lesson(course_id: str, lesson_id: str, request: Request, current_user: dict = Depends(get_current_user)):
+    course = courses_col.find_one({"id": course_id})
+    if not course:
+        raise HTTPException(status_code=404, detail="Course not found")
+    if course["instructor_id"] != current_user["id"] and not has_permission(current_user["role"], UserRole.ASSISTANT):
+        raise HTTPException(status_code=403, detail="Access denied")
+
+    lesson = lessons_col.find_one({"id": lesson_id, "course_id": course_id})
+    if not lesson:
+        raise HTTPException(status_code=404, detail="Lesson not found")
+
+    data = await request.json()
+    update_fields = {}
+    for field in ["title", "description", "content", "video_url", "video_file_id", "order"]:
+        if field in data:
+            update_fields[field] = data[field]
+    update_fields["updated_at"] = datetime.now(timezone.utc)
+
+    lessons_col.update_one({"id": lesson_id}, {"$set": update_fields})
+    updated = lessons_col.find_one({"id": lesson_id}, {"_id": 0})
+    return updated
+
+
+@router.delete("/{course_id}/lessons/{lesson_id}")
+async def delete_lesson(course_id: str, lesson_id: str, current_user: dict = Depends(get_current_user)):
+    course = courses_col.find_one({"id": course_id})
+    if not course:
+        raise HTTPException(status_code=404, detail="Course not found")
+    if course["instructor_id"] != current_user["id"] and not has_permission(current_user["role"], UserRole.ADMIN):
+        raise HTTPException(status_code=403, detail="Access denied")
+
+    lessons_col.delete_one({"id": lesson_id, "course_id": course_id})
+    courses_col.update_one({"id": course_id}, {"$pull": {"lessons": lesson_id}})
+    return {"success": True}
 
 
 @router.get("/{course_id}/lessons")
