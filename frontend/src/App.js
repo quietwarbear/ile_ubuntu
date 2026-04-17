@@ -235,8 +235,8 @@ function App() {
           setShowOnboarding(true);
         }
       } catch (e) {
-        console.error('Password login failed:', e);
       }
+    } else {
     }
   };
 

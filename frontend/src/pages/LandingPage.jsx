@@ -73,7 +73,7 @@ export default function LandingPage({ onLogin }) {
     fetch(`${API}/api/blog/posts/public?limit=3`)
       .then(r => r.json())
       .then(d => setLatestPosts(d.posts || []))
-      .catch(() => {});
+      .catch(() => { });
   }, []);
 
   useEffect(() => {
@@ -92,7 +92,7 @@ export default function LandingPage({ onLogin }) {
   return (
     <div className="min-h-screen bg-[#050814] overflow-x-hidden" data-testid="landing-page">
       {/* ===== NAVBAR ===== */}
-      <nav className="fixed top-0 left-0 right-0 z-50 backdrop-blur-xl bg-[#050814]/80 border-b border-[#1E293B]/50">
+      <nav className="fixed top-0 left-0 right-0 z-50 backdrop-blur-xl bg-[#050814]/80 border-b border-[#1E293B]/50" style={{ paddingTop: 'var(--safe-area-top, 0px)' }} style={{ paddingTop: 'var(--safe-area-top, 0px)' }}>
         <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-md bg-[#D4AF37]/10 border border-[#D4AF37]/20 flex items-center justify-center">
@@ -256,9 +256,8 @@ export default function LandingPage({ onLogin }) {
                   key={f.title}
                   data-feature-card
                   data-idx={i}
-                  className={`group p-5 bg-[#0F172A] border border-[#1E293B] rounded-lg hover:border-[#D4AF37]/30 transition-all duration-500 ${
-                    isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
-                  }`}
+                  className={`group p-5 bg-[#0F172A] border border-[#1E293B] rounded-lg hover:border-[#D4AF37]/30 transition-all duration-500 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
+                    }`}
                   style={{ transitionDelay: `${(i % 3) * 100}ms` }}
                   data-testid={`feature-card-${f.title.toLowerCase().replace(/\s+/g, '-')}`}
                 >
@@ -301,9 +300,8 @@ export default function LandingPage({ onLogin }) {
                 {TESTIMONIALS.map((t, i) => (
                   <div
                     key={t.name}
-                    className={`absolute inset-0 transition-all duration-700 ${
-                      i === currentTestimonial ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-8 pointer-events-none'
-                    }`}
+                    className={`absolute inset-0 transition-all duration-700 ${i === currentTestimonial ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-8 pointer-events-none'
+                      }`}
                   >
                     <Quotes size={28} weight="fill" className="text-[#D4AF37]/30 mb-4" />
                     <blockquote
@@ -340,9 +338,8 @@ export default function LandingPage({ onLogin }) {
                     <button
                       key={`dot-${i}`}
                       onClick={() => setCurrentTestimonial(i)}
-                      className={`w-1.5 h-1.5 rounded-full transition-all ${
-                        i === currentTestimonial ? 'bg-[#D4AF37] w-4' : 'bg-[#1E293B]'
-                      }`}
+                      className={`w-1.5 h-1.5 rounded-full transition-all ${i === currentTestimonial ? 'bg-[#D4AF37] w-4' : 'bg-[#1E293B]'
+                        }`}
                     />
                   ))}
                 </div>

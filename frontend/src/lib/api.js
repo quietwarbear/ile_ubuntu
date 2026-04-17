@@ -1,6 +1,12 @@
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || "https://ileubuntu-production.up.railway.app";
 
 function getCookie(name) {
+  // Prefer localStorage (works in Capacitor WKWebView where cookies fail)
+  try {
+    const stored = localStorage.getItem(name);
+    if (stored) return stored;
+  } catch (e) { /* localStorage not available */ }
+  // Fallback to document.cookie for web
   const value = `; ${document.cookie}`;
   const parts = value.split(`; ${name}=`);
   if (parts.length === 2) return parts.pop().split(';').shift();
@@ -8,11 +14,18 @@ function getCookie(name) {
 }
 
 function setCookie(name, value, days) {
+  // Store in both localStorage and cookie for cross-platform compat
+  try {
+    localStorage.setItem(name, value);
+  } catch (e) { /* localStorage not available */ }
   const expires = new Date(Date.now() + days * 864e5).toUTCString();
   document.cookie = `${name}=${value}; expires=${expires}; path=/`;
 }
 
 function clearCookie(name) {
+  try {
+    localStorage.removeItem(name);
+  } catch (e) { /* localStorage not available */ }
   document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
 }
 
