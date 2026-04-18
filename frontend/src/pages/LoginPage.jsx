@@ -62,10 +62,16 @@ export default function LoginPage({ onLogin, onPasswordLogin }) {
     // redirects back to the app via the ileubuntu:// custom URL scheme).
     const isIOS = isNative && window.Capacitor?.getPlatform?.() === 'ios';
     if (isNative && !isIOS) {
-      // Android native: use web redirect via backend /api/auth/apple/start
+      // Android native: use Browser.open (in-app) for Apple Sign In
       try {
         const redirectUri = 'ileubuntu://auth/apple/callback';
-        window.location.href = `${API}/api/auth/apple/start?redirect_uri=${encodeURIComponent(redirectUri)}`;
+        const authUrl = `${API}/api/auth/apple/start?redirect_uri=${encodeURIComponent(redirectUri)}`;
+        try {
+          const { Browser } = await import('@capacitor/browser');
+          await Browser.open({ url: authUrl, presentationStyle: 'popover' });
+        } catch (_) {
+          window.location.href = authUrl;
+        }
       } catch (e) {
         setError('Failed to start Apple Sign In. Please try again.');
         console.error('Apple Sign In error (Android):', e);
@@ -303,13 +309,17 @@ export default function LoginPage({ onLogin, onPasswordLogin }) {
 
           {/* Google OAuth */}
           <Button
-            onClick={() => {
-              // On native iOS/Android, go straight to server-side OAuth
-              // to avoid the broken Capacitor GoogleAuth plugin entirely
+            onClick={async () => {
+              // On native iOS/Android, use Browser.open (SFSafariViewController)
+              // for in-app OAuth — Apple requires this instead of external Safari
               if (isNative) {
-                const apiUrl = API;
-                const redir = 'ileubuntu://auth/google/callback';
-                window.location.href = `${apiUrl}/api/auth/google/start?redirect_uri=${encodeURIComponent(redir)}`;
+                const authUrl = `${API}/api/auth/google/start?redirect_uri=${encodeURIComponent('ileubuntu://auth/google/callback')}`;
+                try {
+                  const { Browser } = await import('@capacitor/browser');
+                  await Browser.open({ url: authUrl, presentationStyle: 'popover' });
+                } catch (_) {
+                  window.location.href = authUrl;
+                }
                 return;
               }
               onLogin();

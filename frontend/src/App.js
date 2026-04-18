@@ -55,23 +55,22 @@ function PublicRoutes({ handlePasswordLogin }) {
   // Called from the LoginPage "Continue with Google" button. On web, redirects
   // to the backend's Google OAuth start URL. On native, runs the Capacitor
   // GoogleAuth plugin and POSTs the idToken to /api/auth/google/session.
+  // Google sign-in handler — LoginPage's Google button calls this via onLogin.
+  // Native: uses Browser.open (SFSafariViewController) for in-app OAuth.
+  // Web: redirects to Google OAuth via backend login-url endpoint.
   const handleGoogleFromLogin = async () => {
     const isNativePlatform = window.Capacitor && window.Capacitor.isNativePlatform();
-    const isAndroid = isNativePlatform && window.Capacitor.getPlatform() === 'android';
-    const isIOS = isNativePlatform && window.Capacitor.getPlatform() === 'ios';
-    console.log("[DEBUG] Platform:", window.Capacitor?.getPlatform?.(), "isNative:", isNativePlatform, "isIOS:", isIOS, "isAndroid:", isAndroid);
-    if (isIOS) {
-      // iOS native: use server-side OAuth flow via /api/auth/google/start
-      // (GoogleAuth Capacitor plugin needs CocoaPods, not available with SPM)
-      const API = process.env.REACT_APP_BACKEND_URL || 'https://ileubuntu-production.up.railway.app';
-      const redirectUri = 'ileubuntu://auth/google/callback';
-      window.location.href = `${API}/api/auth/google/start?redirect_uri=${encodeURIComponent(redirectUri)}`;
-      return;
-    }
 
-    if (isAndroid) {
-      // Android native: run the Capacitor GoogleAuth flow
-      return handleGoogleLogin();
+    if (isNativePlatform) {
+      const API = process.env.REACT_APP_BACKEND_URL || 'https://ileubuntu-production.up.railway.app';
+      const authUrl = `${API}/api/auth/google/start?redirect_uri=${encodeURIComponent('ileubuntu://auth/google/callback')}`;
+      try {
+        const { Browser } = await import('@capacitor/browser');
+        await Browser.open({ url: authUrl, presentationStyle: 'popover' });
+      } catch (_) {
+        window.location.href = authUrl;
+      }
+      return;
     }
 
     // Web: use backend's Google OAuth redirect flow
@@ -84,19 +83,6 @@ function PublicRoutes({ handlePasswordLogin }) {
     } catch (e) {
       console.error('Failed to get login URL:', e);
     }
-  };
-
-  // All native Google sign-in goes through server-side OAuth flow.
-  // The Capacitor GoogleAuth plugin requires CocoaPods (not SPM) so
-  // we bypass it entirely and use our backend's /api/auth/google/start.
-  const handleGoogleLogin = async () => {
-    if (!(window.Capacitor && window.Capacitor.isNativePlatform())) {
-      return handleLogin();
-    }
-    const API = process.env.REACT_APP_BACKEND_URL || 'https://ileubuntu-production.up.railway.app';
-    const redirectUri = 'ileubuntu://auth/google/callback';
-    console.log('[IleUbuntu] Starting server-side Google OAuth for native');
-    window.location.href = `${API}/api/auth/google/start?redirect_uri=${encodeURIComponent(redirectUri)}`;
   };
 
   return (
