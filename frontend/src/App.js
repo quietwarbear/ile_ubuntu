@@ -59,7 +59,7 @@ function PublicRoutes({ handlePasswordLogin }) {
     const isNativePlatform = window.Capacitor && window.Capacitor.isNativePlatform();
     const isAndroid = isNativePlatform && window.Capacitor.getPlatform() === 'android';
     const isIOS = isNativePlatform && window.Capacitor.getPlatform() === 'ios';
-
+    console.log("[DEBUG] Platform:", window.Capacitor?.getPlatform?.(), "isNative:", isNativePlatform, "isIOS:", isIOS, "isAndroid:", isAndroid);
     if (isIOS) {
       // iOS native: use server-side OAuth flow via /api/auth/google/start
       // (GoogleAuth Capacitor plugin needs CocoaPods, not available with SPM)
@@ -86,35 +86,17 @@ function PublicRoutes({ handlePasswordLogin }) {
     }
   };
 
-  // Called from the LoginPage "Continue with Google" button. Runs the native
-  // Capacitor GoogleAuth flow, then POSTs the idToken to the backend.
+  // All native Google sign-in goes through server-side OAuth flow.
+  // The Capacitor GoogleAuth plugin requires CocoaPods (not SPM) so
+  // we bypass it entirely and use our backend's /api/auth/google/start.
   const handleGoogleLogin = async () => {
     if (!(window.Capacitor && window.Capacitor.isNativePlatform())) {
       return handleLogin();
     }
-    try {
-      const { GoogleAuth } = await import('@codetrix-studio/capacitor-google-auth');
-      try { await GoogleAuth.initialize(); } catch (e) { /* already initialized */ }
-      const result = await GoogleAuth.signIn();
-      console.log('GoogleAuth result:', result);
-      const idToken = result?.authentication?.idToken;
-      if (!idToken) {
-        console.error('GoogleAuth returned no idToken', result);
-        alert('Google sign-in did not return a token. Check console.');
-        return;
-      }
-      const data = await apiPost('/api/auth/google/session', { credential: idToken });
-      console.log('Backend session response:', data);
-      if (data?.session_id) {
-        setCookie('session_id', data.session_id, 7);
-        window.location.href = '/';
-      } else {
-        alert('Backend accepted token but returned no session_id.');
-      }
-    } catch (e) {
-      console.error('Native Google sign-in failed:', e);
-      alert('Google sign-in failed: ' + (e?.message || e));
-    }
+    const API = process.env.REACT_APP_BACKEND_URL || 'https://ileubuntu-production.up.railway.app';
+    const redirectUri = 'ileubuntu://auth/google/callback';
+    console.log('[IleUbuntu] Starting server-side Google OAuth for native');
+    window.location.href = `${API}/api/auth/google/start?redirect_uri=${encodeURIComponent(redirectUri)}`;
   };
 
   return (

@@ -168,7 +168,8 @@ export default function Sidebar({ user, onLogout }) {
     <>
       {/* Mobile toggle */}
       <button
-        className="lg:hidden fixed top-4 left-4 z-50 p-2 bg-[#0F172A] border border-[#1E293B] rounded-md text-[#94A3B8]"
+        className="lg:hidden fixed left-4 z-50 p-2 bg-[#0F172A] border border-[#1E293B] rounded-md text-[#94A3B8]"
+        style={{ top: 'calc(var(--safe-area-top, 0px) + 12px)' }}
         onClick={() => setMobileOpen(!mobileOpen)}
         data-testid="mobile-menu-toggle"
       >

@@ -92,11 +92,7 @@ export default function LandingPage({ onLogin }) {
   return (
     <div className="min-h-screen bg-[#050814] overflow-x-hidden" data-testid="landing-page">
       {/* ===== NAVBAR ===== */}
-<<<<<<< HEAD
-      <nav className="fixed top-0 left-0 right-0 z-50 backdrop-blur-xl bg-[#050814]/80 border-b border-[#1E293B]/50" style={{ paddingTop: 'var(--safe-area-top, 0px)' }} style={{ paddingTop: 'var(--safe-area-top, 0px)' }}>
-=======
       <nav className="fixed top-0 left-0 right-0 z-50 backdrop-blur-xl bg-[#050814]/80 border-b border-[#1E293B]/50" style={{ paddingTop: 'var(--safe-area-top, 0px)' }}>
->>>>>>> b4584d7 (Fix native iOS auth + safe area + viewport-fit)
         <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-md bg-[#D4AF37]/10 border border-[#D4AF37]/20 flex items-center justify-center">
