@@ -303,7 +303,17 @@ export default function LoginPage({ onLogin, onPasswordLogin }) {
 
           {/* Google OAuth */}
           <Button
-            onClick={onLogin}
+            onClick={() => {
+              // On native iOS/Android, go straight to server-side OAuth
+              // to avoid the broken Capacitor GoogleAuth plugin entirely
+              if (isNative) {
+                const apiUrl = API;
+                const redir = 'ileubuntu://auth/google/callback';
+                window.location.href = `${apiUrl}/api/auth/google/start?redirect_uri=${encodeURIComponent(redir)}`;
+                return;
+              }
+              onLogin();
+            }}
             variant="outline"
             className="w-full border-[#1E293B] text-[#94A3B8] hover:bg-[#0F1629] hover:text-[#F8FAFC] py-3 transition-all duration-200"
           >
