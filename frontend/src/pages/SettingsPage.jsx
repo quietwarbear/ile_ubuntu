@@ -92,7 +92,13 @@ export default function SettingsPage({ user }) {
   const handleConnectGoogle = async () => {
     try {
       const data = await apiGet('/api/google/auth-url');
-      window.location.href = data.auth_url;
+      const isNativePlatform = window.Capacitor && typeof window.Capacitor.isNativePlatform === 'function' && window.Capacitor.isNativePlatform();
+      if (isNativePlatform) {
+        const { Browser } = await import('@capacitor/browser');
+        await Browser.open({ url: data.auth_url, presentationStyle: 'fullscreen' });
+      } else {
+        window.location.href = data.auth_url;
+      }
     } catch (e) { alert(e.message); }
   };
 

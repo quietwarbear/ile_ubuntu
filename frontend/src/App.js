@@ -66,9 +66,9 @@ function PublicRoutes({ handlePasswordLogin }) {
       const authUrl = `${API}/api/auth/google/start?redirect_uri=${encodeURIComponent('ileubuntu://auth/google/callback')}`;
       try {
         const { Browser } = await import('@capacitor/browser');
-        await Browser.open({ url: authUrl, presentationStyle: 'popover' });
-      } catch (_) {
-        window.location.href = authUrl;
+        await Browser.open({ url: authUrl, presentationStyle: 'fullscreen' });
+      } catch (e) {
+        console.error('Failed to open in-app browser for Google Sign In:', e);
       }
       return;
     }

@@ -6,6 +6,9 @@ import uuid
 import urllib.parse
 import requests
 import json
+import logging
+
+logger = logging.getLogger("auth")
 from pydantic import BaseModel
 from passlib.context import CryptContext
 from google.auth.transport.requests import Request as GoogleRequest
@@ -454,6 +457,23 @@ async def google_callback_web(payload: GoogleCallbackRequest):
     }
 
 
+@router.get("/google/debug")
+async def google_debug(request: Request):
+    """Temporary diagnostic endpoint — returns the base URL and OAuth config (no secrets)."""
+    base = _external_base_url(request)
+    return {
+        "external_base_url": base,
+        "oauth_callback_uri": base + "/api/auth/google/callback",
+        "google_client_id_set": bool(GOOGLE_CLIENT_ID),
+        "google_client_secret_set": bool(GOOGLE_CLIENT_SECRET),
+        "google_client_id_prefix": GOOGLE_CLIENT_ID[:20] + "..." if GOOGLE_CLIENT_ID else "",
+        "allowed_schemes": list(ALLOWED_MOBILE_GOOGLE_SCHEMES),
+        "forwarded_proto": request.headers.get("x-forwarded-proto", ""),
+        "forwarded_host": request.headers.get("x-forwarded-host", ""),
+        "request_base_url": str(request.base_url),
+    }
+
+
 @router.get("/google/start")
 async def google_login_start(request: Request, redirect_uri: str = DEFAULT_MOBILE_GOOGLE_REDIRECT):
     """
@@ -468,6 +488,10 @@ async def google_login_start(request: Request, redirect_uri: str = DEFAULT_MOBIL
     app_redirect_uri = _validate_mobile_redirect_uri(redirect_uri)
     oauth_callback_uri = _external_base_url(request) + "/api/auth/google/callback"
 
+    logger.info("[Google OAuth START] external_base_url=%s", _external_base_url(request))
+    logger.info("[Google OAuth START] oauth_callback_uri=%s", oauth_callback_uri)
+    logger.info("[Google OAuth START] app_redirect_uri (state)=%s", app_redirect_uri)
+
     params = {
         "client_id": GOOGLE_CLIENT_ID,
         "redirect_uri": oauth_callback_uri,
@@ -478,20 +502,26 @@ async def google_login_start(request: Request, redirect_uri: str = DEFAULT_MOBIL
         "state": app_redirect_uri,
     }
     auth_url = f"https://accounts.google.com/o/oauth2/v2/auth?{urllib.parse.urlencode(params)}"
-    return RedirectResponse(url=auth_url)
+    return RedirectResponse(url=auth_url, status_code=302)
 
 
 @router.get("/google/callback")
 async def google_login_callback(request: Request, code: str = None, state: str = None, error: str = None):
+    logger.info("[Google OAuth CALLBACK] hit! code=%s state=%s error=%s", bool(code), state, error)
+    logger.info("[Google OAuth CALLBACK] external_base_url=%s", _external_base_url(request))
+
     app_redirect_uri = _validate_redirect_uri(state or DEFAULT_MOBILE_GOOGLE_REDIRECT)
 
     if error:
-        return RedirectResponse(url=_append_query_value(app_redirect_uri, "google_error", error))
+        logger.error("[Google OAuth CALLBACK] Google returned error: %s", error)
+        return RedirectResponse(url=_append_query_value(app_redirect_uri, "google_error", error), status_code=302)
 
     if not code:
-        return RedirectResponse(url=_append_query_value(app_redirect_uri, "google_error", "no_code"))
+        logger.error("[Google OAuth CALLBACK] No code received")
+        return RedirectResponse(url=_append_query_value(app_redirect_uri, "google_error", "no_code"), status_code=302)
 
     oauth_callback_uri = _external_base_url(request) + "/api/auth/google/callback"
+    logger.info("[Google OAuth CALLBACK] token exchange redirect_uri=%s", oauth_callback_uri)
 
     token_response = requests.post(
         "https://oauth2.googleapis.com/token",
@@ -510,12 +540,14 @@ async def google_login_callback(request: Request, code: str = None, state: str =
             error_detail = token_response.json().get("error_description", "token_exchange_failed")
         except Exception:
             error_detail = "token_exchange_failed"
-        return RedirectResponse(url=_append_query_value(app_redirect_uri, "google_error", error_detail))
+        logger.error("[Google OAuth CALLBACK] Token exchange failed: status=%s detail=%s", token_response.status_code, error_detail)
+        return RedirectResponse(url=_append_query_value(app_redirect_uri, "google_error", error_detail), status_code=302)
 
     tokens = token_response.json()
     id_token_value = tokens.get("id_token")
     if not id_token_value:
-        return RedirectResponse(url=_append_query_value(app_redirect_uri, "google_error", "missing_id_token"))
+        logger.error("[Google OAuth CALLBACK] No id_token in token response")
+        return RedirectResponse(url=_append_query_value(app_redirect_uri, "google_error", "missing_id_token"), status_code=302)
 
     try:
         idinfo = id_token.verify_oauth2_token(
@@ -530,11 +562,14 @@ async def google_login_callback(request: Request, code: str = None, state: str =
                 "picture": idinfo.get("picture", ""),
             }
         )
-    except Exception:
-        return RedirectResponse(url=_append_query_value(app_redirect_uri, "google_error", "google_validation_failed"))
+    except Exception as exc:
+        logger.error("[Google OAuth CALLBACK] Token validation failed: %s", exc)
+        return RedirectResponse(url=_append_query_value(app_redirect_uri, "google_error", "google_validation_failed"), status_code=302)
 
     session = _create_session(user_id)
-    return RedirectResponse(url=_append_query_value(app_redirect_uri, "session_id", session["session_id"]))
+    final_url = _append_query_value(app_redirect_uri, "session_id", session["session_id"])
+    logger.info("[Google OAuth CALLBACK] SUCCESS — redirecting to %s", final_url)
+    return RedirectResponse(url=final_url, status_code=302)
 
 
 class AppleSessionRequest(BaseModel):

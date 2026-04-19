@@ -66,12 +66,8 @@ export default function LoginPage({ onLogin, onPasswordLogin }) {
       try {
         const redirectUri = 'ileubuntu://auth/apple/callback';
         const authUrl = `${API}/api/auth/apple/start?redirect_uri=${encodeURIComponent(redirectUri)}`;
-        try {
-          const { Browser } = await import('@capacitor/browser');
-          await Browser.open({ url: authUrl, presentationStyle: 'popover' });
-        } catch (_) {
-          window.location.href = authUrl;
-        }
+        const { Browser } = await import('@capacitor/browser');
+        await Browser.open({ url: authUrl, presentationStyle: 'fullscreen' });
       } catch (e) {
         setError('Failed to start Apple Sign In. Please try again.');
         console.error('Apple Sign In error (Android):', e);
@@ -157,11 +153,19 @@ export default function LoginPage({ onLogin, onPasswordLogin }) {
         ? { email, password, name }
         : { email, password };
 
+      // Use AbortController to enforce a 15-second timeout so the request
+      // doesn't hang indefinitely if the backend is slow to respond.
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 15000);
+
       const res = await fetch(`${API}${endpoint}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
+        signal: controller.signal,
       });
+
+      clearTimeout(timeoutId);
 
       const data = await res.json();
 
@@ -176,7 +180,11 @@ export default function LoginPage({ onLogin, onPasswordLogin }) {
         onPasswordLogin(data);
       }
     } catch (err) {
-      setError('Network error. Please try again.');
+      if (err.name === 'AbortError') {
+        setError('The server is taking too long to respond. Please try again in a moment.');
+      } else {
+        setError('Unable to reach the server. Please check your connection and try again.');
+      }
     }
     setLoading(false);
   };
@@ -316,9 +324,10 @@ export default function LoginPage({ onLogin, onPasswordLogin }) {
                 const authUrl = `${API}/api/auth/google/start?redirect_uri=${encodeURIComponent('ileubuntu://auth/google/callback')}`;
                 try {
                   const { Browser } = await import('@capacitor/browser');
-                  await Browser.open({ url: authUrl, presentationStyle: 'popover' });
-                } catch (_) {
-                  window.location.href = authUrl;
+                  await Browser.open({ url: authUrl, presentationStyle: 'fullscreen' });
+                } catch (e) {
+                  console.error('Failed to open in-app browser for Google Sign In:', e);
+                  setError('Unable to open sign-in. Please try again.');
                 }
                 return;
               }

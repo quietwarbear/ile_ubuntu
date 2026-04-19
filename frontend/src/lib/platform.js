@@ -87,20 +87,31 @@ export const initializeNativePlugins = async () => {
     });
 
     // Deep link handler — OAuth callbacks return here via ileubuntu:// scheme
-    App.addListener("appUrlOpen", ({ url }) => {
+    App.addListener("appUrlOpen", async ({ url }) => {
       console.log("[IleUbuntu] Deep link received:", url);
+
+      // Close the in-app browser (SFSafariViewController) immediately
+      try {
+        const { Browser } = await import(/* webpackIgnore: true */ "@capacitor/browser");
+        await Browser.close();
+      } catch (_) {
+        // Browser.close() may fail if it was never opened — ignore
+      }
+
       try {
         const parsed = new URL(url);
         const sessionId = parsed.searchParams.get("session_id");
         const error = parsed.searchParams.get("error");
+        const googleError = parsed.searchParams.get("google_error");
+        const appleError = parsed.searchParams.get("apple_error");
 
-        if (error) {
-          console.error("[IleUbuntu] OAuth callback error:", error);
+        if (error || googleError || appleError) {
+          console.error("[IleUbuntu] OAuth callback error:", error || googleError || appleError);
           return;
         }
 
         if (sessionId) {
-          console.log("[IleUbuntu] Got session_id from deep link");
+          console.log("[IleUbuntu] Got session_id from deep link, storing and reloading");
           // Store in localStorage (primary) and cookie (fallback)
           try { localStorage.setItem("session_id", sessionId); } catch (e) { /* noop */ }
           const expires = new Date(Date.now() + 7 * 864e5).toUTCString();

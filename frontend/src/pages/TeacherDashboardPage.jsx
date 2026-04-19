@@ -39,6 +39,16 @@ export default function TeacherDashboardPage({ user }) {
 
   useEffect(() => { fetchAll(); }, [fetchAll]);
 
+  const openUrlInAppOrBrowser = async (url) => {
+    const isNativePlatform = window.Capacitor && typeof window.Capacitor.isNativePlatform === 'function' && window.Capacitor.isNativePlatform();
+    if (isNativePlatform) {
+      const { Browser } = await import('@capacitor/browser');
+      await Browser.open({ url, presentationStyle: 'fullscreen' });
+    } else {
+      window.location.href = url;
+    }
+  };
+
   const handleStartOnboarding = async () => {
     setOnboardingLoading(true);
     try {
@@ -47,7 +57,7 @@ export default function TeacherDashboardPage({ user }) {
         refresh_url: `${window.location.origin}/teacher-dashboard`,
       });
       if (res.url) {
-        window.location.href = res.url;
+        await openUrlInAppOrBrowser(res.url);
       }
     } catch (e) {
       setStatusMessage({ type: 'error', text: e.message || 'Failed to start onboarding' });
@@ -60,7 +70,7 @@ export default function TeacherDashboardPage({ user }) {
     try {
       const res = await apiGet('/api/marketplace/connect/dashboard-link');
       if (res.url) {
-        window.open(res.url, '_blank');
+        await openUrlInAppOrBrowser(res.url);
       }
     } catch (e) {
       setStatusMessage({ type: 'error', text: 'Could not open Stripe dashboard' });
