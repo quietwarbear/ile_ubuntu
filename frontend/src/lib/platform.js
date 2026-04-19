@@ -48,7 +48,7 @@ export const initializeNativePlugins = async () => {
   try {
     // Status bar
     const { StatusBar, Style } = await import(
-      /* webpackIgnore: true */ "@capacitor/status-bar"
+      "@capacitor/status-bar"
     );
     await StatusBar.setStyle({ style: Style.Dark });
     if (Platform.isAndroid()) {
@@ -61,7 +61,7 @@ export const initializeNativePlugins = async () => {
   try {
     // Keyboard
     const { Keyboard } = await import(
-      /* webpackIgnore: true */ "@capacitor/keyboard"
+      "@capacitor/keyboard"
     );
     Keyboard.addListener("keyboardWillShow", (info) => {
       document.body.style.setProperty("--keyboard-height", `${info.keyboardHeight}px`);
@@ -77,7 +77,7 @@ export const initializeNativePlugins = async () => {
 
   try {
     // App lifecycle (back button on Android)
-    const { App } = await import(/* webpackIgnore: true */ "@capacitor/app");
+    const { App } = await import("@capacitor/app");
     App.addListener("backButton", ({ canGoBack }) => {
       if (canGoBack) {
         window.history.back();
@@ -92,7 +92,7 @@ export const initializeNativePlugins = async () => {
 
       // Close the in-app browser (SFSafariViewController) immediately
       try {
-        const { Browser } = await import(/* webpackIgnore: true */ "@capacitor/browser");
+        const { Browser } = await import("@capacitor/browser");
         await Browser.close();
       } catch (_) {
         // Browser.close() may fail if it was never opened — ignore
