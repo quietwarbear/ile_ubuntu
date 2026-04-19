@@ -52,9 +52,6 @@ function PublicRoutes({ handlePasswordLogin }) {
     navigate('/login');
   };
 
-  // Called from the LoginPage "Continue with Google" button. On web, redirects
-  // to the backend's Google OAuth start URL. On native, runs the Capacitor
-  // GoogleAuth plugin and POSTs the idToken to /api/auth/google/session.
   // Google sign-in handler — LoginPage's Google button calls this via onLogin.
   // Native: uses Browser.open (SFSafariViewController) for in-app OAuth.
   // Web: redirects to Google OAuth via backend login-url endpoint.
