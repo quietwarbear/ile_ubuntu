@@ -1,5 +1,5 @@
 from fastapi import APIRouter, HTTPException, Request, Depends
-from fastapi.responses import RedirectResponse
+from fastapi.responses import RedirectResponse, HTMLResponse
 from datetime import datetime, timezone, timedelta
 import os
 import uuid
@@ -202,6 +202,28 @@ def _append_query_value(url: str, key: str, value: str) -> str:
     query = urllib.parse.parse_qsl(parts.query, keep_blank_values=True)
     query.append((key, value))
     return urllib.parse.urlunsplit(parts._replace(query=urllib.parse.urlencode(query)))
+
+
+def _deep_link_redirect(url: str) -> HTMLResponse:
+    """
+    Return an HTML page that navigates to a custom-scheme deep link.
+
+    SFSafariViewController (iOS) and some desktop browsers do NOT follow
+    HTTP 302 redirects to custom URL schemes like ileubuntu://.  Returning
+    an HTML page with a JavaScript redirect works reliably across all
+    environments.
+    """
+    escaped = url.replace("&", "&amp;").replace('"', "&quot;")
+    html = f"""<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><title>Redirecting…</title></head>
+<body>
+<p>Signing you in…</p>
+<script>window.location.href = "{url}";</script>
+<noscript><a href="{escaped}">Tap here to continue</a></noscript>
+</body>
+</html>"""
+    return HTMLResponse(content=html)
 
 
 def _validate_mobile_redirect_uri(redirect_uri: str) -> str:
@@ -513,15 +535,15 @@ async def google_login_callback(request: Request, code: str = None, state: str =
     app_redirect_uri = _validate_redirect_uri(state or DEFAULT_MOBILE_GOOGLE_REDIRECT)
 
     if error:
-        logger.error("[Google OAuth CALLBACK] Google returned error: %s", error)
-        return RedirectResponse(url=_append_query_value(app_redirect_uri, "google_error", error), status_code=302)
+        print(f"[Google OAuth CALLBACK] Google returned error: {error}")
+        return _deep_link_redirect(_append_query_value(app_redirect_uri, "google_error", error))
 
     if not code:
-        logger.error("[Google OAuth CALLBACK] No code received")
-        return RedirectResponse(url=_append_query_value(app_redirect_uri, "google_error", "no_code"), status_code=302)
+        print("[Google OAuth CALLBACK] No code received")
+        return _deep_link_redirect(_append_query_value(app_redirect_uri, "google_error", "no_code"))
 
     oauth_callback_uri = _external_base_url(request) + "/api/auth/google/callback"
-    logger.info("[Google OAuth CALLBACK] token exchange redirect_uri=%s", oauth_callback_uri)
+    print(f"[Google OAuth CALLBACK] token exchange redirect_uri={oauth_callback_uri}")
 
     token_response = requests.post(
         "https://oauth2.googleapis.com/token",
@@ -540,14 +562,14 @@ async def google_login_callback(request: Request, code: str = None, state: str =
             error_detail = token_response.json().get("error_description", "token_exchange_failed")
         except Exception:
             error_detail = "token_exchange_failed"
-        logger.error("[Google OAuth CALLBACK] Token exchange failed: status=%s detail=%s", token_response.status_code, error_detail)
-        return RedirectResponse(url=_append_query_value(app_redirect_uri, "google_error", error_detail), status_code=302)
+        print(f"[Google OAuth CALLBACK] Token exchange failed: status={token_response.status_code} detail={error_detail}")
+        return _deep_link_redirect(_append_query_value(app_redirect_uri, "google_error", error_detail))
 
     tokens = token_response.json()
     id_token_value = tokens.get("id_token")
     if not id_token_value:
-        logger.error("[Google OAuth CALLBACK] No id_token in token response")
-        return RedirectResponse(url=_append_query_value(app_redirect_uri, "google_error", "missing_id_token"), status_code=302)
+        print("[Google OAuth CALLBACK] No id_token in token response")
+        return _deep_link_redirect(_append_query_value(app_redirect_uri, "google_error", "missing_id_token"))
 
     try:
         idinfo = id_token.verify_oauth2_token(
@@ -563,13 +585,13 @@ async def google_login_callback(request: Request, code: str = None, state: str =
             }
         )
     except Exception as exc:
-        logger.error("[Google OAuth CALLBACK] Token validation failed: %s", exc)
-        return RedirectResponse(url=_append_query_value(app_redirect_uri, "google_error", "google_validation_failed"), status_code=302)
+        print(f"[Google OAuth CALLBACK] Token validation failed: {exc}")
+        return _deep_link_redirect(_append_query_value(app_redirect_uri, "google_error", "google_validation_failed"))
 
     session = _create_session(user_id)
     final_url = _append_query_value(app_redirect_uri, "session_id", session["session_id"])
-    logger.info("[Google OAuth CALLBACK] SUCCESS — redirecting to %s", final_url)
-    return RedirectResponse(url=final_url, status_code=302)
+    print(f"[Google OAuth CALLBACK] SUCCESS — deep-linking to {final_url}")
+    return _deep_link_redirect(final_url)
 
 
 class AppleSessionRequest(BaseModel):
