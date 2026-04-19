@@ -61,7 +61,7 @@ export const initializeRevenueCat = async () => {
 
   try {
     const { Purchases } = await import(
-      /* webpackIgnore: true */ "@revenuecat/purchases-capacitor"
+      "@revenuecat/purchases-capacitor"
     );
 
     await Purchases.configure({
@@ -87,7 +87,7 @@ export const fetchOfferings = async () => {
 
   try {
     const { Purchases } = await import(
-      /* webpackIgnore: true */ "@revenuecat/purchases-capacitor"
+      "@revenuecat/purchases-capacitor"
     );
     const offerings = await Purchases.getOfferings();
     return offerings;
@@ -108,7 +108,7 @@ export const getPackageByProductId = async (productId) => {
 
   try {
     const { Purchases } = await import(
-      /* webpackIgnore: true */ "@revenuecat/purchases-capacitor"
+      "@revenuecat/purchases-capacitor"
     );
     const offerings = await Purchases.getOfferings();
 
@@ -136,7 +136,7 @@ export const makePurchase = async (productId) => {
 
   try {
     const { Purchases } = await import(
-      /* webpackIgnore: true */ "@revenuecat/purchases-capacitor"
+      "@revenuecat/purchases-capacitor"
     );
 
     const pkg = await getPackageByProductId(productId);
@@ -179,7 +179,7 @@ export const getCustomerInfo = async () => {
 
   try {
     const { Purchases } = await import(
-      /* webpackIgnore: true */ "@revenuecat/purchases-capacitor"
+      "@revenuecat/purchases-capacitor"
     );
     const info = await Purchases.getCustomerInfo();
     return info?.customerInfo || null;
@@ -200,7 +200,7 @@ export const restorePurchases = async () => {
 
   try {
     const { Purchases } = await import(
-      /* webpackIgnore: true */ "@revenuecat/purchases-capacitor"
+      "@revenuecat/purchases-capacitor"
     );
     const result = await Purchases.restorePurchases();
     return result?.customerInfo || null;
@@ -221,7 +221,7 @@ export const syncRevenueCatUser = async (userId) => {
 
   try {
     const { Purchases } = await import(
-      /* webpackIgnore: true */ "@revenuecat/purchases-capacitor"
+      "@revenuecat/purchases-capacitor"
     );
     await Purchases.logIn({ appUserID: userId });
     console.log("[IleUbuntu] RevenueCat user synced:", userId);
@@ -241,7 +241,7 @@ export const logOutRevenueCat = async () => {
 
   try {
     const { Purchases } = await import(
-      /* webpackIgnore: true */ "@revenuecat/purchases-capacitor"
+      "@revenuecat/purchases-capacitor"
     );
     await Purchases.logOut();
     console.log("[IleUbuntu] RevenueCat user logged out");
