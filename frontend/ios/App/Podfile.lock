@@ -18,7 +18,7 @@ PODS:
     - Capacitor
   - CapacitorSplashScreen (8.0.1):
     - Capacitor
-  - CapacitorStatusBar (6.0.3):
+  - CapacitorStatusBar (8.0.2):
     - Capacitor
   - PurchasesHybridCommon (17.25.0):
     - RevenueCat (= 5.51.1)
@@ -83,7 +83,7 @@ SPEC CHECKSUMS:
   CapacitorKeyboard: a87ba967a57b5e2f73365ccea38837480e859b6d
   CapacitorPushNotifications: 16becb8878dc18a93a9a6babc705228eed0893a2
   CapacitorSplashScreen: 1281f7df4d9b4a72bccab8d03e6b2bbd17dff122
-  CapacitorStatusBar: 38665f1a18c55677098367a29f6b42126b72dc65
+  CapacitorStatusBar: b692a4cf12b3fe3a7b7ece86da62106065d78fdc
   PurchasesHybridCommon: 6a79a873ab52f777bfa36e9516f3fcd84d3b3428
   RevenueCat: eab035bbab271faccfef5c36eaff2a1ffef14dc0
   RevenuecatPurchasesCapacitor: 17db9f0b99ec5c4055d84af83d38bc5038f50ff2
