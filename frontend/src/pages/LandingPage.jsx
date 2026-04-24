@@ -103,6 +103,7 @@ export default function LandingPage({ onLogin }) {
             </span>
           </div>
           <div className="flex items-center gap-4">
+            <a href="#pricing" className="text-xs text-[#94A3B8] hover:text-[#D4AF37] transition-colors hidden sm:block">Pricing</a>
             <a href="/blog" className="text-xs text-[#94A3B8] hover:text-[#D4AF37] transition-colors hidden sm:block">Blog</a>
             <a href="/about" className="text-xs text-[#94A3B8] hover:text-[#D4AF37] transition-colors hidden sm:block">About</a>
             <Button
@@ -273,6 +274,48 @@ export default function LandingPage({ onLogin }) {
         </div>
       </section>
 
+      {/* ===== SEE IT IN ACTION (demo placeholder) ===== */}
+      {/* TODO: Replace the placeholder card below with the real demo video.
+          Easiest path is a YouTube/Vimeo embed:
+            <iframe className="absolute inset-0 w-full h-full" src="https://www.youtube.com/embed/VIDEO_ID"
+              title="The Ile Ubuntu — product walkthrough" frameBorder="0"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen />
+          Drop that inside the .aspect-video wrapper, or swap the whole inner card for a hosted MP4 <video> tag. */}
+      <section className="py-24" data-testid="demo-section" id="demo">
+        <div className="max-w-5xl mx-auto px-6">
+          <div className="text-center mb-12">
+            <p className="text-xs tracking-[0.25em] uppercase text-[#D4AF37] mb-4">See It In Action</p>
+            <h2
+              className="text-3xl sm:text-4xl font-light text-[#F8FAFC] mb-4"
+              style={{ fontFamily: 'Cormorant Garamond, serif' }}
+            >
+              A walkthrough of the <span className="text-[#D4AF37]">commons</span>
+            </h2>
+            <p className="text-sm text-[#94A3B8] leading-relaxed max-w-xl mx-auto">
+              Watch how a course, a cohort, and a knowledge space come together — and how a learner moves
+              from Explorer to Elder.
+            </p>
+          </div>
+
+          <div className="relative rounded-xl overflow-hidden border border-[#D4AF37]/20 bg-[#0F172A]" data-testid="demo-video-placeholder">
+            <div className="aspect-video w-full bg-gradient-to-br from-[#0A1128] via-[#0F172A] to-[#050814] flex items-center justify-center">
+              <div className="text-center px-6">
+                <div className="w-20 h-20 mx-auto rounded-full bg-[#D4AF37]/10 border border-[#D4AF37]/30 flex items-center justify-center mb-5">
+                  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                    <path d="M8 5V19L19 12L8 5Z" fill="#D4AF37" />
+                  </svg>
+                </div>
+                <p className="text-xs tracking-[0.3em] uppercase text-[#D4AF37] mb-2">Walkthrough Coming Soon</p>
+                <p className="text-sm text-[#94A3B8] max-w-sm mx-auto">
+                  A guided tour is on the way. In the meantime, sign in with a free Explorer account and look around.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* ===== SOCIAL PROOF / TESTIMONIALS ===== */}
       <section className="py-24" data-testid="testimonials-section">
         <div className="max-w-6xl mx-auto px-6">
@@ -385,6 +428,125 @@ export default function LandingPage({ onLogin }) {
               </div>
             ))}
           </div>
+        </div>
+      </section>
+
+      {/* ===== PRICING ===== */}
+      {/* Tier amounts mirror backend/routes/subscriptions.py MEMBERSHIP_TIERS — keep in sync if backend changes. */}
+      <section className="py-24" data-testid="pricing-section" id="pricing">
+        <div className="max-w-6xl mx-auto px-6">
+          <div className="text-center mb-16">
+            <p className="text-xs tracking-[0.25em] uppercase text-[#D4AF37] mb-4">Membership</p>
+            <h2
+              className="text-3xl sm:text-4xl font-light text-[#F8FAFC] mb-4"
+              style={{ fontFamily: 'Cormorant Garamond, serif' }}
+            >
+              Choose your <span className="text-[#D4AF37]">place</span> in the commons
+            </h2>
+            <p className="text-sm text-[#94A3B8] leading-relaxed max-w-xl mx-auto">
+              Start free. Upgrade when you're ready to enroll deeper, sit in cohorts, or step into the Elder Circle.
+            </p>
+          </div>
+
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[
+              {
+                id: 'explorer',
+                name: 'Explorer',
+                price: '$0',
+                cadence: 'Free forever',
+                tagline: 'Wander the commons.',
+                features: [
+                  'Browse public courses',
+                  'Up to 2 active enrollments',
+                  'Community forum access',
+                  'Basic archives',
+                ],
+                cta: 'Begin for free',
+                highlighted: false,
+              },
+              {
+                id: 'scholar',
+                name: 'Scholar',
+                price: '$19.99',
+                cadence: 'per month · or $199.99 / year',
+                tagline: 'Sit in the cohort. Walk the full path.',
+                features: [
+                  'Everything in Explorer',
+                  'Unlimited course enrollment',
+                  'Cohort membership & leaderboards',
+                  'Knowledge spaces',
+                  'Priority support',
+                ],
+                cta: 'Become a Scholar',
+                highlighted: true,
+              },
+              {
+                id: 'elder_circle',
+                name: 'Elder Circle',
+                price: '$49.99',
+                cadence: 'per month · or $499.99 / year',
+                tagline: 'Help govern the village.',
+                features: [
+                  'Everything in Scholar',
+                  'Live teaching sessions',
+                  'Protected archives',
+                  'Governance participation',
+                  'Custom branding',
+                ],
+                cta: 'Join the Elder Circle',
+                highlighted: false,
+              },
+            ].map(tier => (
+              <div
+                key={tier.id}
+                className={`relative p-6 rounded-xl border flex flex-col ${tier.highlighted
+                  ? 'bg-[#0F172A] border-[#D4AF37]/40 shadow-[0_0_0_1px_rgba(212,175,55,0.15),0_20px_60px_-30px_rgba(212,175,55,0.4)]'
+                  : 'bg-[#0A1128] border-[#1E293B]'
+                  }`}
+                data-testid={`pricing-tier-${tier.id}`}
+              >
+                {tier.highlighted && (
+                  <span className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full bg-[#D4AF37] text-[#050814] text-[10px] tracking-[0.2em] uppercase font-medium">
+                    Most Popular
+                  </span>
+                )}
+                <div className="mb-5">
+                  <p className="text-xs tracking-[0.25em] uppercase text-[#D4AF37] mb-2">{tier.name}</p>
+                  <p className="text-sm text-[#94A3B8] italic" style={{ fontFamily: 'Cormorant Garamond, serif' }}>{tier.tagline}</p>
+                </div>
+                <div className="mb-6 pb-6 border-b border-[#1E293B]">
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-4xl text-[#F8FAFC] font-light" style={{ fontFamily: 'Cormorant Garamond, serif' }}>{tier.price}</span>
+                  </div>
+                  <p className="text-[11px] text-[#64748B] mt-1">{tier.cadence}</p>
+                </div>
+                <ul className="space-y-3 mb-8 flex-1">
+                  {tier.features.map(f => (
+                    <li key={f} className="flex items-start gap-2 text-xs text-[#94A3B8]">
+                      <Star size={10} weight="fill" className="text-[#D4AF37] mt-1 flex-shrink-0" />
+                      <span>{f}</span>
+                    </li>
+                  ))}
+                </ul>
+                <Button
+                  onClick={onLogin}
+                  className={`w-full text-xs font-medium py-5 rounded-md ${tier.highlighted
+                    ? 'bg-[#D4AF37] text-[#050814] hover:bg-[#F3E5AB]'
+                    : 'bg-transparent border border-[#D4AF37]/40 text-[#D4AF37] hover:bg-[#D4AF37]/10'
+                    }`}
+                  data-testid={`pricing-cta-${tier.id}`}
+                >
+                  {tier.cta}
+                </Button>
+              </div>
+            ))}
+          </div>
+
+          <p className="text-[11px] text-[#64748B] text-center mt-10 max-w-2xl mx-auto leading-relaxed">
+            Faculty, Elder, and Admin roles bypass tier limits — membership tiers apply to Students and Assistants.
+            All paid tiers can be canceled at any time from your subscription settings.
+          </p>
         </div>
       </section>
 
