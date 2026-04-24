@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { Link } from 'react-router-dom';
 import { Card, CardContent } from '../components/ui/card';
 import { Badge } from '../components/ui/badge';
 import {
@@ -364,6 +365,45 @@ export default function SubscriptionsPage({ user }) {
           </button>
         </div>
       )}
+
+      {/*
+        Apple App Store Guideline 3.1.2(c) — Subscription disclosures and
+        tappable links to the Terms of Use (EULA) and Privacy Policy must
+        be visible on any screen that offers an auto-renewable subscription.
+      */}
+      <div
+        className="mt-6 pt-5 border-t border-[#1E293B] text-center"
+        data-testid="subscription-legal"
+      >
+        <p className="text-[11px] text-[#94A3B8] leading-relaxed mb-3 px-2">
+          Subscriptions auto-renew monthly (Elder Circle $49.99/mo) or annually
+          (Elder Circle $499.99/yr) until cancelled. Payment is charged to your
+          Apple ID at confirmation of purchase. Your account will be charged for
+          renewal within 24 hours prior to the end of the current period at the
+          price of the selected plan. You can manage your subscription and turn
+          off auto-renewal anytime from your Apple ID Account Settings after
+          purchase.
+        </p>
+        <p className="text-[11px] text-[#94A3B8]">
+          By subscribing you agree to our{' '}
+          <Link
+            to="/terms"
+            className="text-[#D4AF37] underline underline-offset-2 hover:text-[#F8FAFC] transition-colors"
+            data-testid="paywall-terms-link"
+          >
+            Terms of Use (EULA)
+          </Link>{' '}
+          and{' '}
+          <Link
+            to="/privacy-policy"
+            className="text-[#D4AF37] underline underline-offset-2 hover:text-[#F8FAFC] transition-colors"
+            data-testid="paywall-privacy-link"
+          >
+            Privacy Policy
+          </Link>
+          .
+        </p>
+      </div>
     </div>
   );
 }

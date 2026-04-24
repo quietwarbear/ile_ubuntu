@@ -1,0 +1,110 @@
+From ec2d5ad32038ea08a7c04d3f0838e91a0ef4b32c Mon Sep 17 00:00:00 2001
+From: Claude <claude@anthropic.com>
+Date: Thu, 23 Apr 2026 18:10:57 -0700
+Subject: [PATCH] fix: add in-app Terms/Privacy links on subscription screen
+ (App Review 3.1.2(c))
+
+Apple rejected build 1.0 (3) under Guideline 3.1.2(c) because the
+subscription screen did not surface tappable links to the Terms of Use
+(EULA) and Privacy Policy from inside the app.
+
+Changes:
+- SubscriptionsPage.jsx: add a legal disclosure block below the tier
+  cards with the Apple-required subscription terms (title, length,
+  price, auto-renewal, Apple ID billing, cancellation via Apple ID
+  Account Settings) plus react-router-dom Link components to the
+  existing /terms and /privacy-policy routes. Tappable, in-app, and
+  visible on the same screen as the Subscribe CTA.
+- ios project.pbxproj: bump CURRENT_PROJECT_VERSION 2 -> 3 so the
+  resubmission archive has a distinct build number.
+
+Also confirms to App Review that US$49.99 (Elder Circle Monthly) and
+US$499.99 (Elder Circle Annual) are the intended prices.
+
+Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>
+---
+ .../ios/App/App.xcodeproj/project.pbxproj     |  4 +-
+ frontend/src/pages/SubscriptionsPage.jsx      | 40 +++++++++++++++++++
+ 2 files changed, 42 insertions(+), 2 deletions(-)
+
+diff --git a/frontend/ios/App/App.xcodeproj/project.pbxproj b/frontend/ios/App/App.xcodeproj/project.pbxproj
+index 0c518fd..7d143d3 100644
+--- a/frontend/ios/App/App.xcodeproj/project.pbxproj
++++ b/frontend/ios/App/App.xcodeproj/project.pbxproj
+@@ -364,7 +364,7 @@
+ 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+ 				CODE_SIGN_ENTITLEMENTS = App/App.entitlements;
+ 				CODE_SIGN_STYLE = Automatic;
+-				CURRENT_PROJECT_VERSION = 2;
++				CURRENT_PROJECT_VERSION = 3;
+ 				DEVELOPMENT_TEAM = H543QXDYUW;
+ 				INFOPLIST_FILE = App/Info.plist;
+ 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.education";
+@@ -387,7 +387,7 @@
+ 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+ 				CODE_SIGN_ENTITLEMENTS = App/App.entitlements;
+ 				CODE_SIGN_STYLE = Automatic;
+-				CURRENT_PROJECT_VERSION = 2;
++				CURRENT_PROJECT_VERSION = 3;
+ 				DEVELOPMENT_TEAM = H543QXDYUW;
+ 				INFOPLIST_FILE = App/Info.plist;
+ 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.education";
+diff --git a/frontend/src/pages/SubscriptionsPage.jsx b/frontend/src/pages/SubscriptionsPage.jsx
+index dd8cdc4..e9b198b 100644
+--- a/frontend/src/pages/SubscriptionsPage.jsx
++++ b/frontend/src/pages/SubscriptionsPage.jsx
+@@ -1,4 +1,5 @@
+ import React, { useState, useEffect, useCallback } from 'react';
++import { Link } from 'react-router-dom';
+ import { Card, CardContent } from '../components/ui/card';
+ import { Badge } from '../components/ui/badge';
+ import {
+@@ -364,6 +365,45 @@ export default function SubscriptionsPage({ user }) {
+           </button>
+         </div>
+       )}
++
++      {/*
++        Apple App Store Guideline 3.1.2(c) — Subscription disclosures and
++        tappable links to the Terms of Use (EULA) and Privacy Policy must
++        be visible on any screen that offers an auto-renewable subscription.
++      */}
++      <div
++        className="mt-6 pt-5 border-t border-[#1E293B] text-center"
++        data-testid="subscription-legal"
++      >
++        <p className="text-[11px] text-[#94A3B8] leading-relaxed mb-3 px-2">
++          Subscriptions auto-renew monthly (Elder Circle $49.99/mo) or annually
++          (Elder Circle $499.99/yr) until cancelled. Payment is charged to your
++          Apple ID at confirmation of purchase. Your account will be charged for
++          renewal within 24 hours prior to the end of the current period at the
++          price of the selected plan. You can manage your subscription and turn
++          off auto-renewal anytime from your Apple ID Account Settings after
++          purchase.
++        </p>
++        <p className="text-[11px] text-[#94A3B8]">
++          By subscribing you agree to our{' '}
++          <Link
++            to="/terms"
++            className="text-[#D4AF37] underline underline-offset-2 hover:text-[#F8FAFC] transition-colors"
++            data-testid="paywall-terms-link"
++          >
++            Terms of Use (EULA)
++          </Link>{' '}
++          and{' '}
++          <Link
++            to="/privacy-policy"
++            className="text-[#D4AF37] underline underline-offset-2 hover:text-[#F8FAFC] transition-colors"
++            data-testid="paywall-privacy-link"
++          >
++            Privacy Policy
++          </Link>
++          .
++        </p>
++      </div>
+     </div>
+   );
+ }
+-- 
+2.34.1
+
