@@ -1,0 +1,13 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.ubuntumarket.ileubuntu",
+      "sha256_cert_fingerprints": [
+        "F5:80:58:00:B4:E5:89:B2:7E:BD:37:E1:5D:A6:9C:B6:BE:95:AC:59:B2:C3:F4:81:D5:22:C9:A5:F0:D9:59:71",
+        "78:FD:B3:D4:BC:FC:78:13:54:8B:D8:5D:54:F8:10:5D:9F:A2:D3:5F:73:6B:4F:73:33:46:D9:FB:3A:BA:EA:AA"
+      ]
+    }
+  }
+]

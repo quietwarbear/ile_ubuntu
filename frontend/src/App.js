@@ -34,6 +34,7 @@ import BlogEditorPage from './pages/BlogEditorPage';
 import TeacherDashboardPage from './pages/TeacherDashboardPage';
 import PrivacyPolicyPage from './pages/PrivacyPolicyPage';
 import TermsPage from './pages/TermsPage';
+import InviteLandingPage from './components/InviteLandingPage';
 import './App.css';
 
 // Unauthenticated routes. This sits INSIDE <BrowserRouter> so it can use
@@ -84,6 +85,7 @@ function PublicRoutes({ handlePasswordLogin }) {
 
   return (
     <Routes>
+      <Route path="/invite/:code" element={<InviteLandingPage />} />
       <Route path="/about" element={<AboutPage />} />
       <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
       <Route path="/terms" element={<TermsPage />} />

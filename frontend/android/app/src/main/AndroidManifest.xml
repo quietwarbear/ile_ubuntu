@@ -30,6 +30,15 @@
                 <data android:scheme="ileubuntu" />
             </intent-filter>
 
+            <!-- App Links: verified HTTPS deep links for invites -->
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="https" android:host="ile-ubuntu.org" android:pathPrefix="/invite" />
+                <data android:scheme="https" android:host="www.ile-ubuntu.org" android:pathPrefix="/invite" />
+            </intent-filter>
+
         </activity>
 
         <provider
