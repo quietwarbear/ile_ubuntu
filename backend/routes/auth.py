@@ -16,7 +16,22 @@ from google.oauth2 import id_token
 import jwt as pyjwt
 from cryptography.hazmat.primitives.asymmetric.rsa import RSAPublicNumbers
 from cryptography.hazmat.backends import default_backend
-from database import users_col, sessions_col
+from database import (
+    users_col,
+    sessions_col,
+    enrollments_col,
+    messages_col,
+    notifications_col,
+    google_tokens_col,
+    payment_transactions_col,
+    blog_posts_col,
+    blog_comments_col,
+    lesson_comments_col,
+    quiz_attempts_col,
+    spaces_col,
+    posts_col,
+    live_sessions_col,
+)
 from middleware import get_current_user
 from models.user import UserRole
 
@@ -743,6 +758,83 @@ async def get_me(current_user: dict = Depends(get_current_user)):
         "language": current_user.get("language", "en"),
         "interests": current_user.get("interests", []),
     }
+
+
+@router.delete("/me")
+async def delete_my_account(current_user: dict = Depends(get_current_user)):
+    """
+    Permanently delete the authenticated user's account and all associated data.
+
+    Required by Apple App Store Guideline 5.1.1(v): apps that allow account
+    creation must allow account deletion from within the app.
+
+    This is a hard delete. Each collection is wrapped in its own try/except so
+    a single failure does not strand the rest of the cleanup. Returns per-
+    collection deletion counts for verifiability.
+    """
+    user_id = current_user["id"]
+
+    # (collection, filter dict, label)
+    deletion_targets = [
+        (sessions_col,             {"user_id": user_id},                                              "sessions"),
+        (enrollments_col,          {"user_id": user_id},                                              "enrollments"),
+        (notifications_col,        {"user_id": user_id},                                              "notifications"),
+        (google_tokens_col,        {"user_id": user_id},                                              "google_tokens"),
+        (payment_transactions_col, {"user_id": user_id},                                              "payment_transactions"),
+        (quiz_attempts_col,        {"user_id": user_id},                                              "quiz_attempts"),
+        (blog_posts_col,           {"author_id": user_id},                                            "blog_posts"),
+        (blog_comments_col,        {"author_id": user_id},                                            "blog_comments"),
+        (lesson_comments_col,      {"author_id": user_id},                                            "lesson_comments"),
+        (posts_col,                {"author_id": user_id},                                            "community_posts"),
+        (live_sessions_col,        {"host_id": user_id},                                              "live_sessions_hosted"),
+        (spaces_col,               {"owner_id": user_id},                                             "spaces_owned"),
+        (messages_col,             {"$or": [{"sender_id": user_id}, {"recipient_id": user_id}]},     "messages"),
+    ]
+
+    deletion_report = {}
+    errors = {}
+
+    for col, query, label in deletion_targets:
+        try:
+            result = col.delete_many(query)
+            deletion_report[label] = result.deleted_count
+        except Exception as exc:
+            errors[label] = str(exc)
+            logger.exception("Account deletion: failed to clear %s for user %s", label, user_id)
+
+    # Remove the user from any spaces they were a member of (but did not own)
+    try:
+        result = spaces_col.update_many(
+            {"members": user_id},
+            {"$pull": {"members": user_id}},
+        )
+        deletion_report["spaces_membership_removed"] = result.modified_count
+    except Exception as exc:
+        errors["spaces_membership_removed"] = str(exc)
+        logger.exception("Account deletion: failed to pull membership for user %s", user_id)
+
+    # Finally, delete the user record itself.
+    try:
+        result = users_col.delete_one({"id": user_id})
+        deletion_report["user_record"] = result.deleted_count
+    except Exception as exc:
+        errors["user_record"] = str(exc)
+        logger.exception("Account deletion: failed to delete user record %s", user_id)
+        raise HTTPException(
+            status_code=500,
+            detail="Account deletion partially failed; please contact support.",
+        ) from exc
+
+    if deletion_report.get("user_record", 0) != 1:
+        raise HTTPException(status_code=404, detail="User record not found.")
+
+    logger.info("Account deletion complete for user_id=%s report=%s errors=%s",
+                user_id, deletion_report, errors)
+
+    response = {"success": True, "deleted": deletion_report}
+    if errors:
+        response["partial_errors"] = errors
+    return response
 
 
 @router.put("/me/onboarding")
