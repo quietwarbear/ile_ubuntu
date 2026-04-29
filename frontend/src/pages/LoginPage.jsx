@@ -340,13 +340,13 @@ export default function LoginPage({ onLogin, onPasswordLogin }) {
             Continue with Google
           </Button>
 
-          {/* Apple Sign In */}
+          {/* Apple Sign In — HIG-compliant black button (resolves Apple Review 4 - Design rejection of 2.2(7):
+              the prior outline-style button blended into the dark background) */}
           <Button
             onClick={handleAppleSignIn}
-            variant="outline"
-            className="w-full border-[#1E293B] text-[#94A3B8] hover:bg-[#0F1629] hover:text-[#F8FAFC] py-3 transition-all duration-200"
+            className="w-full bg-black text-white hover:bg-black/90 border-0 py-3 font-semibold transition-all duration-200"
           >
-            <AppleLogo size={18} weight="bold" className="mr-2" />
+            <AppleLogo size={18} weight="fill" className="mr-2" />
             Continue with Apple
           </Button>
 
