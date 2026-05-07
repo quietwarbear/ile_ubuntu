@@ -120,7 +120,7 @@ export default function LandingPage({ onLogin }) {
       {/* ===== HERO ===== */}
       <section className="relative min-h-screen flex items-center pt-16" data-testid="hero-section">
         <div className="absolute inset-0">
-          <img src={HERO_IMG} alt="" className="w-full h-full object-cover" loading="eager" />
+          <img src={HERO_IMG} alt="Students and elders learning together in a communal setting" className="w-full h-full object-cover" loading="eager" />
           <div className="absolute inset-0 bg-gradient-to-r from-[#050814] via-[#050814]/85 to-[#050814]/60" />
           <div className="absolute inset-0 bg-gradient-to-t from-[#050814] via-transparent to-transparent" />
         </div>
