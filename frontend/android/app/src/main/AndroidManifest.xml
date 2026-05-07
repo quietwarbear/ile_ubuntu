@@ -35,7 +35,6 @@
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
-                <data android:scheme="https" android:host="ile-ubuntu.org" android:pathPrefix="/invite" />
                 <data android:scheme="https" android:host="www.ile-ubuntu.org" android:pathPrefix="/invite" />
             </intent-filter>
 
