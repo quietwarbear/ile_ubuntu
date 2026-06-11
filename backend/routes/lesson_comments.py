@@ -6,6 +6,7 @@ import uuid
 from database import lesson_comments_col, lessons_col, courses_col, enrollments_col, notifications_col
 from middleware import get_current_user
 from models.user import has_permission, UserRole
+from events import emit
 
 router = APIRouter(
     prefix="/api/courses/{course_id}/lessons/{lesson_id}/comments",
@@ -97,6 +98,8 @@ async def create_comment(
     }
     lesson_comments_col.insert_one(comment)
     comment.pop("_id", None)
+    emit("lesson.commented", current_user, "lesson", lesson_id,
+         meta={"course_id": course_id, "is_reply": bool(parent_id)})
 
     # Notify the course instructor when a student comments
     if not is_instructor:

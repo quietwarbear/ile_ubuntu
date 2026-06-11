@@ -6,6 +6,7 @@ from database import live_sessions_col, courses_col
 from middleware import get_current_user
 from models.user import has_permission, UserRole
 from tier_gating import require_tier
+from events import emit
 
 router = APIRouter(prefix="/api/live-sessions", tags=["live-sessions"])
 
@@ -84,6 +85,7 @@ def start_live_session(session_id: str, current_user: dict = Depends(get_current
         {"id": session_id},
         {"$set": {"status": "live", "started_at": datetime.now(timezone.utc)}},
     )
+    emit("live_session.started", current_user, "live_session", session_id)
     return {"success": True, "room_name": session["room_name"]}
 
 
@@ -99,6 +101,8 @@ def end_live_session(session_id: str, current_user: dict = Depends(get_current_u
         {"id": session_id},
         {"$set": {"status": "ended", "ended_at": datetime.now(timezone.utc)}},
     )
+    emit("live_session.ended", current_user, "live_session", session_id,
+         meta={"participants": len(session.get("participants", []))})
     return {"success": True}
 
 
@@ -120,6 +124,7 @@ def join_live_session(session_id: str, current_user: dict = Depends(get_current_
             {"id": session_id},
             {"$addToSet": {"participants": current_user["id"]}},
         )
+        emit("live_session.joined", current_user, "live_session", session_id)
 
     return {
         "room_name": session["room_name"],

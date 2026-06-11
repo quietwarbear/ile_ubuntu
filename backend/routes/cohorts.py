@@ -6,6 +6,7 @@ from middleware import get_current_user
 from models.user import has_permission, UserRole
 from models.cohort import CohortStatus
 from tier_gating import require_tier
+from events import emit
 
 router = APIRouter(prefix="/api/cohorts", tags=["cohorts"])
 
@@ -93,11 +94,10 @@ def join_cohort(cohort_id: str, current_user: dict = Depends(get_current_user)):
         {"$addToSet": {"members": current_user["id"]}},
     )
 
-    # Send cohort join email (non-blocking)
+    # Send cohort join email (non-blocking; handler is sync, so no event loop here)
     try:
-        import asyncio
-        from routes.email_notifications import send_cohort_join_email
-        asyncio.create_task(send_cohort_join_email(
+        from routes.email_notifications import send_cohort_join_email, send_in_background
+        send_in_background(send_cohort_join_email(
             current_user.get("email", ""),
             current_user.get("name", "Learner"),
             cohort["name"],
@@ -105,6 +105,7 @@ def join_cohort(cohort_id: str, current_user: dict = Depends(get_current_user)):
     except Exception:
         pass
 
+    emit("cohort.joined", current_user, "cohort", cohort_id)
     return {"success": True, "message": "Joined cohort"}
 
 
@@ -114,6 +115,7 @@ def leave_cohort(cohort_id: str, current_user: dict = Depends(get_current_user))
         {"id": cohort_id},
         {"$pull": {"members": current_user["id"]}},
     )
+    emit("cohort.left", current_user, "cohort", cohort_id)
     return {"success": True, "message": "Left cohort"}
 
 

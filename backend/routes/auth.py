@@ -37,6 +37,7 @@ from database import (
 from middleware import get_current_user
 from models.user import UserRole
 from rate_limit import rate_limit
+from events import emit
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 
@@ -155,6 +156,7 @@ def _create_session(user_id: str) -> dict:
         "expires_at": datetime.now(timezone.utc) + timedelta(days=7),
     }
     sessions_col.insert_one(session_data)
+    emit("user.logged_in", {"id": user_id})
     return {"session_id": session_id, "session_token": session_token}
 
 
@@ -331,6 +333,7 @@ async def register(request: Request):
         "created_at": datetime.now(timezone.utc),
     }
     users_col.insert_one(user_data)
+    emit("user.registered", user_data, meta={"provider": "password"})
 
     # Best-effort verification email — registration succeeds regardless.
     try:
@@ -479,6 +482,7 @@ async def reset_password(request: Request):
     password_resets_col.update_one({"_id": reset["_id"]}, {"$set": {"used": True}})
     # Invalidate all existing sessions for this user.
     sessions_col.delete_many({"user_id": reset["user_id"]})
+    emit("user.password_reset", {"id": reset["user_id"]})
 
     return {"success": True, "message": "Password updated. Please sign in with your new password."}
 
@@ -896,6 +900,7 @@ def delete_my_account(current_user: dict = Depends(get_current_user)):
     a single failure does not strand the rest of the cleanup. Returns per-
     collection deletion counts for verifiability.
     """
+    emit("user.deleted", current_user, "user", current_user["id"])
     user_id = current_user["id"]
 
     # (collection, filter dict, label)

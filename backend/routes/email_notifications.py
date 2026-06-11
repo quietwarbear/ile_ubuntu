@@ -67,6 +67,24 @@ async def send_email(to_email, subject, html):
         return None
 
 
+def send_in_background(coro):
+    """Fire-and-forget an async email coroutine from a sync (threadpool) handler.
+
+    Route handlers that do blocking DB work are sync and run in FastAPI's
+    threadpool, where asyncio.create_task() fails (no running event loop).
+    This runs the coroutine on a short-lived daemon thread instead.
+    """
+    import threading
+
+    def _run():
+        try:
+            asyncio.run(coro)
+        except Exception as e:
+            logger.error(f"Background email failed: {e}")
+
+    threading.Thread(target=_run, daemon=True).start()
+
+
 async def send_enrollment_email(user_email, user_name, course_title, course_id):
     html = build_email_html(
         "You're Enrolled!",

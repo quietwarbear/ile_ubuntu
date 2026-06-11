@@ -6,6 +6,7 @@ import uuid
 from database import quizzes_col, quiz_attempts_col, lessons_col, courses_col, enrollments_col
 from middleware import get_current_user
 from models.user import has_permission, UserRole
+from events import emit
 
 router = APIRouter(prefix="/api/courses/{course_id}/lessons/{lesson_id}/quiz", tags=["quizzes"])
 
@@ -264,6 +265,13 @@ async def submit_quiz(course_id: str, lesson_id: str, request: Request, current_
     }
     quiz_attempts_col.insert_one(attempt)
     attempt.pop("_id", None)
+    emit("quiz.attempted", current_user, "quiz", quiz["id"], meta={
+        "course_id": course_id,
+        "lesson_id": lesson_id,
+        "score": grading["score_percentage"],
+        "status": status,
+        "attempt_number": attempt_count + 1,
+    })
 
     # Strip correct answers from response if quiz doesn't show them
     if not quiz.get("show_correct_answers", True):

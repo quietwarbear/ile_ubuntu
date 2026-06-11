@@ -76,6 +76,7 @@ from routes.blog import router as blog_router
 from routes.revenuecat_webhook import router as revenuecat_router
 from routes.quizzes import router as quizzes_router
 from routes.lesson_comments import router as lesson_comments_router
+from routes.events import router as events_router
 
 app.include_router(auth_router)
 app.include_router(courses_router)
@@ -99,6 +100,7 @@ app.include_router(blog_router)
 app.include_router(revenuecat_router)
 app.include_router(quizzes_router)
 app.include_router(lesson_comments_router)
+app.include_router(events_router)
 
 
 @app.get("/")
@@ -158,6 +160,9 @@ async def stripe_webhook(request: Request):
                             "subscribed_at": datetime.now(timezone.utc).isoformat(),
                         }},
                     )
+                    from events import emit
+                    emit("subscription.activated", {"id": txn["user_id"]},
+                         meta={"tier": tier_id, "provider": "stripe"})
 
         return {"status": "ok"}
     except Exception as e:

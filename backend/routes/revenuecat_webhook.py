@@ -12,6 +12,7 @@ import os
 import hmac
 import hashlib
 from database import users_col, payment_transactions_col
+from events import emit
 
 router = APIRouter(prefix="/api/webhook", tags=["webhooks"])
 
@@ -101,6 +102,8 @@ async def revenuecat_webhook(request: Request):
                 "payment_method": "in_app_purchase",
                 "created_at": now,
             })
+            emit("subscription.activated", {"id": app_user_id},
+                 meta={"tier": tier_id, "provider": "revenuecat", "event_type": event_type})
 
     elif event_type in ("CANCELLATION", "EXPIRATION"):
         # Downgrade to free tier
@@ -119,6 +122,8 @@ async def revenuecat_webhook(request: Request):
             "payment_status": event_type.lower(),
             "created_at": now,
         })
+        emit("subscription.cancelled", {"id": app_user_id},
+             meta={"provider": "revenuecat", "event_type": event_type})
 
     elif event_type == "BILLING_ISSUE":
         # Flag billing issue but keep tier active (grace period)

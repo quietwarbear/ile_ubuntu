@@ -6,7 +6,7 @@ from middleware import get_current_user
 from models.user import has_permission, UserRole
 from models.course import CourseStatus
 from tier_gating import check_enrollment_limit
-import asyncio
+from events import emit
 
 router = APIRouter(prefix="/api/courses", tags=["courses"])
 
@@ -33,6 +33,7 @@ async def create_course(request: Request, current_user: dict = Depends(get_curre
     }
     courses_col.insert_one(course)
     course.pop("_id", None)
+    emit("course.created", current_user, "course", course["id"], meta={"title": course["title"]})
     return course
 
 
@@ -206,10 +207,10 @@ def enroll_in_course(course_id: str, current_user: dict = Depends(get_current_us
     courses_col.update_one({"id": course_id}, {"$inc": {"enrolled_count": 1}})
     enrollment.pop("_id", None)
 
-    # Send enrollment email (non-blocking)
+    # Send enrollment email (non-blocking; handler is sync, so no event loop here)
     try:
-        from routes.email_notifications import send_enrollment_email
-        asyncio.create_task(send_enrollment_email(
+        from routes.email_notifications import send_enrollment_email, send_in_background
+        send_in_background(send_enrollment_email(
             current_user.get("email", ""),
             current_user.get("name", "Learner"),
             course["title"],
@@ -218,6 +219,7 @@ def enroll_in_course(course_id: str, current_user: dict = Depends(get_current_us
     except Exception:
         pass
 
+    emit("course.enrolled", current_user, "course", course_id)
     return enrollment
 
 
@@ -227,6 +229,7 @@ def unenroll_from_course(course_id: str, current_user: dict = Depends(get_curren
     if result.deleted_count == 0:
         raise HTTPException(status_code=404, detail="Not enrolled in this course")
     courses_col.update_one({"id": course_id}, {"$inc": {"enrolled_count": -1}})
+    emit("course.unenrolled", current_user, "course", course_id)
     return {"success": True}
 
 
@@ -267,6 +270,10 @@ def complete_lesson(course_id: str, lesson_id: str, current_user: dict = Depends
         update["completed_at"] = datetime.now(timezone.utc)
 
     enrollments_col.update_one({"id": enrollment["id"]}, {"$set": update})
+    emit("lesson.completed", current_user, "lesson", lesson_id,
+         meta={"course_id": course_id, "progress": progress})
+    if progress >= 100:
+        emit("course.completed", current_user, "course", course_id)
     return {"message": "Lesson completed", "progress": progress}
 
 

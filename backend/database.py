@@ -34,6 +34,9 @@ quiz_attempts_col = db.quiz_attempts
 # Auth feature collections
 password_resets_col = db.password_resets
 
+# Activity event stream (append-only; substrate for analytics + Ubuntu Intelligence)
+events_col = db.events
+
 
 def ensure_indexes():
     """Create the indexes the hot query paths rely on. Idempotent; called at startup.
@@ -83,6 +86,11 @@ def ensure_indexes():
         # Password reset tokens: lookup by token hash, TTL on expiry
         (password_resets_col, [("token_hash", 1)], {}),
         (password_resets_col, [("expires_at", 1)], {"expireAfterSeconds": 0}),
+        # Activity event stream: per-user timelines, per-type trends, per-entity history
+        (events_col, [("user_id", 1), ("created_at", -1)], {}),
+        (events_col, [("type", 1), ("created_at", -1)], {}),
+        (events_col, [("entity_type", 1), ("entity_id", 1), ("created_at", -1)], {}),
+        (events_col, [("created_at", -1)], {}),
     ]
 
     for col, keys, kwargs in specs:

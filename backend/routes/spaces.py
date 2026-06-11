@@ -5,6 +5,7 @@ from database import spaces_col
 from middleware import get_current_user
 from models.user import has_permission, UserRole
 from tier_gating import require_tier
+from events import emit
 
 router = APIRouter(prefix="/api/spaces", tags=["spaces"])
 
@@ -135,6 +136,7 @@ def request_access(space_id: str, current_user: dict = Depends(get_current_user)
         "requested_at": datetime.now(timezone.utc).isoformat(),
     }
     spaces_col.update_one({"id": space_id}, {"$push": {"pending_requests": req}})
+    emit("space.access_requested", current_user, "space", space_id)
     return {"success": True, "message": "Access requested"}
 
 
@@ -153,6 +155,8 @@ def approve_access(space_id: str, user_id: str, current_user: dict = Depends(get
             "$pull": {"pending_requests": {"user_id": user_id}},
         },
     )
+    emit("space.access_approved", {"id": user_id}, "space", space_id,
+         meta={"approved_by": current_user["id"]})
     return {"success": True}
 
 

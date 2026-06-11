@@ -3,6 +3,7 @@ from datetime import datetime, timezone
 import uuid
 from database import posts_col
 from middleware import get_current_user
+from events import emit
 
 router = APIRouter(prefix="/api/community", tags=["community"])
 
@@ -27,6 +28,7 @@ async def create_post(request: Request, current_user: dict = Depends(get_current
     }
     posts_col.insert_one(post)
     post.pop("_id", None)
+    emit("post.created", current_user, "post", post["id"], meta={"category": post["category"]})
     return post
 
 
@@ -72,6 +74,7 @@ async def reply_to_post(post_id: str, request: Request, current_user: dict = Dep
     )
     if result.matched_count == 0:
         raise HTTPException(status_code=404, detail="Post not found")
+    emit("post.replied", current_user, "post", post_id)
     return reply
 
 
@@ -86,6 +89,7 @@ def like_post(post_id: str, current_user: dict = Depends(get_current_user)):
         return {"liked": False}
     else:
         posts_col.update_one({"id": post_id}, {"$addToSet": {"likes": current_user["id"]}})
+        emit("post.liked", current_user, "post", post_id)
         return {"liked": True}
 
 
