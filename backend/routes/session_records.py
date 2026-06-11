@@ -9,7 +9,7 @@ router = APIRouter(prefix="/api/session-records", tags=["session-records"])
 
 
 @router.get("")
-async def list_session_records(current_user: dict = Depends(get_current_user)):
+def list_session_records(current_user: dict = Depends(get_current_user)):
     """List all ended sessions with their recording metadata."""
     sessions = list(live_sessions_col.find(
         {"status": "ended"},
@@ -25,7 +25,7 @@ async def list_session_records(current_user: dict = Depends(get_current_user)):
 
 
 @router.get("/{session_id}")
-async def get_session_record(session_id: str, current_user: dict = Depends(get_current_user)):
+def get_session_record(session_id: str, current_user: dict = Depends(get_current_user)):
     """Get a specific session's recording metadata."""
     session = live_sessions_col.find_one({"id": session_id}, {"_id": 0})
     if not session:
@@ -73,7 +73,7 @@ async def update_session_notes(session_id: str, request: Request, current_user: 
 
 
 @router.get("/{session_id}/export")
-async def export_session_record(session_id: str, current_user: dict = Depends(get_current_user)):
+def export_session_record(session_id: str, current_user: dict = Depends(get_current_user)):
     """Export session record as CSV-friendly data."""
     session = live_sessions_col.find_one({"id": session_id}, {"_id": 0})
     if not session:

@@ -43,7 +43,7 @@ MAX_VIDEO_SIZE = 500 * 1024 * 1024  # 500MB
 
 
 @router.post("/upload")
-async def upload_file(
+def upload_file(
     file: UploadFile = File(...),
     lesson_id: Optional[str] = Form(None),
     course_id: Optional[str] = Form(None),
@@ -105,7 +105,7 @@ async def upload_file(
 
 
 @router.get("/{file_id}/download")
-async def download_file(file_id: str):
+def download_file(file_id: str):
     """Download file - public access for enrolled users via direct link"""
     file_data = files_col.find_one({"id": file_id})
     if not file_data:
@@ -123,7 +123,7 @@ async def download_file(file_id: str):
 
 
 @router.get("/{file_id}/stream")
-async def stream_video(file_id: str):
+def stream_video(file_id: str):
     """Stream video file with range request support for seeking."""
     from fastapi.responses import StreamingResponse
     from starlette.responses import Response
@@ -146,7 +146,7 @@ async def stream_video(file_id: str):
 
 
 @router.get("")
-async def list_files(
+def list_files(
     lesson_id: Optional[str] = None,
     course_id: Optional[str] = None,
     current_user: dict = Depends(get_current_user),
@@ -166,7 +166,7 @@ async def list_files(
 
 
 @router.delete("/{file_id}")
-async def delete_file(file_id: str, current_user: dict = Depends(get_current_user)):
+def delete_file(file_id: str, current_user: dict = Depends(get_current_user)):
     file_data = files_col.find_one({"id": file_id})
     if not file_data:
         raise HTTPException(status_code=404, detail="File not found")

@@ -6,7 +6,7 @@ router = APIRouter(prefix="/api/enrollments", tags=["enrollments"])
 
 
 @router.get("/my-courses")
-async def my_enrolled_courses(current_user: dict = Depends(get_current_user)):
+def my_enrolled_courses(current_user: dict = Depends(get_current_user)):
     enrollments = list(
         enrollments_col.find({"user_id": current_user["id"]}, {"_id": 0}).sort("enrolled_at", -1)
     )

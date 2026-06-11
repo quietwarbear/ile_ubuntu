@@ -28,7 +28,7 @@ async def subscribe_push(request: Request, current_user: dict = Depends(get_curr
 
 
 @router.delete("/subscribe")
-async def unsubscribe_push(current_user: dict = Depends(get_current_user)):
+def unsubscribe_push(current_user: dict = Depends(get_current_user)):
     """Remove push subscription."""
     users_col.update_one(
         {"id": current_user["id"]},
@@ -38,14 +38,14 @@ async def unsubscribe_push(current_user: dict = Depends(get_current_user)):
 
 
 @router.get("/status")
-async def push_status(current_user: dict = Depends(get_current_user)):
+def push_status(current_user: dict = Depends(get_current_user)):
     """Check if user has push subscription."""
     user = users_col.find_one({"id": current_user["id"]}, {"_id": 0, "push_subscription": 1})
     return {"subscribed": bool(user and user.get("push_subscription"))}
 
 
 @router.get("/vapid-key")
-async def get_vapid_key():
+def get_vapid_key():
     """Return the public VAPID key for push subscription."""
     # Generate static VAPID keys (in production, store these in env)
     import os

@@ -1,5 +1,5 @@
 import os
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from pathlib import Path
@@ -7,15 +7,47 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-app = FastAPI(title="The Ile Ubuntu API", version="2.0.0")
+# API docs are disabled by default in production. Set ENABLE_API_DOCS=true to expose
+# /docs and /openapi.json (e.g. in local development).
+_DOCS_ENABLED = os.environ.get("ENABLE_API_DOCS", "").strip().lower() in ("1", "true", "yes")
+
+app = FastAPI(
+    title="The Ile Ubuntu API",
+    version="2.0.0",
+    docs_url="/docs" if _DOCS_ENABLED else None,
+    redoc_url="/redoc" if _DOCS_ENABLED else None,
+    openapi_url="/openapi.json" if _DOCS_ENABLED else None,
+)
+
+# Explicit CORS allow-list (wildcard + credentials is invalid per the CORS spec).
+# Override/extend with a comma-separated CORS_ORIGINS env var.
+_DEFAULT_CORS_ORIGINS = [
+    "https://ile-ubuntu.org",
+    "https://www.ile-ubuntu.org",
+    # Capacitor native shells
+    "capacitor://localhost",
+    "https://localhost",
+    "ionic://localhost",
+    # Local development
+    "http://localhost:3000",
+    "http://localhost:8001",
+]
+_env_origins = [o.strip() for o in os.environ.get("CORS_ORIGINS", "").split(",") if o.strip()]
+CORS_ORIGINS = _env_origins or _DEFAULT_CORS_ORIGINS
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=CORS_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+@app.on_event("startup")
+def _ensure_indexes():
+    from database import ensure_indexes
+    ensure_indexes()
 
 # Ensure uploads directory exists
 Path("uploads").mkdir(exist_ok=True)
@@ -90,14 +122,16 @@ async def stripe_webhook(request: Request):
     if not api_key:
         return {"status": "error", "message": "Stripe not configured"}
 
+    # Fail closed: never process unverified webhook payloads on a payments endpoint.
+    if not webhook_secret:
+        raise HTTPException(status_code=503, detail="Stripe webhook secret not configured")
+    if not stripe_signature:
+        raise HTTPException(status_code=401, detail="Missing Stripe-Signature header")
+
     stripe_lib.api_key = api_key
 
     try:
-        if webhook_secret and stripe_signature:
-            event = stripe_lib.Webhook.construct_event(body, stripe_signature, webhook_secret)
-        else:
-            import json
-            event = json.loads(body)
+        event = stripe_lib.Webhook.construct_event(body, stripe_signature, webhook_secret)
 
         if event.get("type") == "checkout.session.completed":
             session_data = event["data"]["object"]
@@ -127,7 +161,8 @@ async def stripe_webhook(request: Request):
 
         return {"status": "ok"}
     except Exception as e:
-        return {"status": "error", "message": str(e)}
+        # Non-2xx so Stripe retries legitimate deliveries and rejects bad signatures.
+        raise HTTPException(status_code=400, detail=str(e))
 
 
 if __name__ == "__main__":

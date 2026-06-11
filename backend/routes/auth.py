@@ -16,9 +16,11 @@ from google.oauth2 import id_token
 import jwt as pyjwt
 from cryptography.hazmat.primitives.asymmetric.rsa import RSAPublicNumbers
 from cryptography.hazmat.backends import default_backend
+import hashlib
 from database import (
     users_col,
     sessions_col,
+    password_resets_col,
     enrollments_col,
     messages_col,
     notifications_col,
@@ -34,8 +36,15 @@ from database import (
 )
 from middleware import get_current_user
 from models.user import UserRole
+from rate_limit import rate_limit
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
+
+PUBLIC_SITE_URL = os.environ.get("PUBLIC_SITE_URL", "https://www.ile-ubuntu.org").rstrip("/")
+
+
+def _hash_token(token: str) -> str:
+    return hashlib.sha256(token.encode()).hexdigest()
 
 GOOGLE_CLIENT_ID = os.environ.get("GOOGLE_CLIENT_ID", "")
 GOOGLE_CLIENT_SECRET = os.environ.get("GOOGLE_CLIENT_SECRET", "")
@@ -289,6 +298,7 @@ def _external_base_url(request: Request) -> str:
 @router.post("/register")
 async def register(request: Request):
     """Register a new user with email and password."""
+    rate_limit(request, "register", max_requests=10, window_seconds=3600)
     data = await request.json()
     email = data.get("email", "").strip().lower()
     password = data.get("password", "")
@@ -306,6 +316,7 @@ async def register(request: Request):
     if existing:
         raise HTTPException(status_code=409, detail="An account with this email already exists. Try signing in instead.")
 
+    verification_token = str(uuid.uuid4())
     user_data = {
         "id": str(uuid.uuid4()),
         "email": email,
@@ -315,9 +326,27 @@ async def register(request: Request):
         "bio": "",
         "auth_provider": "password",
         "password_hash": pwd_context.hash(password),
+        "email_verified": False,
+        "email_verification_token_hash": _hash_token(verification_token),
         "created_at": datetime.now(timezone.utc),
     }
     users_col.insert_one(user_data)
+
+    # Best-effort verification email — registration succeeds regardless.
+    try:
+        from routes.email_notifications import send_email, build_email_html
+
+        verify_url = f"{_external_base_url(request)}/api/auth/verify-email?token={verification_token}"
+        html = build_email_html(
+            "Welcome to The Ile Ubuntu",
+            f"<p>Hello, <strong>{name}</strong>! Please confirm your email address "
+            f"to secure your account.</p>",
+            "Verify Email",
+            verify_url,
+        )
+        await send_email(email, "Verify your email — The Ile Ubuntu", html)
+    except Exception:
+        logger.exception("Verification email failed for %s", email)
 
     session = _create_session(user_data["id"])
     return {
@@ -330,6 +359,7 @@ async def register(request: Request):
 @router.post("/login")
 async def login(request: Request):
     """Sign in with email and password."""
+    rate_limit(request, "login", max_requests=10, window_seconds=300)
     data = await request.json()
     email = data.get("email", "").strip().lower()
     password = data.get("password", "")
@@ -359,12 +389,106 @@ async def login(request: Request):
     }
 
 
+@router.get("/verify-email")
+def verify_email(token: str = ""):
+    """Email verification link target. Marks the account verified and sends
+    the user back to the site."""
+    if token:
+        result = users_col.update_one(
+            {"email_verification_token_hash": _hash_token(token)},
+            {"$set": {"email_verified": True},
+             "$unset": {"email_verification_token_hash": ""}},
+        )
+        if result.modified_count:
+            return RedirectResponse(f"{PUBLIC_SITE_URL}/?email_verified=1")
+    return RedirectResponse(f"{PUBLIC_SITE_URL}/?email_verified=0")
+
+
+@router.post("/forgot-password")
+async def forgot_password(request: Request):
+    """Start a password reset. Always returns success so account existence
+    can't be probed."""
+    rate_limit(request, "forgot_password", max_requests=5, window_seconds=900)
+    data = await request.json()
+    email = (data.get("email") or "").strip().lower()
+    if not email:
+        raise HTTPException(status_code=400, detail="Email required")
+
+    generic = {"success": True, "message": "If an account exists for that email, a reset link has been sent."}
+
+    user = users_col.find_one({"email": email})
+    if not user or not user.get("password_hash"):
+        # No account, or social-login-only account — same generic answer.
+        return generic
+
+    token = str(uuid.uuid4())
+    password_resets_col.insert_one({
+        "token_hash": _hash_token(token),
+        "user_id": user["id"],
+        "used": False,
+        "created_at": datetime.now(timezone.utc),
+        "expires_at": datetime.now(timezone.utc) + timedelta(hours=1),
+    })
+
+    try:
+        from routes.email_notifications import send_email, build_email_html
+
+        reset_url = f"{PUBLIC_SITE_URL}/reset-password?token={token}"
+        html = build_email_html(
+            "Reset Your Password",
+            f"<p>Hello, <strong>{user.get('name', '')}</strong>. We received a request to "
+            f"reset your password. This link expires in 1 hour. If you didn't ask for "
+            f"this, you can safely ignore this email.</p>",
+            "Reset Password",
+            reset_url,
+        )
+        await send_email(email, "Reset your password — The Ile Ubuntu", html)
+    except Exception:
+        logger.exception("Password reset email failed for %s", email)
+
+    return generic
+
+
+@router.post("/reset-password")
+async def reset_password(request: Request):
+    """Complete a password reset with a token from the reset email."""
+    rate_limit(request, "reset_password", max_requests=10, window_seconds=900)
+    data = await request.json()
+    token = (data.get("token") or "").strip()
+    password = data.get("password") or ""
+
+    if not token:
+        raise HTTPException(status_code=400, detail="Reset token required")
+    if len(password) < 6:
+        raise HTTPException(status_code=400, detail="Password must be at least 6 characters")
+
+    reset = password_resets_col.find_one({"token_hash": _hash_token(token), "used": False})
+    if not reset:
+        raise HTTPException(status_code=400, detail="Invalid or expired reset link. Please request a new one.")
+
+    expires_at = reset["expires_at"]
+    if expires_at.tzinfo is None:
+        expires_at = expires_at.replace(tzinfo=timezone.utc)
+    if expires_at < datetime.now(timezone.utc):
+        raise HTTPException(status_code=400, detail="Invalid or expired reset link. Please request a new one.")
+
+    users_col.update_one(
+        {"id": reset["user_id"]},
+        {"$set": {"password_hash": pwd_context.hash(password)}},
+    )
+    password_resets_col.update_one({"_id": reset["_id"]}, {"$set": {"used": True}})
+    # Invalidate all existing sessions for this user.
+    sessions_col.delete_many({"user_id": reset["user_id"]})
+
+    return {"success": True, "message": "Password updated. Please sign in with your new password."}
+
+
 class GoogleSessionRequest(BaseModel):
     credential: str
 
 
 @router.post("/google/session")
-async def google_session_login(payload: GoogleSessionRequest):
+def google_session_login(payload: GoogleSessionRequest):
     """
     Validate a Google OAuth ID token (credential) and log the user in.
 
@@ -405,7 +529,7 @@ async def google_session_login(payload: GoogleSessionRequest):
 
 
 @router.get("/google/login-url")
-async def google_login_url(request: Request, redirect_uri: str = "https://www.ile-ubuntu.org/"):
+def google_login_url(request: Request, redirect_uri: str = "https://www.ile-ubuntu.org/"):
     """
     Return the Google OAuth URL as JSON for the web frontend.
 
@@ -437,7 +561,7 @@ class GoogleCallbackRequest(BaseModel):
 
 
 @router.post("/google/callback")
-async def google_callback_web(payload: GoogleCallbackRequest):
+def google_callback_web(payload: GoogleCallbackRequest):
     """
     Web frontend posts the Google auth code here after the redirect.
 
@@ -495,7 +619,7 @@ async def google_callback_web(payload: GoogleCallbackRequest):
 
 
 @router.get("/google/debug")
-async def google_debug(request: Request):
+def google_debug(request: Request):
     """Temporary diagnostic endpoint — returns the base URL and OAuth config (no secrets)."""
     base = _external_base_url(request)
     return {
@@ -512,7 +636,7 @@ async def google_debug(request: Request):
 
 
 @router.get("/google/start")
-async def google_login_start(request: Request, redirect_uri: str = DEFAULT_MOBILE_GOOGLE_REDIRECT):
+def google_login_start(request: Request, redirect_uri: str = DEFAULT_MOBILE_GOOGLE_REDIRECT):
     """
     Start the native-safe Google login flow.
 
@@ -543,7 +667,7 @@ async def google_login_start(request: Request, redirect_uri: str = DEFAULT_MOBIL
 
 
 @router.get("/google/callback")
-async def google_login_callback(request: Request, code: str = None, state: str = None, error: str = None):
+def google_login_callback(request: Request, code: str = None, state: str = None, error: str = None):
     logger.info("[Google OAuth CALLBACK] hit! code=%s state=%s error=%s", bool(code), state, error)
     logger.info("[Google OAuth CALLBACK] external_base_url=%s", _external_base_url(request))
 
@@ -614,7 +738,7 @@ class AppleSessionRequest(BaseModel):
 
 
 @router.post("/apple/session")
-async def apple_session_login(payload: AppleSessionRequest):
+def apple_session_login(payload: AppleSessionRequest):
     """
     Validate Apple Sign In ID token and log the user in.
 
@@ -646,7 +770,7 @@ async def apple_session_login(payload: AppleSessionRequest):
 
 
 @router.get("/apple/start")
-async def apple_login_start(request: Request, redirect_uri: str = APPLE_MOBILE_REDIRECT_URI):
+def apple_login_start(request: Request, redirect_uri: str = APPLE_MOBILE_REDIRECT_URI):
     """
     Start the native Apple login flow.
 
@@ -745,7 +869,7 @@ async def create_profile(request: Request):
 
 
 @router.get("/me")
-async def get_me(current_user: dict = Depends(get_current_user)):
+def get_me(current_user: dict = Depends(get_current_user)):
     return {
         "id": current_user["id"],
         "email": current_user["email"],
@@ -761,7 +885,7 @@ async def get_me(current_user: dict = Depends(get_current_user)):
 
 
 @router.delete("/me")
-async def delete_my_account(current_user: dict = Depends(get_current_user)):
+def delete_my_account(current_user: dict = Depends(get_current_user)):
     """
     Permanently delete the authenticated user's account and all associated data.
 
@@ -860,7 +984,7 @@ async def set_language(request: Request, current_user: dict = Depends(get_curren
 
 
 @router.get("/users")
-async def list_users(current_user: dict = Depends(get_current_user)):
+def list_users(current_user: dict = Depends(get_current_user)):
     from models.user import has_permission, UserRole
     if not has_permission(current_user["role"], UserRole.FACULTY):
         raise HTTPException(status_code=403, detail="Insufficient permissions")

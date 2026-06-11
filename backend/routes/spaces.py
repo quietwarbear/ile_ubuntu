@@ -37,7 +37,7 @@ async def create_space(request: Request, current_user: dict = Depends(get_curren
 
 
 @router.get("")
-async def list_spaces(current_user: dict = Depends(get_current_user)):
+def list_spaces(current_user: dict = Depends(get_current_user)):
     all_spaces = list(spaces_col.find({}, {"_id": 0}).sort("created_at", -1))
     visible = []
     for s in all_spaces:
@@ -70,7 +70,7 @@ async def list_spaces(current_user: dict = Depends(get_current_user)):
 
 
 @router.get("/{space_id}")
-async def get_space(space_id: str, current_user: dict = Depends(get_current_user)):
+def get_space(space_id: str, current_user: dict = Depends(get_current_user)):
     space = spaces_col.find_one({"id": space_id}, {"_id": 0})
     if not space:
         raise HTTPException(status_code=404, detail="Space not found")
@@ -103,7 +103,7 @@ async def update_space(space_id: str, request: Request, current_user: dict = Dep
 
 
 @router.delete("/{space_id}")
-async def delete_space(space_id: str, current_user: dict = Depends(get_current_user)):
+def delete_space(space_id: str, current_user: dict = Depends(get_current_user)):
     space = spaces_col.find_one({"id": space_id})
     if not space:
         raise HTTPException(status_code=404, detail="Space not found")
@@ -115,7 +115,7 @@ async def delete_space(space_id: str, current_user: dict = Depends(get_current_u
 
 
 @router.post("/{space_id}/request-access")
-async def request_access(space_id: str, current_user: dict = Depends(get_current_user)):
+def request_access(space_id: str, current_user: dict = Depends(get_current_user)):
     # Tier gating: Scholar+ required to request access to knowledge spaces
     require_tier(current_user, "scholar", "space_access")
 
@@ -139,7 +139,7 @@ async def request_access(space_id: str, current_user: dict = Depends(get_current
 
 
 @router.post("/{space_id}/approve/{user_id}")
-async def approve_access(space_id: str, user_id: str, current_user: dict = Depends(get_current_user)):
+def approve_access(space_id: str, user_id: str, current_user: dict = Depends(get_current_user)):
     space = spaces_col.find_one({"id": space_id})
     if not space:
         raise HTTPException(status_code=404, detail="Space not found")
@@ -157,7 +157,7 @@ async def approve_access(space_id: str, user_id: str, current_user: dict = Depen
 
 
 @router.post("/{space_id}/deny/{user_id}")
-async def deny_access(space_id: str, user_id: str, current_user: dict = Depends(get_current_user)):
+def deny_access(space_id: str, user_id: str, current_user: dict = Depends(get_current_user)):
     space = spaces_col.find_one({"id": space_id})
     if not space:
         raise HTTPException(status_code=404, detail="Space not found")
@@ -186,7 +186,7 @@ async def invite_member(space_id: str, request: Request, current_user: dict = De
 
 
 @router.post("/{space_id}/remove/{user_id}")
-async def remove_member(space_id: str, user_id: str, current_user: dict = Depends(get_current_user)):
+def remove_member(space_id: str, user_id: str, current_user: dict = Depends(get_current_user)):
     space = spaces_col.find_one({"id": space_id})
     if not space:
         raise HTTPException(status_code=404, detail="Space not found")

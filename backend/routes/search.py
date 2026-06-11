@@ -68,7 +68,7 @@ def _search_spaces(pattern, sort, limit, access_level):
 
 
 @router.get("")
-async def search_all(
+def search_all(
     q: str = "",
     type: str = None,
     status: str = None,

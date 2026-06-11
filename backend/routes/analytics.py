@@ -11,7 +11,7 @@ router = APIRouter(prefix="/api/analytics", tags=["analytics"])
 
 
 @router.get("/dashboard")
-async def get_analytics_dashboard(current_user: dict = Depends(get_current_user)):
+def get_analytics_dashboard(current_user: dict = Depends(get_current_user)):
     if not has_permission(current_user["role"], UserRole.FACULTY):
         return {"error": "Faculty+ required"}
 
@@ -128,7 +128,7 @@ async def get_analytics_dashboard(current_user: dict = Depends(get_current_user)
 
 
 @router.get("/enrollment-trends")
-async def get_enrollment_trends(days: int = 30, current_user: dict = Depends(get_current_user)):
+def get_enrollment_trends(days: int = 30, current_user: dict = Depends(get_current_user)):
     """Return daily enrollment counts for the last N days."""
     if not has_permission(current_user["role"], UserRole.FACULTY):
         return {"error": "Faculty+ required"}
@@ -149,7 +149,7 @@ async def get_enrollment_trends(days: int = 30, current_user: dict = Depends(get
 
 
 @router.get("/export/csv")
-async def export_analytics_csv(current_user: dict = Depends(get_current_user)):
+def export_analytics_csv(current_user: dict = Depends(get_current_user)):
     """Export course performance as CSV data."""
     if not has_permission(current_user["role"], UserRole.FACULTY):
         return {"error": "Faculty+ required"}

@@ -38,7 +38,7 @@ async def send_message(request: Request, current_user: dict = Depends(get_curren
 
 
 @router.get("/messages")
-async def get_messages(recipient_id: Optional[str] = None, current_user: dict = Depends(get_current_user)):
+def get_messages(recipient_id: Optional[str] = None, current_user: dict = Depends(get_current_user)):
     if recipient_id:
         query = {
             "$or": [
@@ -59,7 +59,7 @@ async def get_messages(recipient_id: Optional[str] = None, current_user: dict = 
 
 
 @router.get("/notifications")
-async def get_notifications(current_user: dict = Depends(get_current_user)):
+def get_notifications(current_user: dict = Depends(get_current_user)):
     notifs = list(
         notifications_col.find({"user_id": current_user["id"]}, {"_id": 0}).sort("created_at", -1)
     )
@@ -67,7 +67,7 @@ async def get_notifications(current_user: dict = Depends(get_current_user)):
 
 
 @router.put("/notifications/{notification_id}/read")
-async def mark_read(notification_id: str, current_user: dict = Depends(get_current_user)):
+def mark_read(notification_id: str, current_user: dict = Depends(get_current_user)):
     notifications_col.update_one(
         {"id": notification_id, "user_id": current_user["id"]},
         {"$set": {"read": True}},

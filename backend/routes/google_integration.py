@@ -33,7 +33,7 @@ def _external_base_url(request: Request) -> str:
 
 
 @router.get("/auth-url")
-async def get_google_auth_url(request: Request, current_user: dict = Depends(get_current_user)):
+def get_google_auth_url(request: Request, current_user: dict = Depends(get_current_user)):
     """Generate Google OAuth URL for connecting Google account."""
     redirect_uri = _external_base_url(request) + "/api/google/callback"
 
@@ -51,7 +51,7 @@ async def get_google_auth_url(request: Request, current_user: dict = Depends(get
 
 
 @router.get("/callback")
-async def google_callback(request: Request, code: str = None, state: str = None, error: str = None):
+def google_callback(request: Request, code: str = None, state: str = None, error: str = None):
     """Handle Google OAuth callback - exchanges code for tokens."""
     if error:
         # Redirect to frontend with error
@@ -104,14 +104,14 @@ async def google_callback(request: Request, code: str = None, state: str = None,
 
 
 @router.get("/status")
-async def google_status(current_user: dict = Depends(get_current_user)):
+def google_status(current_user: dict = Depends(get_current_user)):
     """Check if user has connected their Google account."""
     token = google_tokens_col.find_one({"user_id": current_user["id"]}, {"_id": 0})
     return {"connected": token is not None}
 
 
 @router.delete("/disconnect")
-async def disconnect_google(current_user: dict = Depends(get_current_user)):
+def disconnect_google(current_user: dict = Depends(get_current_user)):
     """Disconnect Google account."""
     google_tokens_col.delete_one({"user_id": current_user["id"]})
     return {"success": True}
@@ -146,7 +146,7 @@ def get_valid_access_token(user_id: str) -> str:
 
 
 @router.get("/slides")
-async def list_google_slides(current_user: dict = Depends(get_current_user)):
+def list_google_slides(current_user: dict = Depends(get_current_user)):
     """List user's Google Slides presentations."""
     access_token = get_valid_access_token(current_user["id"])
 
@@ -169,7 +169,7 @@ async def list_google_slides(current_user: dict = Depends(get_current_user)):
 
 
 @router.get("/docs")
-async def list_google_docs(current_user: dict = Depends(get_current_user)):
+def list_google_docs(current_user: dict = Depends(get_current_user)):
     """List user's Google Docs documents."""
     access_token = get_valid_access_token(current_user["id"])
 

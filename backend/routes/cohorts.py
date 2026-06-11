@@ -37,7 +37,7 @@ async def create_cohort(request: Request, current_user: dict = Depends(get_curre
 
 
 @router.get("")
-async def list_cohorts(status: str = None, current_user: dict = Depends(get_current_user)):
+def list_cohorts(status: str = None, current_user: dict = Depends(get_current_user)):
     query = {}
     if status:
         query["status"] = status
@@ -46,7 +46,7 @@ async def list_cohorts(status: str = None, current_user: dict = Depends(get_curr
 
 
 @router.get("/{cohort_id}")
-async def get_cohort(cohort_id: str, current_user: dict = Depends(get_current_user)):
+def get_cohort(cohort_id: str, current_user: dict = Depends(get_current_user)):
     cohort = cohorts_col.find_one({"id": cohort_id}, {"_id": 0})
     if not cohort:
         raise HTTPException(status_code=404, detail="Cohort not found")
@@ -74,7 +74,7 @@ async def update_cohort(cohort_id: str, request: Request, current_user: dict = D
 
 
 @router.post("/{cohort_id}/join")
-async def join_cohort(cohort_id: str, current_user: dict = Depends(get_current_user)):
+def join_cohort(cohort_id: str, current_user: dict = Depends(get_current_user)):
     # Tier gating: Scholar+ required to join cohorts
     require_tier(current_user, "scholar", "cohort_join")
 
@@ -109,7 +109,7 @@ async def join_cohort(cohort_id: str, current_user: dict = Depends(get_current_u
 
 
 @router.post("/{cohort_id}/leave")
-async def leave_cohort(cohort_id: str, current_user: dict = Depends(get_current_user)):
+def leave_cohort(cohort_id: str, current_user: dict = Depends(get_current_user)):
     cohorts_col.update_one(
         {"id": cohort_id},
         {"$pull": {"members": current_user["id"]}},
@@ -118,7 +118,7 @@ async def leave_cohort(cohort_id: str, current_user: dict = Depends(get_current_
 
 
 @router.delete("/{cohort_id}")
-async def delete_cohort(cohort_id: str, current_user: dict = Depends(get_current_user)):
+def delete_cohort(cohort_id: str, current_user: dict = Depends(get_current_user)):
     cohort = cohorts_col.find_one({"id": cohort_id})
     if not cohort:
         raise HTTPException(status_code=404, detail="Cohort not found")
@@ -156,7 +156,7 @@ async def link_course_to_cohort(cohort_id: str, request: Request, current_user: 
 
 
 @router.delete("/{cohort_id}/courses/{course_id}")
-async def unlink_course_from_cohort(cohort_id: str, course_id: str, current_user: dict = Depends(get_current_user)):
+def unlink_course_from_cohort(cohort_id: str, course_id: str, current_user: dict = Depends(get_current_user)):
     if not has_permission(current_user["role"], UserRole.FACULTY):
         raise HTTPException(status_code=403, detail="Only faculty+ can unlink courses")
 
@@ -170,7 +170,7 @@ async def unlink_course_from_cohort(cohort_id: str, course_id: str, current_user
 
 
 @router.get("/{cohort_id}/detail")
-async def get_cohort_detail(cohort_id: str, current_user: dict = Depends(get_current_user)):
+def get_cohort_detail(cohort_id: str, current_user: dict = Depends(get_current_user)):
     """Get cohort with enriched course and member data."""
     cohort = cohorts_col.find_one({"id": cohort_id}, {"_id": 0})
     if not cohort:

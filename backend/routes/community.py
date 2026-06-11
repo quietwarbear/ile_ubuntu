@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, Request, Depends
+from fastapi import APIRouter, HTTPException, Query, Request, Depends
 from datetime import datetime, timezone
 import uuid
 from database import posts_col
@@ -31,16 +31,23 @@ async def create_post(request: Request, current_user: dict = Depends(get_current
 
 
 @router.get("/posts")
-async def list_posts(category: str = None, current_user: dict = Depends(get_current_user)):
+def list_posts(
+    category: str = None,
+    limit: int = Query(100, ge=1, le=200),
+    skip: int = Query(0, ge=0),
+    current_user: dict = Depends(get_current_user),
+):
     query = {}
     if category:
         query["category"] = category
-    posts = list(posts_col.find(query, {"_id": 0}).sort("created_at", -1))
+    posts = list(
+        posts_col.find(query, {"_id": 0}).sort("created_at", -1).skip(skip).limit(limit)
+    )
     return posts
 
 
 @router.get("/posts/{post_id}")
-async def get_post(post_id: str, current_user: dict = Depends(get_current_user)):
+def get_post(post_id: str, current_user: dict = Depends(get_current_user)):
     post = posts_col.find_one({"id": post_id}, {"_id": 0})
     if not post:
         raise HTTPException(status_code=404, detail="Post not found")
@@ -69,7 +76,7 @@ async def reply_to_post(post_id: str, request: Request, current_user: dict = Dep
 
 
 @router.post("/posts/{post_id}/like")
-async def like_post(post_id: str, current_user: dict = Depends(get_current_user)):
+def like_post(post_id: str, current_user: dict = Depends(get_current_user)):
     post = posts_col.find_one({"id": post_id})
     if not post:
         raise HTTPException(status_code=404, detail="Post not found")
@@ -83,7 +90,7 @@ async def like_post(post_id: str, current_user: dict = Depends(get_current_user)
 
 
 @router.delete("/posts/{post_id}")
-async def delete_post(post_id: str, current_user: dict = Depends(get_current_user)):
+def delete_post(post_id: str, current_user: dict = Depends(get_current_user)):
     from models.user import has_permission, UserRole
 
     post = posts_col.find_one({"id": post_id})

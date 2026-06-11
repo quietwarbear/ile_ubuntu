@@ -41,7 +41,7 @@ async def archive_course(request: Request, current_user: dict = Depends(get_curr
 
 
 @router.get("")
-async def list_archives(type: str = None, current_user: dict = Depends(get_current_user)):
+def list_archives(type: str = None, current_user: dict = Depends(get_current_user)):
     query = {}
     if type:
         query["type"] = type
@@ -54,7 +54,7 @@ async def list_archives(type: str = None, current_user: dict = Depends(get_curre
 
 
 @router.get("/{archive_id}")
-async def get_archive(archive_id: str, current_user: dict = Depends(get_current_user)):
+def get_archive(archive_id: str, current_user: dict = Depends(get_current_user)):
     archive = archives_col.find_one({"id": archive_id}, {"_id": 0})
     if not archive:
         raise HTTPException(status_code=404, detail="Archive not found")
@@ -67,7 +67,7 @@ async def get_archive(archive_id: str, current_user: dict = Depends(get_current_
 
 
 @router.delete("/{archive_id}")
-async def delete_archive(archive_id: str, current_user: dict = Depends(get_current_user)):
+def delete_archive(archive_id: str, current_user: dict = Depends(get_current_user)):
     if not has_permission(current_user["role"], UserRole.ADMIN):
         raise HTTPException(status_code=403, detail="Only admins can delete archives")
 

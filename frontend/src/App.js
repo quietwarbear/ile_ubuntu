@@ -8,6 +8,7 @@ import AppLayout from './components/layout/AppLayout';
 import BrandMark from './components/brand/BrandMark';
 import OnboardingWizard from './components/OnboardingWizard';
 import LoginPage from './pages/LoginPage';
+import ResetPasswordPage from './pages/ResetPasswordPage';
 import DashboardPage from './pages/DashboardPage';
 import CoursesPage from './pages/CoursesPage';
 import CourseDetailPage from './pages/CourseDetailPage';
@@ -91,6 +92,7 @@ function PublicRoutes({ handlePasswordLogin }) {
       <Route path="/terms" element={<TermsPage />} />
       <Route path="/blog" element={<PublicBlogPage onLogin={handleLogin} />} />
       <Route path="/login" element={<LoginPage onLogin={handleGoogleFromLogin} onPasswordLogin={handlePasswordLogin} />} />
+      <Route path="/reset-password" element={<ResetPasswordPage />} />
       <Route path="*" element={<LandingPage onLogin={handleLogin} />} />
     </Routes>
   );

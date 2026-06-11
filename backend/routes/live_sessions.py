@@ -56,7 +56,7 @@ async def create_live_session(request: Request, current_user: dict = Depends(get
 
 
 @router.get("")
-async def list_live_sessions(status: str = None, current_user: dict = Depends(get_current_user)):
+def list_live_sessions(status: str = None, current_user: dict = Depends(get_current_user)):
     query = {}
     if status:
         query["status"] = status
@@ -65,7 +65,7 @@ async def list_live_sessions(status: str = None, current_user: dict = Depends(ge
 
 
 @router.get("/{session_id}")
-async def get_live_session(session_id: str, current_user: dict = Depends(get_current_user)):
+def get_live_session(session_id: str, current_user: dict = Depends(get_current_user)):
     session = live_sessions_col.find_one({"id": session_id}, {"_id": 0})
     if not session:
         raise HTTPException(status_code=404, detail="Session not found")
@@ -73,7 +73,7 @@ async def get_live_session(session_id: str, current_user: dict = Depends(get_cur
 
 
 @router.put("/{session_id}/start")
-async def start_live_session(session_id: str, current_user: dict = Depends(get_current_user)):
+def start_live_session(session_id: str, current_user: dict = Depends(get_current_user)):
     session = live_sessions_col.find_one({"id": session_id})
     if not session:
         raise HTTPException(status_code=404, detail="Session not found")
@@ -88,7 +88,7 @@ async def start_live_session(session_id: str, current_user: dict = Depends(get_c
 
 
 @router.put("/{session_id}/end")
-async def end_live_session(session_id: str, current_user: dict = Depends(get_current_user)):
+def end_live_session(session_id: str, current_user: dict = Depends(get_current_user)):
     session = live_sessions_col.find_one({"id": session_id})
     if not session:
         raise HTTPException(status_code=404, detail="Session not found")
@@ -103,7 +103,7 @@ async def end_live_session(session_id: str, current_user: dict = Depends(get_cur
 
 
 @router.post("/{session_id}/join")
-async def join_live_session(session_id: str, current_user: dict = Depends(get_current_user)):
+def join_live_session(session_id: str, current_user: dict = Depends(get_current_user)):
     session = live_sessions_col.find_one({"id": session_id})
     if not session:
         raise HTTPException(status_code=404, detail="Session not found")
@@ -129,7 +129,7 @@ async def join_live_session(session_id: str, current_user: dict = Depends(get_cu
 
 
 @router.delete("/{session_id}")
-async def delete_live_session(session_id: str, current_user: dict = Depends(get_current_user)):
+def delete_live_session(session_id: str, current_user: dict = Depends(get_current_user)):
     session = live_sessions_col.find_one({"id": session_id})
     if not session:
         raise HTTPException(status_code=404, detail="Session not found")

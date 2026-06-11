@@ -153,7 +153,7 @@ async def create_quiz(course_id: str, lesson_id: str, request: Request, current_
 
 
 @router.get("")
-async def get_quiz(course_id: str, lesson_id: str, current_user: dict = Depends(get_current_user)):
+def get_quiz(course_id: str, lesson_id: str, current_user: dict = Depends(get_current_user)):
     """Get the quiz for a lesson. Students don't see correct answers."""
     _get_lesson(course_id, lesson_id)
     quiz = quizzes_col.find_one({"lesson_id": lesson_id}, {"_id": 0})
@@ -198,7 +198,7 @@ async def update_quiz(course_id: str, lesson_id: str, request: Request, current_
 
 
 @router.delete("")
-async def delete_quiz(course_id: str, lesson_id: str, current_user: dict = Depends(get_current_user)):
+def delete_quiz(course_id: str, lesson_id: str, current_user: dict = Depends(get_current_user)):
     """Delete the quiz for a lesson."""
     _check_course_instructor(course_id, current_user)
     result = quizzes_col.delete_one({"lesson_id": lesson_id})
@@ -274,7 +274,7 @@ async def submit_quiz(course_id: str, lesson_id: str, request: Request, current_
 
 
 @router.get("/attempts")
-async def get_my_attempts(course_id: str, lesson_id: str, current_user: dict = Depends(get_current_user)):
+def get_my_attempts(course_id: str, lesson_id: str, current_user: dict = Depends(get_current_user)):
     """Get the current user's quiz attempts for a lesson."""
     quiz = quizzes_col.find_one({"lesson_id": lesson_id})
     if not quiz:
@@ -289,7 +289,7 @@ async def get_my_attempts(course_id: str, lesson_id: str, current_user: dict = D
 
 
 @router.get("/all-attempts")
-async def get_all_attempts(course_id: str, lesson_id: str, current_user: dict = Depends(get_current_user)):
+def get_all_attempts(course_id: str, lesson_id: str, current_user: dict = Depends(get_current_user)):
     """Get all student attempts for a quiz (instructor only)."""
     _check_course_instructor(course_id, current_user)
     quiz = quizzes_col.find_one({"lesson_id": lesson_id})

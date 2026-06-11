@@ -36,7 +36,7 @@ def _verify_access(course_id: str, lesson_id: str, current_user: dict):
 
 
 @router.get("")
-async def list_comments(course_id: str, lesson_id: str, current_user: dict = Depends(get_current_user)):
+def list_comments(course_id: str, lesson_id: str, current_user: dict = Depends(get_current_user)):
     """Get all comments for a lesson, including replies (threaded)."""
     _verify_access(course_id, lesson_id, current_user)
 
@@ -161,7 +161,7 @@ async def update_comment(
 
 
 @router.delete("/{comment_id}")
-async def delete_comment(
+def delete_comment(
     course_id: str, lesson_id: str, comment_id: str,
     current_user: dict = Depends(get_current_user),
 ):

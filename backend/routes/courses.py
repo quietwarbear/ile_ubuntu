@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, Request, Depends
+from fastapi import APIRouter, HTTPException, Query, Request, Depends
 from datetime import datetime, timezone
 import uuid
 from database import courses_col, lessons_col, files_col, enrollments_col
@@ -37,7 +37,12 @@ async def create_course(request: Request, current_user: dict = Depends(get_curre
 
 
 @router.get("")
-async def list_courses(status: str = None, current_user: dict = Depends(get_current_user)):
+def list_courses(
+    status: str = None,
+    limit: int = Query(100, ge=1, le=200),
+    skip: int = Query(0, ge=0),
+    current_user: dict = Depends(get_current_user),
+):
     query = {}
     if status:
         query["status"] = status
@@ -45,12 +50,14 @@ async def list_courses(status: str = None, current_user: dict = Depends(get_curr
     if not has_permission(current_user["role"], UserRole.FACULTY):
         query["status"] = CourseStatus.ACTIVE
 
-    courses = list(courses_col.find(query, {"_id": 0}).sort("created_at", -1))
+    courses = list(
+        courses_col.find(query, {"_id": 0}).sort("created_at", -1).skip(skip).limit(limit)
+    )
     return courses
 
 
 @router.get("/{course_id}")
-async def get_course(course_id: str, current_user: dict = Depends(get_current_user)):
+def get_course(course_id: str, current_user: dict = Depends(get_current_user)):
     course = courses_col.find_one({"id": course_id}, {"_id": 0})
     if not course:
         raise HTTPException(status_code=404, detail="Course not found")
@@ -78,7 +85,7 @@ async def update_course(course_id: str, request: Request, current_user: dict = D
 
 
 @router.delete("/{course_id}")
-async def delete_course(course_id: str, current_user: dict = Depends(get_current_user)):
+def delete_course(course_id: str, current_user: dict = Depends(get_current_user)):
     course = courses_col.find_one({"id": course_id})
     if not course:
         raise HTTPException(status_code=404, detail="Course not found")
@@ -150,7 +157,7 @@ async def update_lesson(course_id: str, lesson_id: str, request: Request, curren
 
 
 @router.delete("/{course_id}/lessons/{lesson_id}")
-async def delete_lesson(course_id: str, lesson_id: str, current_user: dict = Depends(get_current_user)):
+def delete_lesson(course_id: str, lesson_id: str, current_user: dict = Depends(get_current_user)):
     course = courses_col.find_one({"id": course_id})
     if not course:
         raise HTTPException(status_code=404, detail="Course not found")
@@ -163,14 +170,14 @@ async def delete_lesson(course_id: str, lesson_id: str, current_user: dict = Dep
 
 
 @router.get("/{course_id}/lessons")
-async def list_lessons(course_id: str, current_user: dict = Depends(get_current_user)):
+def list_lessons(course_id: str, current_user: dict = Depends(get_current_user)):
     lessons = list(lessons_col.find({"course_id": course_id}, {"_id": 0}).sort("order", 1))
     return lessons
 
 
 # --- Enrollment endpoints ---
 @router.post("/{course_id}/enroll")
-async def enroll_in_course(course_id: str, current_user: dict = Depends(get_current_user)):
+def enroll_in_course(course_id: str, current_user: dict = Depends(get_current_user)):
     course = courses_col.find_one({"id": course_id})
     if not course:
         raise HTTPException(status_code=404, detail="Course not found")
@@ -215,7 +222,7 @@ async def enroll_in_course(course_id: str, current_user: dict = Depends(get_curr
 
 
 @router.post("/{course_id}/unenroll")
-async def unenroll_from_course(course_id: str, current_user: dict = Depends(get_current_user)):
+def unenroll_from_course(course_id: str, current_user: dict = Depends(get_current_user)):
     result = enrollments_col.delete_one({"user_id": current_user["id"], "course_id": course_id})
     if result.deleted_count == 0:
         raise HTTPException(status_code=404, detail="Not enrolled in this course")
@@ -224,7 +231,7 @@ async def unenroll_from_course(course_id: str, current_user: dict = Depends(get_
 
 
 @router.get("/{course_id}/enrollment")
-async def get_enrollment_status(course_id: str, current_user: dict = Depends(get_current_user)):
+def get_enrollment_status(course_id: str, current_user: dict = Depends(get_current_user)):
     enrollment = enrollments_col.find_one(
         {"user_id": current_user["id"], "course_id": course_id}, {"_id": 0}
     )
@@ -232,7 +239,7 @@ async def get_enrollment_status(course_id: str, current_user: dict = Depends(get
 
 
 @router.post("/{course_id}/lessons/{lesson_id}/complete")
-async def complete_lesson(course_id: str, lesson_id: str, current_user: dict = Depends(get_current_user)):
+def complete_lesson(course_id: str, lesson_id: str, current_user: dict = Depends(get_current_user)):
     enrollment = enrollments_col.find_one({"user_id": current_user["id"], "course_id": course_id})
     if not enrollment:
         raise HTTPException(status_code=400, detail="Not enrolled in this course")
@@ -264,7 +271,7 @@ async def complete_lesson(course_id: str, lesson_id: str, current_user: dict = D
 
 
 @router.get("/{course_id}/progress")
-async def get_course_progress(course_id: str, current_user: dict = Depends(get_current_user)):
+def get_course_progress(course_id: str, current_user: dict = Depends(get_current_user)):
     enrollment = enrollments_col.find_one(
         {"user_id": current_user["id"], "course_id": course_id}, {"_id": 0}
     )
@@ -282,7 +289,7 @@ async def get_course_progress(course_id: str, current_user: dict = Depends(get_c
 
 
 @router.get("/{course_id}/enrollments")
-async def list_course_enrollments(course_id: str, current_user: dict = Depends(get_current_user)):
+def list_course_enrollments(course_id: str, current_user: dict = Depends(get_current_user)):
     """List all enrollments for a course (faculty+ only)"""
     course = courses_col.find_one({"id": course_id})
     if not course:

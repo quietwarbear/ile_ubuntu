@@ -1,10 +1,14 @@
 """
 Subscription tier gating middleware.
 Faculty/Elder/Admin bypass all tier restrictions (they are creators/managers).
-Admin emails (ubuntu-village.org) also bypass all tier restrictions.
 Tier restrictions only apply to students and assistants.
+
+Admin identification: prefer the user's `role` in the database (use
+PUT /api/auth/users/{id}/role to grant admin). The ADMIN_EMAILS env var
+(comma-separated) is a bootstrap fallback only.
 """
 
+import os
 from fastapi import HTTPException
 from database import enrollments_col
 
@@ -18,11 +22,14 @@ TIER_HIERARCHY = {
 # Roles that bypass all tier restrictions
 BYPASS_ROLES = {"faculty", "elder", "admin"}
 
-# Owner/admin emails that bypass all tier restrictions
+# Owner/admin emails that bypass all tier restrictions.
+# NOTE: the previous endswith("@ubuntu-village.org") wildcard was removed —
+# registration does not verify email ownership, so a domain wildcard is forgeable.
+_DEFAULT_ADMIN_EMAILS = "hodari@ubuntu-village.org,shy@ubuntu-village.org,quiet927@gmail.com"
 ADMIN_EMAILS = {
-    "hodari@ubuntu-village.org",
-    "shy@ubuntu-village.org",
-    "quiet927@gmail.com",
+    e.strip().lower()
+    for e in os.environ.get("ADMIN_EMAILS", _DEFAULT_ADMIN_EMAILS).split(",")
+    if e.strip()
 }
 
 ENROLLMENT_LIMITS = {
@@ -36,8 +43,7 @@ def _is_admin_email(email: str | None) -> bool:
     """Return True if the email belongs to an admin/owner."""
     if not email:
         return False
-    email = email.lower().strip()
-    return email in ADMIN_EMAILS or email.endswith("@ubuntu-village.org")
+    return email.lower().strip() in ADMIN_EMAILS
 
 
 def _should_bypass(user: dict) -> bool:

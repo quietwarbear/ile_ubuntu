@@ -8,12 +8,13 @@ const API = process.env.REACT_APP_BACKEND_URL || process.env.REACT_APP_API_URL |
 export default function LoginPage({ onLogin, onPasswordLogin }) {
   const [appleSDKReady, setAppleSDKReady] = useState(false);
   const [isNative, setIsNative] = useState(false);
-  const [mode, setMode] = useState('login'); // 'login' or 'register'
+  const [mode, setMode] = useState('login'); // 'login', 'register', or 'forgot'
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
+  const [info, setInfo] = useState('');
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -145,12 +146,17 @@ export default function LoginPage({ onLogin, onPasswordLogin }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+    setInfo('');
     setLoading(true);
 
     try {
-      const endpoint = mode === 'register' ? '/api/auth/register' : '/api/auth/login';
-      const body = mode === 'register'
-        ? { email, password, name }
+      const endpoint =
+        mode === 'register' ? '/api/auth/register'
+        : mode === 'forgot' ? '/api/auth/forgot-password'
+        : '/api/auth/login';
+      const body =
+        mode === 'register' ? { email, password, name }
+        : mode === 'forgot' ? { email }
         : { email, password };
 
       // Use AbortController to enforce a 15-second timeout so the request
@@ -171,6 +177,12 @@ export default function LoginPage({ onLogin, onPasswordLogin }) {
 
       if (!res.ok) {
         setError(data.detail || 'Something went wrong');
+        setLoading(false);
+        return;
+      }
+
+      if (mode === 'forgot') {
+        setInfo(data.message || 'If an account exists for that email, a reset link has been sent.');
         setLoading(false);
         return;
       }
@@ -269,29 +281,45 @@ export default function LoginPage({ onLogin, onPasswordLogin }) {
               </div>
             </div>
 
-            <div>
-              <label className="block text-xs text-[#94A3B8] mb-1.5 uppercase tracking-wider">Password</label>
-              <div className="relative">
-                <input
-                  type={showPassword ? 'text' : 'password'}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder={mode === 'register' ? 'Min 6 characters' : 'Your password'}
-                  required
-                  className="w-full px-4 py-2.5 rounded-md bg-[#0F1629] border border-[#1E293B] text-[#F8FAFC] placeholder-[#475569] focus:outline-none focus:border-[#D4AF37]/50 text-sm pr-10 transition-colors"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-[#475569] hover:text-[#94A3B8]"
-                >
-                  {showPassword ? <EyeSlash size={16} /> : <Eye size={16} />}
-                </button>
+            {mode !== 'forgot' && (
+              <div>
+                <label className="block text-xs text-[#94A3B8] mb-1.5 uppercase tracking-wider">Password</label>
+                <div className="relative">
+                  <input
+                    type={showPassword ? 'text' : 'password'}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder={mode === 'register' ? 'Min 6 characters' : 'Your password'}
+                    required
+                    className="w-full px-4 py-2.5 rounded-md bg-[#0F1629] border border-[#1E293B] text-[#F8FAFC] placeholder-[#475569] focus:outline-none focus:border-[#D4AF37]/50 text-sm pr-10 transition-colors"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-[#475569] hover:text-[#94A3B8]"
+                  >
+                    {showPassword ? <EyeSlash size={16} /> : <Eye size={16} />}
+                  </button>
+                </div>
+                {mode === 'login' && (
+                  <div className="text-right mt-1.5">
+                    <button
+                      type="button"
+                      onClick={() => { setMode('forgot'); setError(''); setInfo(''); }}
+                      className="text-xs text-[#D4AF37] hover:underline"
+                    >
+                      Forgot password?
+                    </button>
+                  </div>
+                )}
               </div>
-            </div>
+            )}
 
             {error && (
               <p className="text-xs text-red-400 bg-red-400/10 rounded-md px-3 py-2">{error}</p>
+            )}
+            {info && (
+              <p className="text-xs text-emerald-400 bg-emerald-400/10 rounded-md px-3 py-2">{info}</p>
             )}
 
             <Button
@@ -302,6 +330,8 @@ export default function LoginPage({ onLogin, onPasswordLogin }) {
             >
               {mode === 'register' ? (
                 <><UserPlus size={18} weight="duotone" className="mr-2" /> Create Account</>
+              ) : mode === 'forgot' ? (
+                <><EnvelopeSimple size={18} weight="duotone" className="mr-2" /> Send Reset Link</>
               ) : (
                 <><SignIn size={18} weight="duotone" className="mr-2" /> Sign In</>
               )}
@@ -354,13 +384,13 @@ export default function LoginPage({ onLogin, onPasswordLogin }) {
           <p className="text-center text-xs text-[#94A3B8]">
             {mode === 'login' ? (
               <>Don't have an account?{' '}
-                <button onClick={() => { setMode('register'); setError(''); }} className="text-[#D4AF37] hover:underline">
+                <button onClick={() => { setMode('register'); setError(''); setInfo(''); }} className="text-[#D4AF37] hover:underline">
                   Create one
                 </button>
               </>
             ) : (
               <>Already have an account?{' '}
-                <button onClick={() => { setMode('login'); setError(''); }} className="text-[#D4AF37] hover:underline">
+                <button onClick={() => { setMode('login'); setError(''); setInfo(''); }} className="text-[#D4AF37] hover:underline">
                   Sign in
                 </button>
               </>
