@@ -2,13 +2,19 @@ from fastapi import APIRouter, HTTPException, Request, Depends
 from datetime import datetime, timezone
 import uuid
 import hashlib
-from database import live_sessions_col, courses_col
+from database import live_sessions_col, courses_col, attendance_col, enrollments_col, users_col
 from middleware import get_current_user
 from models.user import has_permission, UserRole
 from tier_gating import require_tier
 from events import emit
 
 router = APIRouter(prefix="/api/live-sessions", tags=["live-sessions"])
+
+ATTENDANCE_STATUSES = {"present", "late", "absent"}
+
+
+def _can_take_attendance(session: dict, user: dict) -> bool:
+    return session["host_id"] == user["id"] or has_permission(user["role"], UserRole.FACULTY)
 
 
 def generate_room_name(session_id: str) -> str:
@@ -143,3 +149,85 @@ def delete_live_session(session_id: str, current_user: dict = Depends(get_curren
 
     live_sessions_col.delete_one({"id": session_id})
     return {"success": True}
+
+
+# --- Attendance v0 (eval §10 Quick Win 4) ---
+
+@router.get("/{session_id}/attendance")
+def get_attendance(session_id: str, current_user: dict = Depends(get_current_user)):
+    """Roster + attendance for a session. Host or faculty+ only.
+
+    Roster = saved attendance records, merged with everyone who joined the
+    call and (if the session is linked to a course) everyone enrolled.
+    Unsaved joiners default to 'present'; unsaved enrollees to 'absent'.
+    """
+    session = live_sessions_col.find_one({"id": session_id})
+    if not session:
+        raise HTTPException(status_code=404, detail="Session not found")
+    if not _can_take_attendance(session, current_user):
+        raise HTTPException(status_code=403, detail="Only the host or faculty can view attendance")
+
+    saved = {r["user_id"]: r for r in attendance_col.find({"session_id": session_id}, {"_id": 0})}
+    joined = set(session.get("participants", []))
+
+    roster_ids = set(saved) | joined
+    if session.get("course_id"):
+        for e in enrollments_col.find({"course_id": session["course_id"]}, {"_id": 0, "user_id": 1}):
+            roster_ids.add(e["user_id"])
+    roster_ids.discard(session["host_id"])
+
+    roster = []
+    for uid in roster_ids:
+        u = users_col.find_one({"id": uid}, {"_id": 0, "id": 1, "name": 1, "picture": 1}) or {}
+        record = saved.get(uid)
+        roster.append({
+            "user_id": uid,
+            "name": u.get("name", "Unknown"),
+            "picture": u.get("picture", ""),
+            "joined_call": uid in joined,
+            "status": record["status"] if record else ("present" if uid in joined else "absent"),
+            "saved": record is not None,
+        })
+    roster.sort(key=lambda r: r["name"].lower())
+
+    return {"session_id": session_id, "roster": roster, "taken": bool(saved)}
+
+
+@router.post("/{session_id}/attendance")
+async def take_attendance(session_id: str, request: Request, current_user: dict = Depends(get_current_user)):
+    """Save attendance records. Host or faculty+ only. Upserts per user."""
+    session = live_sessions_col.find_one({"id": session_id})
+    if not session:
+        raise HTTPException(status_code=404, detail="Session not found")
+    if not _can_take_attendance(session, current_user):
+        raise HTTPException(status_code=403, detail="Only the host or faculty can take attendance")
+
+    data = await request.json()
+    records = data.get("records", [])
+    if not isinstance(records, list) or not records:
+        raise HTTPException(status_code=400, detail="records list required")
+
+    now = datetime.now(timezone.utc)
+    counts = {"present": 0, "late": 0, "absent": 0}
+    for rec in records:
+        uid = rec.get("user_id")
+        status = rec.get("status")
+        if not uid or status not in ATTENDANCE_STATUSES:
+            raise HTTPException(status_code=400, detail=f"Each record needs user_id and status in {sorted(ATTENDANCE_STATUSES)}")
+        u = users_col.find_one({"id": uid}, {"_id": 0, "name": 1}) or {}
+        attendance_col.update_one(
+            {"session_id": session_id, "user_id": uid},
+            {"$set": {
+                "status": status,
+                "user_name": u.get("name", "Unknown"),
+                "session_title": session.get("title", ""),
+                "marked_by": current_user["id"],
+                "marked_at": now,
+            },
+             "$setOnInsert": {"id": str(uuid.uuid4())}},
+            upsert=True,
+        )
+        counts[status] += 1
+
+    emit("attendance.recorded", current_user, "live_session", session_id, meta=counts)
+    return {"success": True, "counts": counts}

@@ -40,6 +40,7 @@ EVENT_TYPES = {
     "live_session.started",
     "live_session.ended",
     "live_session.joined",
+    "attendance.recorded",
     # community
     "post.created",
     "post.replied",

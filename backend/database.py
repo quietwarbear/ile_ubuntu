@@ -37,6 +37,9 @@ password_resets_col = db.password_resets
 # Activity event stream (append-only; substrate for analytics + Ubuntu Intelligence)
 events_col = db.events
 
+# Attendance v0 (one record per session+user; eval §10 Quick Win 4)
+attendance_col = db.attendance
+
 
 def ensure_indexes():
     """Create the indexes the hot query paths rely on. Idempotent; called at startup.
@@ -91,6 +94,9 @@ def ensure_indexes():
         (events_col, [("type", 1), ("created_at", -1)], {}),
         (events_col, [("entity_type", 1), ("entity_id", 1), ("created_at", -1)], {}),
         (events_col, [("created_at", -1)], {}),
+        # Attendance: one record per session+user; per-user history
+        (attendance_col, [("session_id", 1), ("user_id", 1)], {"unique": True}),
+        (attendance_col, [("user_id", 1), ("marked_at", -1)], {}),
     ]
 
     for col, keys, kwargs in specs:

@@ -16,6 +16,7 @@ import {
   Users,
   Calendar,
   Circle,
+  ClipboardText,
 } from '@phosphor-icons/react';
 import { apiGet, apiPost, apiPut, apiDelete, parseTierError } from '../lib/api';
 import UpgradePrompt from '../components/UpgradePrompt';
@@ -81,6 +82,44 @@ export default function LiveSessionsPage({ user }) {
   };
 
   const [upgradePrompt, setUpgradePrompt] = useState(null);
+
+  // Attendance v0
+  const [attendanceSession, setAttendanceSession] = useState(null);
+  const [roster, setRoster] = useState([]);
+  const [attendanceLoading, setAttendanceLoading] = useState(false);
+  const [attendanceSaving, setAttendanceSaving] = useState(false);
+
+  const openAttendance = async (session, e) => {
+    e.stopPropagation();
+    setAttendanceSession(session);
+    setAttendanceLoading(true);
+    try {
+      const data = await apiGet(`/api/live-sessions/${session.id}/attendance`);
+      setRoster(data.roster || []);
+    } catch (err) {
+      alert(err.message);
+      setAttendanceSession(null);
+    }
+    setAttendanceLoading(false);
+  };
+
+  const setAttendanceStatus = (userId, status) => {
+    setRoster(prev => prev.map(r => (r.user_id === userId ? { ...r, status } : r)));
+  };
+
+  const saveAttendance = async () => {
+    if (!attendanceSession) return;
+    setAttendanceSaving(true);
+    try {
+      await apiPost(`/api/live-sessions/${attendanceSession.id}/attendance`, {
+        records: roster.map(r => ({ user_id: r.user_id, status: r.status })),
+      });
+      setAttendanceSession(null);
+    } catch (err) {
+      alert(err.message);
+    }
+    setAttendanceSaving(false);
+  };
 
   const handleJoin = async (id) => {
     try {
@@ -309,6 +348,17 @@ export default function LiveSessionsPage({ user }) {
                           </Button>
                         </>
                       )}
+                      {(session.status === 'live' || session.status === 'ended') && (isHost || isFaculty) && (
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={(e) => openAttendance(session, e)}
+                          className="text-[#D4AF37] hover:text-[#F3E5AB] text-xs"
+                          data-testid={`attendance-${session.id}`}
+                        >
+                          <ClipboardText size={14} weight="duotone" className="mr-1" /> Attendance
+                        </Button>
+                      )}
                       {(session.status === 'scheduled' || session.status === 'ended') && isHost && (
                         <Button
                           size="sm"
@@ -336,6 +386,76 @@ export default function LiveSessionsPage({ user }) {
           onClose={() => setUpgradePrompt(null)}
         />
       )}
+
+      {/* Attendance dialog */}
+      <Dialog open={!!attendanceSession} onOpenChange={(open) => !open && setAttendanceSession(null)}>
+        <DialogContent className="bg-[#0F172A] border-[#1E293B] max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-[#F8FAFC]" style={{ fontFamily: 'Cormorant Garamond, serif' }}>
+              Attendance — {attendanceSession?.title}
+            </DialogTitle>
+          </DialogHeader>
+          {attendanceLoading ? (
+            <p className="text-sm text-[#94A3B8] py-6 text-center">Loading roster…</p>
+          ) : roster.length === 0 ? (
+            <p className="text-sm text-[#94A3B8] py-6 text-center">
+              No one to mark yet — the roster fills from call joins and course enrollment.
+            </p>
+          ) : (
+            <div className="space-y-2">
+              {roster.map(r => (
+                <div
+                  key={r.user_id}
+                  className="flex items-center justify-between gap-3 p-2.5 rounded-md bg-[#050814] border border-[#1E293B]"
+                  data-testid={`attendance-row-${r.user_id}`}
+                >
+                  <div className="flex items-center gap-2 min-w-0">
+                    <img
+                      src={r.picture || `https://ui-avatars.com/api/?name=${encodeURIComponent(r.name)}&background=0F172A&color=D4AF37&size=24`}
+                      alt=""
+                      className="w-6 h-6 rounded-full flex-shrink-0"
+                    />
+                    <div className="min-w-0">
+                      <p className="text-sm text-[#F8FAFC] truncate">{r.name}</p>
+                      {r.joined_call && (
+                        <p className="text-[9px] text-emerald-400 uppercase tracking-wider">joined call</p>
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex gap-1 flex-shrink-0">
+                    {['present', 'late', 'absent'].map(status => (
+                      <button
+                        key={status}
+                        onClick={() => setAttendanceStatus(r.user_id, status)}
+                        className={`px-2 py-1 rounded text-[10px] uppercase tracking-wider border transition-all ${
+                          r.status === status
+                            ? status === 'present'
+                              ? 'bg-emerald-500/15 text-emerald-400 border-emerald-500/40'
+                              : status === 'late'
+                                ? 'bg-amber-500/15 text-amber-400 border-amber-500/40'
+                                : 'bg-red-500/15 text-red-400 border-red-500/40'
+                            : 'text-[#475569] border-[#1E293B] hover:text-[#94A3B8]'
+                        }`}
+                        data-testid={`attendance-${r.user_id}-${status}`}
+                      >
+                        {status}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ))}
+              <Button
+                onClick={saveAttendance}
+                disabled={attendanceSaving}
+                className="w-full bg-[#D4AF37] text-[#050814] hover:bg-[#F3E5AB] mt-2"
+                data-testid="save-attendance-btn"
+              >
+                {attendanceSaving ? 'Saving…' : 'Save Attendance'}
+              </Button>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
