@@ -120,6 +120,40 @@ export default function TeacherDashboardPage({ user }) {
         <p className="text-xs text-[#94A3B8]">Manage premium courses and view your earnings</p>
       </div>
 
+      {/* How it works */}
+      <Card className="bg-[#0F172A] border-[#1E293B]">
+        <CardContent className="p-5">
+          <p className="text-xs tracking-[0.15em] uppercase text-[#D4AF37] mb-3">How the marketplace works</p>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <p className="text-sm text-[#F8FAFC] mb-1">1 · Connect your account</p>
+              <p className="text-xs text-[#94A3B8]">
+                Payments run through Stripe, the same processor used across the platform.
+                Onboarding takes a few minutes — Stripe asks for your details so they can
+                deposit your earnings directly to your bank.
+              </p>
+            </div>
+            <div>
+              <p className="text-sm text-[#F8FAFC] mb-1">2 · Set a price on a course</p>
+              <p className="text-xs text-[#94A3B8]">
+                Any course you teach can become premium. Learners then purchase it once
+                for lifetime access instead of enrolling free. Set the price to $0 anytime
+                to make it free again.
+              </p>
+            </div>
+            <div>
+              <p className="text-sm text-[#F8FAFC] mb-1">3 · You keep 85%</p>
+              <p className="text-xs text-[#94A3B8]">
+                The platform keeps a 15% fee to sustain the commons; the rest lands in your
+                Stripe account and pays out to your bank on Stripe's schedule (typically
+                2 business days). Purchases happen on the website — app-store rules don't
+                allow card checkout inside the mobile apps.
+              </p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Status messages */}
       {statusMessage && (
         <div className={`p-3 rounded-md text-sm ${

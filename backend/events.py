@@ -36,6 +36,7 @@ EVENT_TYPES = {
     "course.completed",
     "quiz.attempted",
     "certificate.issued",
+    "course.purchased",
     # live teaching
     "live_session.started",
     "live_session.ended",

@@ -189,6 +189,16 @@ def enroll_in_course(course_id: str, current_user: dict = Depends(get_current_us
     if existing:
         raise HTTPException(status_code=400, detail="Already enrolled")
 
+    # Premium courses require purchase (fulfilled via Stripe webhook) — free
+    # enrollment is blocked unless you're the instructor or faculty+.
+    if course.get("is_premium") and (course.get("premium_price") or 0) > 0:
+        is_staff = course["instructor_id"] == current_user["id"] or has_permission(current_user["role"], UserRole.FACULTY)
+        if not is_staff:
+            raise HTTPException(
+                status_code=402,
+                detail=f"premium_required:{course['premium_price']}",
+            )
+
     # Tier gating: check enrollment limit
     check_enrollment_limit(current_user)
 

@@ -77,6 +77,7 @@ from routes.revenuecat_webhook import router as revenuecat_router
 from routes.quizzes import router as quizzes_router
 from routes.lesson_comments import router as lesson_comments_router
 from routes.events import router as events_router
+from routes.marketplace import router as marketplace_router
 
 app.include_router(auth_router)
 app.include_router(courses_router)
@@ -101,6 +102,7 @@ app.include_router(revenuecat_router)
 app.include_router(quizzes_router)
 app.include_router(lesson_comments_router)
 app.include_router(events_router)
+app.include_router(marketplace_router)
 
 
 @app.get("/")
@@ -139,6 +141,12 @@ async def stripe_webhook(request: Request):
             session_data = event["data"]["object"]
             session_id = session_data["id"]
             payment_status = session_data.get("payment_status", "unpaid")
+
+            # Premium course purchases (Teacher Marketplace) fulfill separately
+            if payment_status == "paid" and (session_data.get("metadata") or {}).get("kind") == "course_purchase":
+                from routes.marketplace import fulfill_course_purchase
+                fulfill_course_purchase(session_data)
+                return {"status": "ok"}
 
             if payment_status == "paid":
                 txn = payment_transactions_col.find_one({"session_id": session_id})

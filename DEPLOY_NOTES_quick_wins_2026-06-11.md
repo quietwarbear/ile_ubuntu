@@ -48,6 +48,18 @@ Store webhook secrets in the Bitwarden team vault, not in the repo or Desktop.
 4. Buy/restore a test subscription on mobile → tier updates (webhook auth OK).
 5. 11 rapid failed logins → 429.
 
+## Teacher Marketplace (added later on 2026-06-11)
+
+The Teacher Marketplace UI (built earlier on another channel) had NO backend — now implemented: Stripe Connect Express onboarding, premium pricing, web-only checkout with 15% application fee (destination charges), webhook fulfillment, earnings.
+
+**Before marketplace can take real money:**
+1. Enable **Connect** in the Stripe Dashboard (Settings → Connect → enable Express accounts). Without this, "Connect with Stripe" returns a Stripe error.
+2. Branding: set platform name/icon under Connect settings (shows on teacher onboarding).
+3. Optional env: `MARKETPLACE_FEE_PCT` (default 0.15).
+4. Test end-to-end in Stripe **test mode** first: connect a test teacher → set a price → buy with card 4242… on the web → webhook fulfills enrollment.
+5. Payouts to teachers are on Stripe's standard schedule; the platform fee stays on the platform account.
+6. Mobile: premium purchase is web-only by design (Apple/Google IAP rules). Native apps show a "purchase on the web" message. Do NOT add a Stripe buy button inside the apps before reviewing App Store guideline 3.1.1.
+
 ## Not done yet (next from the brief)
 
 - Motor/async driver migration (full §11.2.1) — threadpool + workers covers classroom-scale; revisit with a staging environment.

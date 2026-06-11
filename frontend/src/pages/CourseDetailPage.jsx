@@ -96,6 +96,28 @@ export default function CourseDetailPage({ user }) {
       await apiPost(`/api/courses/${courseId}/enroll`, {});
       loadCourseData();
     } catch (e) {
+      // Premium course → purchase flow (web only; app stores require IAP for
+      // in-app digital purchases, so native users are pointed to the website)
+      const premiumMatch = /premium_required:([\d.]+)/.exec(e.message || '');
+      if (premiumMatch) {
+        const price = premiumMatch[1];
+        const isNative = window.Capacitor?.isNativePlatform?.();
+        if (isNative) {
+          alert(`This is a premium course ($${price}). Premium courses can be purchased on the web at ile-ubuntu.org.`);
+          return;
+        }
+        if (!window.confirm(`This is a premium course: $${price} (one-time). Continue to secure checkout?`)) return;
+        try {
+          const res = await apiPost(`/api/marketplace/courses/${courseId}/checkout`, {
+            success_url: window.location.href,
+            cancel_url: window.location.href,
+          });
+          if (res.url) window.location.href = res.url;
+        } catch (err) {
+          alert(err.message);
+        }
+        return;
+      }
       const tierErr = parseTierError(e.message);
       if (tierErr) {
         setUpgradePrompt({ feature: 'enrollment', requiredTier: tierErr.requiredTier || 'scholar' });
