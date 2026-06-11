@@ -1,5 +1,10 @@
 const yo = {
   // Nav
+  nav_learn: 'Ẹ̀kọ́',
+  nav_belong: 'Àjọṣe',
+  nav_facilitate: 'Ìdarí',
+  nav_account: 'Àkáǹtì',
+  teacher_dashboard: 'Pánẹ́lì Olùkọ́',
   dashboard: 'Pánẹ́lì',
   courses: 'Àwọn Ẹ̀kọ́',
   live_teaching: 'Ìkọ́ni Láàyè',

@@ -1,5 +1,10 @@
 const es = {
   // Nav
+  nav_learn: 'Aprender',
+  nav_belong: 'Pertenecer',
+  nav_facilitate: 'Facilitar',
+  nav_account: 'Cuenta',
+  teacher_dashboard: 'Panel del Docente',
   dashboard: 'Panel',
   courses: 'Cursos',
   live_teaching: 'Enseñanza en Vivo',

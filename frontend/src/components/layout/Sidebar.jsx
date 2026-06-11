@@ -20,26 +20,53 @@ import {
   GlobeSimple,
   Megaphone,
   Newspaper,
+  ChalkboardTeacher,
 } from '@phosphor-icons/react';
 import { clearCookie, apiPut } from '../../lib/api';
 import { useI18n } from '../../i18n';
 import SearchBar from './SearchBar';
 
-const navItems = [
-  { to: '/dashboard', labelKey: 'dashboard', icon: House },
-  { to: '/courses', labelKey: 'courses', icon: BookOpenText },
-  { to: '/live', labelKey: 'live_teaching', icon: VideoCamera },
-  { to: '/session-records', labelKey: 'session_records', icon: FilmSlate, facultyOnly: true },
-  { to: '/cohorts', labelKey: 'cohorts', icon: UsersThree },
-  { to: '/spaces', labelKey: 'spaces', icon: ShieldCheck },
-  { to: '/community', labelKey: 'community', icon: Chats },
-  { to: '/archives', labelKey: 'archives', icon: Archive },
-  { to: '/messages', labelKey: 'messages', icon: Bell },
-  { to: '/analytics', labelKey: 'analytics', icon: ChartBar, facultyOnly: true },
-  { to: '/subscriptions', labelKey: 'membership', icon: Sparkle },
-  { to: '/blog', labelKey: 'blog', icon: Newspaper },
-  { to: '/marketing', labelKey: 'marketing', icon: Megaphone, facultyOnly: true },
+// Role-aware, mode-based navigation (product eval §8): each persona sees a
+// small, coherent menu instead of one flat 14-item list.
+const navSections = [
+  {
+    labelKey: 'nav_learn',
+    items: [
+      { to: '/dashboard', labelKey: 'dashboard', icon: House },
+      { to: '/courses', labelKey: 'courses', icon: BookOpenText },
+      { to: '/live', labelKey: 'live_teaching', icon: VideoCamera },
+      { to: '/cohorts', labelKey: 'cohorts', icon: UsersThree },
+      { to: '/archives', labelKey: 'archives', icon: Archive },
+    ],
+  },
+  {
+    labelKey: 'nav_belong',
+    items: [
+      { to: '/community', labelKey: 'community', icon: Chats },
+      { to: '/spaces', labelKey: 'spaces', icon: ShieldCheck },
+      { to: '/blog', labelKey: 'blog', icon: Newspaper },
+      { to: '/messages', labelKey: 'messages', icon: Bell },
+    ],
+  },
+  {
+    labelKey: 'nav_facilitate',
+    facultyOnly: true,
+    items: [
+      { to: '/teacher-dashboard', labelKey: 'teacher_dashboard', icon: ChalkboardTeacher },
+      { to: '/session-records', labelKey: 'session_records', icon: FilmSlate },
+      { to: '/analytics', labelKey: 'analytics', icon: ChartBar },
+      { to: '/marketing', labelKey: 'marketing', icon: Megaphone },
+    ],
+  },
+  {
+    labelKey: 'nav_account',
+    items: [
+      { to: '/subscriptions', labelKey: 'membership', icon: Sparkle },
+    ],
+  },
 ];
+
+const FACULTY_ROLES = ['admin', 'elder', 'faculty'];
 
 export default function Sidebar({ user, onLogout }) {
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -57,10 +84,16 @@ export default function Sidebar({ user, onLogout }) {
     try { await apiPut('/api/auth/me/language', { language: newLang }); } catch (e) { console.error('Language update failed:', e); }
   };
 
-  const visibleNavItems = useMemo(() =>
-    navItems.filter(item => !item.facultyOnly || ['admin', 'elder', 'faculty'].includes(user?.role)),
-    [user?.role]
-  );
+  const visibleSections = useMemo(() => {
+    const isFaculty = FACULTY_ROLES.includes(user?.role);
+    return navSections
+      .filter(section => !section.facultyOnly || isFaculty)
+      .map(section => ({
+        ...section,
+        items: section.items.filter(item => !item.facultyOnly || isFaculty),
+      }))
+      .filter(section => section.items.length > 0);
+  }, [user?.role]);
 
   const linkClass = ({ isActive }) =>
     `flex items-center gap-3 px-4 py-3 text-sm font-medium transition-all duration-200 border-l-2 ${
@@ -92,18 +125,27 @@ export default function Sidebar({ user, onLogout }) {
       </div>
 
       {/* Nav */}
-      <nav className="flex-1 py-4 space-y-1 overflow-y-auto">
-        {visibleNavItems.map((item) => (
-          <NavLink
-            key={item.to}
-            to={item.to}
-            className={linkClass}
-            onClick={() => setMobileOpen(false)}
-            data-testid={`nav-${item.labelKey}`}
-          >
-            <item.icon size={20} weight="duotone" />
-            {t(item.labelKey)}
-          </NavLink>
+      <nav className="flex-1 py-2 overflow-y-auto">
+        {visibleSections.map((section) => (
+          <div key={section.labelKey} className="mb-2">
+            <p className="px-4 pt-3 pb-1 text-[9px] tracking-[0.25em] uppercase text-[#475569]">
+              {t(section.labelKey)}
+            </p>
+            <div className="space-y-0.5">
+              {section.items.map((item) => (
+                <NavLink
+                  key={item.to}
+                  to={item.to}
+                  className={linkClass}
+                  onClick={() => setMobileOpen(false)}
+                  data-testid={`nav-${item.labelKey}`}
+                >
+                  <item.icon size={20} weight="duotone" />
+                  {t(item.labelKey)}
+                </NavLink>
+              ))}
+            </div>
+          </div>
         ))}
       </nav>
 
