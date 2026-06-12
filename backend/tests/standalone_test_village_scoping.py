@@ -170,5 +170,17 @@ c.put(f"/api/live-sessions/{s['id']}/end")
 ev = _db4.events_col.find_one({"type": "village.session_held", "entity_id": v["id"]})
 check("session_held event emitted on village session end", ev is not None)
 
+# Catalog privacy: another teacher's draft is invisible, even to admins
+_db4.users_col.insert_one({"id": "shy", "email": "shy@x.co", "name": "Shy", "role": "faculty", "subscription_tier": "elder_circle"})
+USERS["shy"] = _db4.users_col.find_one({"id": "shy"})
+USERS["admin"] = dict(USERS["fac"], id="adm", role="admin", email="adm@x.co"); _db4.users_col.insert_one(dict(USERS["admin"]))
+as_user("shy")
+draft = c.post("/api/courses", json={"title": "Shy Draft"}).json()  # status: draft
+as_user("admin")
+check("admin catalog hides another teacher's draft", all(x["id"] != draft["id"] for x in c.get("/api/courses").json()))
+check("admin can still open the draft by link", c.get(f"/api/courses/{draft['id']}").status_code == 200)
+as_user("shy")
+check("owner still sees own draft in catalog", any(x["id"] == draft["id"] for x in c.get("/api/courses").json()))
+
 print(f"\n{ok} passed, {fail} failed")
 exit(1 if fail else 0)

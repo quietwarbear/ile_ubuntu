@@ -76,16 +76,16 @@ def list_courses(
     # - listed = visibility "listed" OR no visibility field (pre-feature courses)
     # - village = visible only to members of course.village_id (third tier)
     # - students/assistants: active + (listed OR their villages' courses)
-    # - faculty/elder: the same community view PLUS their own (any state)
-    # - admin: everything
+    # - faculty/elder/ADMIN: the same community view PLUS their own (any state).
+    #   Another teacher's draft is their private workspace — it does not appear
+    #   in anyone else's catalog, admins included. (Admins can still open a
+    #   draft by direct link via get_course, and edit/delete it.)
     visible_or = [{"visibility": "listed"}, {"visibility": {"$exists": False}}]
     my_villages = user_village_ids(current_user["id"])
     if my_villages:
         visible_or.append({"visibility": "village", "village_id": {"$in": my_villages}})
     visible_clause = {"$or": visible_or}
-    if current_user["role"] == UserRole.ADMIN:
-        pass
-    elif has_permission(current_user["role"], UserRole.FACULTY):
+    if has_permission(current_user["role"], UserRole.FACULTY):
         query["$or"] = [
             {"$and": [{"status": CourseStatus.ACTIVE}, visible_clause]},
             {"instructor_id": current_user["id"]},
