@@ -49,6 +49,9 @@ family_links_col = db.family_links
 # Weekly family digest send log (idempotency: one digest per guardian per week)
 digest_log_col = db.digest_log
 
+# SEL check-ins (scores feed dashboard wellness; notes stay private)
+checkins_col = db.checkins
+
 # Mentorship: faculty-blessed mentor <-> mentee pairings + shared goals/journal
 mentorship_pairs_col = db.mentorship_pairs
 mentorship_goals_col = db.mentorship_goals
@@ -125,6 +128,8 @@ def ensure_indexes():
         (mentorship_pairs_col, [("mentee_id", 1)], {}),
         (mentorship_goals_col, [("pairing_id", 1)], {}),
         (mentorship_notes_col, [("pairing_id", 1), ("created_at", -1)], {}),
+        # Check-ins: one per user per day; window queries for wellness
+        (checkins_col, [("user_id", 1), ("day", -1)], {"unique": True}),
     ]
 
     for col, keys, kwargs in specs:

@@ -145,7 +145,7 @@ export default function CommunityDashboardPage({ user }) {
                   <tr className="text-[9px] uppercase tracking-wider text-[#94A3B8]">
                     <th className="pb-2 pr-3 font-normal">Member</th>
                     <th className="pb-2 px-2 font-normal text-center">Active days</th>
-                    {['belonging', 'participation', 'contribution', 'collaboration', 'leadership'].map(k => (
+                    {['belonging', 'participation', 'contribution', 'collaboration', 'leadership', 'wellness'].map(k => (
                       <th key={k} className="pb-2 px-2 font-normal text-center capitalize">{k}</th>
                     ))}
                   </tr>
@@ -161,13 +161,17 @@ export default function CommunityDashboardPage({ user }) {
                         </span>
                       </td>
                       <td className="py-2 px-2 text-center text-xs text-[#94A3B8]">{m.active_days}</td>
-                      {['belonging', 'participation', 'contribution', 'collaboration', 'leadership'].map(k => {
+                      {['belonging', 'participation', 'contribution', 'collaboration', 'leadership', 'wellness'].map(k => {
                         const s = m.scores[k];
                         return (
                           <td key={k} className="py-2 px-2">
-                            <div className="w-14 h-1.5 bg-[#0A1128] rounded-full overflow-hidden mx-auto">
-                              <div className="h-full bg-[#D4AF37] rounded-full" style={{ width: `${Math.max(s, 2)}%` }} />
-                            </div>
+                            {s === null || s === undefined ? (
+                              <p className="text-center text-[10px] text-[#475569]">—</p>
+                            ) : (
+                              <div className="w-14 h-1.5 bg-[#0A1128] rounded-full overflow-hidden mx-auto">
+                                <div className="h-full bg-[#D4AF37] rounded-full" style={{ width: `${Math.max(s, 2)}%` }} />
+                              </div>
+                            )}
                           </td>
                         );
                       })}

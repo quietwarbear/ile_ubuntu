@@ -39,6 +39,8 @@ EVENT_TYPES = {
     "mentorship.goal_added",
     "mentorship.goal_completed",
     "mentorship.note_added",
+    # wellness (the event never carries scores — see routes/checkins.py)
+    "wellness.checked_in",
     # learning
     "course.created",
     "course.enrolled",

@@ -15,7 +15,7 @@ from datetime import datetime, timezone, timedelta
 
 from fastapi import APIRouter, Depends, HTTPException
 
-from database import cohorts_col, users_col, events_col, mentorship_pairs_col
+from database import cohorts_col, users_col, events_col, mentorship_pairs_col, checkins_col
 from middleware import get_current_user
 from models.user import has_permission, UserRole
 
@@ -96,6 +96,22 @@ def community_dashboard(cohort_id: str, current_user: dict = Depends(get_current
     mentors = {p["mentor_id"] for p in mentorship_pairs_col.find(
         {"mentor_id": {"$in": member_ids}}, {"_id": 0, "mentor_id": 1})}
 
+    # Wellness: average of check-in scores (1–5 → 0–100) over the window.
+    # Notes are NEVER read here — scores only.
+    since_day = since.strftime("%Y-%m-%d")
+    wellness_pipeline = [
+        {"$match": {"user_id": {"$in": member_ids}, "day": {"$gte": since_day}}},
+        {"$group": {
+            "_id": "$user_id",
+            "avg": {"$avg": {"$divide": [{"$add": ["$mood", "$connected", "$confident"]}, 3]}},
+            "checkins": {"$sum": 1},
+        }},
+    ]
+    wellness_by_member = {
+        row["_id"]: {"score": round(row["avg"] * 20), "checkins": row["checkins"]}
+        for row in checkins_col.aggregate(wellness_pipeline)
+    }
+
     members, attention = [], []
     agg = {"participation": 0, "contribution": 0, "collaboration": 0, "leadership": 0, "belonging": 0}
     for uid in member_ids:
@@ -115,6 +131,7 @@ def community_dashboard(cohort_id: str, current_user: dict = Depends(get_current
                 "contribution": _score(counts, "contribution"),
                 "collaboration": _score(counts, "collaboration"),
                 "leadership": min(100, _score(counts, "leadership") + (25 if uid in mentors else 0)),
+                "wellness": wellness_by_member.get(uid, {}).get("score"),
             },
             "raw": counts,
         }
@@ -130,8 +147,15 @@ def community_dashboard(cohort_id: str, current_user: dict = Depends(get_current
     dimensions = {
         k: {"score": round(agg[k] / n)} for k in agg
     }
-    # Honest placeholder: no data source yet, so no number.
-    dimensions["wellness"] = {"score": None, "note": "Arrives with SEL check-ins — we don't invent a number."}
+    # Wellness: collective average across members who checked in; honest null otherwise.
+    with_wellness = [m["scores"]["wellness"] for m in members if m["scores"]["wellness"] is not None]
+    if with_wellness:
+        dimensions["wellness"] = {
+            "score": round(sum(with_wellness) / len(with_wellness)),
+            "note": f"From {len(with_wellness)} of {n} members checking in — words stay private, always.",
+        }
+    else:
+        dimensions["wellness"] = {"score": None, "note": "Comes alive as members check in — no one's words are ever shown."}
 
     members.sort(key=lambda m: (m["name"] or "").lower())
 
