@@ -22,7 +22,13 @@ from events import emit
 
 router = APIRouter(prefix="/api/marketplace", tags=["marketplace"])
 
-STRIPE_API_KEY = os.environ.get("STRIPE_API_KEY", "")
+# The marketplace runs on its OWN Stripe account (Connect-enabled), separate
+# from the subscriptions account. Falls back to STRIPE_API_KEY for
+# single-account setups. IMPORTANT: every Stripe call below passes api_key
+# explicitly — never set stripe.api_key globally here, the subscriptions code
+# owns that global and handlers run concurrently.
+MARKETPLACE_KEY = os.environ.get("STRIPE_MARKETPLACE_API_KEY", "") or os.environ.get("STRIPE_API_KEY", "")
+MARKETPLACE_WEBHOOK_SECRET = os.environ.get("STRIPE_MARKETPLACE_WEBHOOK_SECRET", "")
 PUBLIC_SITE_URL = os.environ.get("PUBLIC_SITE_URL", "https://www.ile-ubuntu.org").rstrip("/")
 
 # Platform fee — 15% per the marketing copy; override with MARKETPLACE_FEE_PCT.
@@ -39,9 +45,8 @@ _ALLOWED_REDIRECT_ORIGINS = {
 
 
 def _require_stripe():
-    if not STRIPE_API_KEY:
+    if not MARKETPLACE_KEY:
         raise HTTPException(status_code=503, detail="Stripe is not configured")
-    stripe.api_key = STRIPE_API_KEY
 
 
 def _require_faculty(user: dict):
@@ -66,7 +71,7 @@ def connect_status(current_user: dict = Depends(get_current_user)):
         return {"connected": False, "charges_enabled": False, "payouts_enabled": False}
     _require_stripe()
     try:
-        acct = stripe.Account.retrieve(account_id)
+        acct = stripe.Account.retrieve(account_id, api_key=MARKETPLACE_KEY)
         return {
             "connected": True,
             "charges_enabled": bool(acct.get("charges_enabled")),
@@ -90,6 +95,7 @@ async def connect_onboard(request: Request, current_user: dict = Depends(get_cur
     try:
         if not account_id:
             acct = stripe.Account.create(
+                api_key=MARKETPLACE_KEY,
                 type="express",
                 email=current_user.get("email"),
                 capabilities={
@@ -102,6 +108,7 @@ async def connect_onboard(request: Request, current_user: dict = Depends(get_cur
             users_col.update_one({"id": current_user["id"]}, {"$set": {"stripe_account_id": account_id}})
 
         link = stripe.AccountLink.create(
+            api_key=MARKETPLACE_KEY,
             account=account_id,
             refresh_url=refresh_url,
             return_url=return_url,
@@ -120,7 +127,7 @@ def connect_dashboard_link(current_user: dict = Depends(get_current_user)):
         raise HTTPException(status_code=400, detail="No connected Stripe account")
     _require_stripe()
     try:
-        link = stripe.Account.create_login_link(account_id)
+        link = stripe.Account.create_login_link(account_id, api_key=MARKETPLACE_KEY)
         return {"url": link["url"]}
     except stripe.error.StripeError as e:
         raise HTTPException(status_code=502, detail=f"Stripe error: {e.user_message or str(e)}")
@@ -187,6 +194,7 @@ async def course_checkout(course_id: str, request: Request, current_user: dict =
 
     try:
         session = stripe.checkout.Session.create(
+            api_key=MARKETPLACE_KEY,
             mode="payment",
             line_items=[{
                 "quantity": 1,
@@ -265,6 +273,37 @@ def fulfill_course_purchase(session_data: dict) -> bool:
          meta={"amount": txn["amount"], "teacher_id": txn["teacher_id"]})
     emit("course.enrolled", {"id": txn["user_id"]}, "course", txn["course_id"], meta={"via": "purchase"})
     return True
+
+
+# --- Webhook (configure on the MARKETPLACE Stripe account) ---
+
+@router.post("/webhook")
+async def marketplace_webhook(request: Request):
+    """checkout.session.completed from the marketplace Stripe account.
+
+    Fail closed: requires STRIPE_MARKETPLACE_WEBHOOK_SECRET and a valid
+    signature. Configure the endpoint on the marketplace account pointing to
+    /api/marketplace/webhook with the checkout.session.completed event.
+    """
+    if not MARKETPLACE_WEBHOOK_SECRET:
+        raise HTTPException(status_code=503, detail="Marketplace webhook secret not configured")
+    signature = request.headers.get("Stripe-Signature")
+    if not signature:
+        raise HTTPException(status_code=401, detail="Missing Stripe-Signature header")
+
+    body = await request.body()
+    try:
+        event = stripe.Webhook.construct_event(body, signature, MARKETPLACE_WEBHOOK_SECRET)
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+    if event.get("type") == "checkout.session.completed":
+        session_data = event["data"]["object"]
+        if session_data.get("payment_status") == "paid" and \
+                (session_data.get("metadata") or {}).get("kind") == "course_purchase":
+            fulfill_course_purchase(session_data)
+
+    return {"status": "ok"}
 
 
 # --- Earnings ---
