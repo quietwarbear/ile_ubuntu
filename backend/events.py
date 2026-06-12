@@ -28,6 +28,7 @@ EVENT_TYPES = {
     "user.logged_in",
     "user.deleted",
     "user.password_reset",
+    "user.onboarded",
     # learning
     "course.created",
     "course.enrolled",

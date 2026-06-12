@@ -1,4 +1,19 @@
 const yo = {
+  // Onboarding path fork
+  onboard_path: 'Báwo ni o ṣe máa rìn pẹ̀lú wa?',
+  onboard_path_sub: 'Yan ọ̀nà tí ó bá ọ mu — o lè dàgbà sí àwọn mìíràn nígbà gbogbo.',
+  path_learner: 'Mo wá láti kọ́ ẹ̀kọ́',
+  path_learner_desc: 'Gba àwọn ẹ̀kọ́, dara pọ̀ mọ́ ẹgbẹ́, dàgbà pẹ̀lú àwùjọ.',
+  path_educator: 'Mo wá láti kọ́ni',
+  path_educator_desc: 'Ṣẹ̀dá àwọn ẹ̀kọ́ kí o sì darí àwọn akẹ́kọ̀ọ́.',
+  path_mentor: 'Mo wá láti ṣe amọ̀nà',
+  path_mentor_desc: 'Rìn pẹ̀lú àwọn ọ̀dọ́ bí wọ́n ti ń dàgbà.',
+  path_family: 'Mo ń ti ọ̀dọ́ kan lẹ́yìn',
+  path_family_desc: 'Tẹ̀lé kí o sì gba akẹ́kọ̀ọ́ nínú ìdílé rẹ níyànjú.',
+  onboard_complete_educator: 'Káàbọ̀, olùkọ́. Ṣàwárí àwùjọ nígbà tí àgbà kan ń fọwọ́ sí ànfààní ìkọ́ni rẹ — a ó sọ fún ọ nígbà tí àwọn irinṣẹ́ rẹ bá ṣí.',
+  onboard_complete_mentor: 'Káàbọ̀, amọ̀nà. Àwọn àyíká amọ̀nà ń bọ̀ láìpẹ́ — ní báyìí, fi ara balẹ̀ nínú àwùjọ.',
+  onboard_complete_family: 'Káàbọ̀ sí abúlé. Ìrírí ìdílé — títẹ̀lé ìdàgbàsókè ọ̀dọ́ rẹ — ń bọ̀ lọ́nà. A ó jẹ́ kí o mọ̀ nígbà tí ó bá ṣí.',
+
   // Nav
   nav_learn: 'Ẹ̀kọ́',
   nav_belong: 'Àjọṣe',

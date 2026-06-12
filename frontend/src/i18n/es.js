@@ -1,4 +1,19 @@
 const es = {
+  // Onboarding path fork
+  onboard_path: '¿Cómo caminarás con nosotros?',
+  onboard_path_sub: 'Elige el camino que te corresponde — siempre podrás crecer hacia otros.',
+  path_learner: 'Vengo a aprender',
+  path_learner_desc: 'Toma cursos, únete a cohortes, crece con la comunidad.',
+  path_educator: 'Vengo a enseñar',
+  path_educator_desc: 'Crea cursos y guía a estudiantes en la comunidad.',
+  path_mentor: 'Vengo a ser mentor',
+  path_mentor_desc: 'Acompaña a los jóvenes en su crecimiento.',
+  path_family: 'Apoyo a un joven',
+  path_family_desc: 'Sigue y anima a un estudiante de tu familia.',
+  onboard_complete_educator: 'Bienvenido, educador. Explora la comunidad mientras un mayor confirma tu acceso de enseñanza — te avisaremos cuando tus herramientas se abran.',
+  onboard_complete_mentor: 'Bienvenido, mentor. Los círculos de mentoría llegarán pronto — por ahora, siéntete en casa en la comunidad.',
+  onboard_complete_family: 'Bienvenido a la aldea. La experiencia familiar — seguir el crecimiento de tu joven — está en camino. Te avisaremos en cuanto abra.',
+
   // Nav
   nav_learn: 'Aprender',
   nav_belong: 'Pertenecer',

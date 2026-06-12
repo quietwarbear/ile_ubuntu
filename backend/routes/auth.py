@@ -885,6 +885,7 @@ def get_me(current_user: dict = Depends(get_current_user)):
         "onboarding_complete": current_user.get("onboarding_complete", False),
         "language": current_user.get("language", "en"),
         "interests": current_user.get("interests", []),
+        "intent": current_user.get("intent", "learner"),
     }
 
 
@@ -974,7 +975,14 @@ async def complete_onboarding(request: Request, current_user: dict = Depends(get
         update["interests"] = data["interests"]
     if "language" in data:
         update["language"] = data["language"]
+    # Onboarding role fork (eval §10 QW5): the person's declared intent.
+    # This does NOT grant permissions — `role` stays admin-controlled. It
+    # personalizes the experience and tells admins who to elevate to faculty.
+    if data.get("intent") in ("learner", "educator", "mentor", "family"):
+        update["intent"] = data["intent"]
     users_col.update_one({"id": current_user["id"]}, {"$set": update})
+    emit("user.onboarded", current_user, "user", current_user["id"],
+         meta={"intent": update.get("intent", "learner"), "interests": len(update.get("interests", []))})
     return {"success": True}
 
 

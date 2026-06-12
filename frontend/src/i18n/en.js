@@ -1,4 +1,19 @@
 const en = {
+  // Onboarding path fork
+  onboard_path: 'How will you walk with us?',
+  onboard_path_sub: 'Choose the path that fits — you can always grow into others.',
+  path_learner: "I'm here to learn",
+  path_learner_desc: 'Take courses, join cohorts, grow with the community.',
+  path_educator: "I'm here to teach",
+  path_educator_desc: 'Create courses and guide learners in the commons.',
+  path_mentor: "I'm here to mentor",
+  path_mentor_desc: 'Walk alongside young people as they grow.',
+  path_family: "I'm supporting a young person",
+  path_family_desc: 'Follow and encourage a learner in your family.',
+  onboard_complete_educator: "Welcome, educator. Explore the commons while an elder confirms your teaching access — you'll be notified when your Facilitate tools open.",
+  onboard_complete_mentor: 'Welcome, mentor. Mentorship circles are coming to the village soon — for now, make yourself at home in the community.',
+  onboard_complete_family: "Welcome to the village. The family experience — following your young person's growth — is on its way. We'll let you know the moment it opens.",
+
   // Nav
   nav_learn: 'Learn',
   nav_belong: 'Belong',
