@@ -206,9 +206,26 @@ export default function FamilyPage({ user }) {
 
       {family?.youth?.length > 0 && (
         <div className="space-y-3">
-          <h2 className="text-xs tracking-[0.15em] uppercase text-[#D4AF37] flex items-center gap-2">
-            <GraduationCap size={14} weight="duotone" /> My young people
-          </h2>
+          <div className="flex items-center justify-between">
+            <h2 className="text-xs tracking-[0.15em] uppercase text-[#D4AF37] flex items-center gap-2">
+              <GraduationCap size={14} weight="duotone" /> My young people
+            </h2>
+            <button
+              onClick={async () => {
+                setBusy(true);
+                try {
+                  const res = await apiPost('/api/family/digest/preview', {});
+                  setMessage({ type: 'success', text: res.message });
+                } catch (e) { setMessage({ type: 'error', text: e.message }); }
+                setBusy(false);
+              }}
+              disabled={busy}
+              className="text-[10px] text-[#94A3B8] hover:text-[#D4AF37] transition-colors"
+              data-testid="digest-preview-btn"
+            >
+              Email me this week's digest →
+            </button>
+          </div>
           {family.youth.map(y => (
             <YouthCard key={y.id} youth={y} onUnlink={handleUnlink} />
           ))}

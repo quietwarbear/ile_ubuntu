@@ -32,6 +32,7 @@ EVENT_TYPES = {
     # family / minor safety
     "family.linked",
     "family.unlinked",
+    "family.digest_sent",
     # learning
     "course.created",
     "course.enrolled",

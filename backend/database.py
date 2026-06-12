@@ -46,6 +46,9 @@ course_invites_col = db.course_invites
 # Family: guardian <-> youth links (minor-safety foundation)
 family_links_col = db.family_links
 
+# Weekly family digest send log (idempotency: one digest per guardian per week)
+digest_log_col = db.digest_log
+
 
 def ensure_indexes():
     """Create the indexes the hot query paths rely on. Idempotent; called at startup.
@@ -110,6 +113,8 @@ def ensure_indexes():
         (family_links_col, [("guardian_id", 1), ("youth_id", 1)], {"unique": True}),
         (family_links_col, [("youth_id", 1)], {}),
         (users_col, [("family_code", 1)], {"sparse": True}),
+        # Digest log: idempotent weekly sends (duplicate triggers are no-ops)
+        (digest_log_col, [("guardian_id", 1), ("week_key", 1)], {"unique": True}),
     ]
 
     for col, keys, kwargs in specs:

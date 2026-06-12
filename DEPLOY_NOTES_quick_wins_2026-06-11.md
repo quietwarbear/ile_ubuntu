@@ -72,6 +72,16 @@ Guardian↔youth linkage via family codes, optional birth year at onboarding →
 
 **Important:** this is the *technical* foundation, not legal compliance. Before marketing to under-13 users, have counsel review COPPA/FERPA posture (verifiable parental consent, data retention, deletion rights). Birth year is self-reported and optional in v1.
 
+### Weekly family digest (same day)
+
+One branded email per guardian per week summarizing each linked young person (event-stream activity + course progress). Idempotent per guardian per ISO week.
+
+Setup:
+1. Railway env: `DIGEST_SECRET` — any long random string (`openssl rand -hex 24`).
+2. GitHub repo → Settings → Secrets and variables → Actions → new secret `FAMILY_DIGEST_KEY` with the same value. The workflow `.github/workflows/family-digest.yml` fires Sundays 18:00 UTC (also manually runnable from the Actions tab).
+3. Guardians can self-serve a preview anytime: "Email me this week's digest" on the Family page.
+4. Requires `RESEND_API_KEY`/`SENDER_EMAIL` (already set for transactional email).
+
 ## Not done yet (next from the brief)
 
 - Motor/async driver migration (full §11.2.1) — threadpool + workers covers classroom-scale; revisit with a staging environment.

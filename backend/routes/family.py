@@ -102,13 +102,8 @@ def unlink(other_id: str, current_user: dict = Depends(get_current_user)):
     return {"success": True}
 
 
-@router.get("/youth/{youth_id}/summary")
-def youth_summary(youth_id: str, current_user: dict = Depends(get_current_user)):
-    """Guardian-only growth summary: how the young person is showing up —
-    progress and participation, told warmly. Not a gradebook."""
-    if not is_guardian_of(current_user["id"], youth_id):
-        raise HTTPException(status_code=403, detail="You're not linked to this young person")
-
+def _build_youth_summary(youth_id: str) -> dict:
+    """Growth summary data: progress and participation, told warmly."""
     youth = _user_brief(youth_id)
 
     enrollments = []
@@ -140,3 +135,130 @@ def youth_summary(youth_id: str, current_user: dict = Depends(get_current_user))
             "courses_completed": week_counts.get("course.completed", 0),
         },
     }
+
+
+@router.get("/youth/{youth_id}/summary")
+def youth_summary(youth_id: str, current_user: dict = Depends(get_current_user)):
+    """Guardian-only growth summary. Not a gradebook."""
+    if not is_guardian_of(current_user["id"], youth_id):
+        raise HTTPException(status_code=403, detail="You're not linked to this young person")
+    return _build_youth_summary(youth_id)
+
+
+# --- Weekly family digest (eval mid-term: the ClassDojo loop, with dignity) ---
+
+import os
+
+DIGEST_SECRET = os.environ.get("DIGEST_SECRET", "")
+
+
+def _digest_section_html(s: dict) -> str:
+    """One youth's section of the digest email."""
+    w = s["this_week"]
+    name = s["youth"].get("name", "Your young person")
+    first = name.split(" ")[0]
+
+    lines = []
+    if w["lessons_completed"]:
+        lines.append(f"completed {w['lessons_completed']} lesson{'s' if w['lessons_completed'] != 1 else ''}")
+    if w["live_sessions_joined"]:
+        lines.append(f"joined {w['live_sessions_joined']} live session{'s' if w['live_sessions_joined'] != 1 else ''}")
+    if w["posts_and_replies"]:
+        lines.append(f"contributed {w['posts_and_replies']} time{'s' if w['posts_and_replies'] != 1 else ''} in the community")
+    if w["quizzes_attempted"]:
+        lines.append(f"took on {w['quizzes_attempted']} quiz{'zes' if w['quizzes_attempted'] != 1 else ''}")
+    if w["courses_completed"]:
+        lines.append(f"<strong style='color:#D4AF37'>finished {w['courses_completed']} whole course{'s' if w['courses_completed'] != 1 else ''}</strong>")
+
+    if lines:
+        week_html = f"<p>This week, {first} " + ", ".join(lines) + ".</p>"
+    else:
+        week_html = (f"<p>{first} had a quiet week on the platform. A word of encouragement "
+                     f"from you can mean more than you know.</p>")
+
+    journey = ""
+    active = [e for e in s["enrollments"] if not e["completed"]][:3]
+    done = [e for e in s["enrollments"] if e["completed"]]
+    if active:
+        rows = "".join(
+            f"<li>{e['course_title']} — {e['progress']}% of the way</li>" for e in active
+        )
+        journey += f"<p style='margin-bottom:4px'>On the journey:</p><ul style='margin-top:0'>{rows}</ul>"
+    if done:
+        journey += f"<p>Already carried home: {', '.join(e['course_title'] for e in done)}. 🏆</p>"
+
+    return (f"<h3 style='color:#D4AF37;font-size:15px;margin:18px 0 6px'>{name}</h3>"
+            f"{week_html}{journey}")
+
+
+def _send_guardian_digest(guardian: dict, youth_ids: list) -> bool:
+    """Build and send one guardian's digest. Returns True if sent."""
+    import asyncio
+    from routes.email_notifications import send_email, build_email_html
+
+    email = guardian.get("email")
+    if not email:
+        return False
+
+    sections = "".join(_digest_section_html(_build_youth_summary(yid)) for yid in youth_ids)
+    html = build_email_html(
+        "How your young people showed up this week",
+        f"<p>Hello, <strong>{guardian.get('name', '')}</strong>. Here's this week's note from the village:</p>"
+        + sections
+        + "<p style='margin-top:16px'>Thank you for walking with them. — The Ile Ubuntu</p>",
+        "Open the Family Page",
+        "https://www.ile-ubuntu.org/family",
+    )
+    asyncio.run(send_email(email, "This week in the village — The Ile Ubuntu", html))
+    return True
+
+
+def _week_key() -> str:
+    now = datetime.now(timezone.utc).isocalendar()
+    return f"{now[0]}-W{now[1]:02d}"
+
+
+@router.post("/digest/run")
+def run_weekly_digest(request: Request):
+    """Send the weekly digest to every guardian. Idempotent per guardian per
+    ISO week — safe to trigger repeatedly. Auth: X-Digest-Key header."""
+    from database import digest_log_col
+    from pymongo.errors import DuplicateKeyError
+
+    if not DIGEST_SECRET or request.headers.get("X-Digest-Key") != DIGEST_SECRET:
+        raise HTTPException(status_code=401, detail="Invalid digest key")
+
+    week = _week_key()
+    by_guardian = {}
+    for link in family_links_col.find({}, {"_id": 0, "guardian_id": 1, "youth_id": 1}):
+        by_guardian.setdefault(link["guardian_id"], []).append(link["youth_id"])
+
+    sent, skipped = 0, 0
+    for guardian_id, youth_ids in by_guardian.items():
+        try:
+            digest_log_col.insert_one({
+                "guardian_id": guardian_id,
+                "week_key": week,
+                "youth_count": len(youth_ids),
+                "sent_at": datetime.now(timezone.utc),
+            })
+        except DuplicateKeyError:
+            skipped += 1
+            continue
+        guardian = users_col.find_one({"id": guardian_id}) or {}
+        if _send_guardian_digest(guardian, youth_ids):
+            emit("family.digest_sent", {"id": guardian_id}, meta={"week": week, "youth": len(youth_ids)})
+            sent += 1
+
+    return {"week": week, "sent": sent, "already_sent": skipped, "guardians": len(by_guardian)}
+
+
+@router.post("/digest/preview")
+def preview_digest(current_user: dict = Depends(get_current_user)):
+    """Send ME my digest right now (no idempotency — it's a preview)."""
+    youth_ids = [l["youth_id"] for l in family_links_col.find({"guardian_id": current_user["id"]}, {"_id": 0, "youth_id": 1})]
+    if not youth_ids:
+        raise HTTPException(status_code=400, detail="No linked young people yet")
+    if not _send_guardian_digest(current_user, youth_ids):
+        raise HTTPException(status_code=400, detail="Your account has no email address")
+    return {"success": True, "message": "Preview sent — check your inbox"}

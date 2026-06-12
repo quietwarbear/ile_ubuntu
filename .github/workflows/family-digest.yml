@@ -1,0 +1,18 @@
+name: Weekly family digest
+
+on:
+  schedule:
+    # Sundays 18:00 UTC (≈ 10am Pacific). The endpoint is idempotent per
+    # guardian per ISO week, so duplicate or manual triggers are safe.
+    - cron: "0 18 * * 0"
+  workflow_dispatch: {}
+
+jobs:
+  send-digest:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger digest endpoint
+        run: |
+          curl --fail-with-body -sS -X POST \
+            -H "X-Digest-Key: ${{ secrets.FAMILY_DIGEST_KEY }}" \
+            https://ileubuntu-production.up.railway.app/api/family/digest/run
