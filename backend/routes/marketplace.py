@@ -78,12 +78,24 @@ def connect_status(current_user: dict = Depends(get_current_user)):
     if not account_id:
         return {"connected": False, "charges_enabled": False, "payouts_enabled": False}
     try:
-        acct = _client().v1.accounts.retrieve(account_id)
+        # Direct HTTPS call — the stripe SDK's GET path misbehaves in this
+        # deploy environment (POSTs work); requests is proven in prod here.
+        import requests as _requests
+        resp = _requests.get(
+            f"https://api.stripe.com/v1/accounts/{account_id}",
+            auth=(MARKETPLACE_KEY, ""),
+            timeout=20,
+        )
+        body = resp.json()
+        if resp.status_code >= 400:
+            msg = (body.get("error") or {}).get("message", f"HTTP {resp.status_code}")
+            return {"connected": True, "charges_enabled": False, "payouts_enabled": False,
+                    "status_error": msg}
         return {
             "connected": True,
-            "charges_enabled": bool(acct.get("charges_enabled")),
-            "payouts_enabled": bool(acct.get("payouts_enabled")),
-            "details_submitted": bool(acct.get("details_submitted")),
+            "charges_enabled": bool(body.get("charges_enabled")),
+            "payouts_enabled": bool(body.get("payouts_enabled")),
+            "details_submitted": bool(body.get("details_submitted")),
         }
     except Exception as e:
         # Status is informational — degrade with the reason, never 500.
@@ -93,7 +105,7 @@ def connect_status(current_user: dict = Depends(get_current_user)):
             "connected": True,
             "charges_enabled": False,
             "payouts_enabled": False,
-            "status_error": str(e),
+            "status_error": f"{type(e).__name__}: {e}",
         }
 
 
