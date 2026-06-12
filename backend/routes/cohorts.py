@@ -201,19 +201,37 @@ def get_cohort_detail(cohort_id: str, current_user: dict = Depends(get_current_u
         if u:
             member_enrollments = list(enrollments_col.find(
                 {"user_id": uid, "course_id": {"$in": cohort.get("course_ids", [])}},
-                {"_id": 0, "course_id": 1, "progress": 1, "status": 1},
+                {"_id": 0, "course_id": 1, "progress": 1, "status": 1, "completed_lessons": 1},
             ))
             total_progress = 0
             if member_enrollments:
                 total_progress = sum(e.get("progress", 0) for e in member_enrollments) / len(cohort.get("course_ids", [1]))
+            lessons_done = sum(len(e.get("completed_lessons", [])) for e in member_enrollments)
+            for e in member_enrollments:
+                e.pop("completed_lessons", None)
             enriched_members.append({
                 **u,
                 "enrollments": member_enrollments,
                 "overall_progress": round(total_progress, 1),
+                "lessons_completed": lessons_done,
             })
+
+    # Collective progress (eval §10 QW3): the village is the unit of
+    # achievement — measure what we've done together, not who's "winning".
+    member_count = len(enriched_members)
+    collective = {
+        "average_progress": round(
+            sum(m["overall_progress"] for m in enriched_members) / member_count, 1
+        ) if member_count else 0,
+        "lessons_completed_together": sum(m["lessons_completed"] for m in enriched_members),
+        "members_on_the_path": sum(1 for m in enriched_members if m["overall_progress"] > 0),
+        "members_completed": sum(1 for m in enriched_members if m["overall_progress"] >= 100),
+        "member_count": member_count,
+    }
 
     return {
         **cohort,
         "linked_courses": linked_courses,
         "enriched_members": enriched_members,
+        "collective": collective,
     }
