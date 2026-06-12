@@ -62,6 +62,7 @@ const navSections = [
     labelKey: 'nav_facilitate',
     facultyOnly: true,
     items: [
+      { to: '/community-dashboard', labelKey: 'community_dashboard', icon: UsersThree },
       { to: '/teacher-dashboard', labelKey: 'teacher_dashboard', icon: ChalkboardTeacher },
       { to: '/session-records', labelKey: 'session_records', icon: FilmSlate },
       { to: '/analytics', labelKey: 'analytics', icon: ChartBar },

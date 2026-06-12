@@ -19,6 +19,7 @@ const en = {
   nav_family: 'Family',
   family_my: 'My Family',
   mentorship: 'Mentorship',
+  community_dashboard: 'Community Dashboard',
   onboard_about: 'A little about you',
   onboard_about_sub: 'Your birth year helps us keep young people safe in the village. Optional.',
   onboard_birth_skip: 'Prefer not to say',
