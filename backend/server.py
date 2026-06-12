@@ -78,6 +78,7 @@ from routes.quizzes import router as quizzes_router
 from routes.lesson_comments import router as lesson_comments_router
 from routes.events import router as events_router
 from routes.marketplace import router as marketplace_router
+from routes.family import router as family_router
 
 app.include_router(auth_router)
 app.include_router(courses_router)
@@ -103,6 +104,7 @@ app.include_router(quizzes_router)
 app.include_router(lesson_comments_router)
 app.include_router(events_router)
 app.include_router(marketplace_router)
+app.include_router(family_router)
 
 
 @app.get("/")

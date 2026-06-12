@@ -43,6 +43,9 @@ attendance_col = db.attendance
 # Course invite codes (closed-ecosystem joining)
 course_invites_col = db.course_invites
 
+# Family: guardian <-> youth links (minor-safety foundation)
+family_links_col = db.family_links
+
 
 def ensure_indexes():
     """Create the indexes the hot query paths rely on. Idempotent; called at startup.
@@ -103,6 +106,10 @@ def ensure_indexes():
         # Course invites: resolve by code, list per course
         (course_invites_col, [("code", 1)], {"unique": True}),
         (course_invites_col, [("course_id", 1)], {}),
+        # Family links: one per guardian+youth pair, lookups from both sides
+        (family_links_col, [("guardian_id", 1), ("youth_id", 1)], {"unique": True}),
+        (family_links_col, [("youth_id", 1)], {}),
+        (users_col, [("family_code", 1)], {"sparse": True}),
     ]
 
     for col, keys, kwargs in specs:

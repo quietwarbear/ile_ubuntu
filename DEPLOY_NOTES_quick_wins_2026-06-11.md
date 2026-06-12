@@ -66,6 +66,12 @@ The Teacher Marketplace UI (built earlier on another channel) had NO backend —
 6. Payouts to teachers are on Stripe's standard schedule; the platform fee stays on the marketplace account. Disputes/refunds on course sales land on the platform — owner decision made when accepting the Connect profile.
 7. Mobile: premium purchase is web-only by design (Apple/Google IAP rules). Native apps show a "purchase on the web" message. Do NOT add a Stripe buy button inside the apps before reviewing App Store guideline 3.1.1.
 
+## Family + minor-safety foundation (2026-06-12)
+
+Guardian↔youth linkage via family codes, optional birth year at onboarding → `is_minor` flag, DM safeguards (messages to/from minors limited to faculty+ and linked guardians; minor↔minor blocked in v1), guardian growth summaries from the event stream, /family page, FAMILY nav for family-intent users and minors.
+
+**Important:** this is the *technical* foundation, not legal compliance. Before marketing to under-13 users, have counsel review COPPA/FERPA posture (verifiable parental consent, data retention, deletion rights). Birth year is self-reported and optional in v1.
+
 ## Not done yet (next from the brief)
 
 - Motor/async driver migration (full §11.2.1) — threadpool + workers covers classroom-scale; revisit with a staging environment.

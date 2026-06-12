@@ -16,6 +16,11 @@ const en = {
 
   // Nav
   nav_learn: 'Learn',
+  nav_family: 'Family',
+  family_my: 'My Family',
+  onboard_about: 'A little about you',
+  onboard_about_sub: 'Your birth year helps us keep young people safe in the village. Optional.',
+  onboard_birth_skip: 'Prefer not to say',
   nav_belong: 'Belong',
   nav_facilitate: 'Facilitate',
   nav_account: 'Account',

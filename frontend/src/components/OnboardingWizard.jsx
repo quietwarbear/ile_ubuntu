@@ -18,11 +18,14 @@ const INTEREST_TAGS = [
 // The learner walks the full path; other intents go straight to a tailored
 // completion (their experiences arrive with later slices of the roadmap).
 const STEPS_BY_INTENT = {
-  learner: ['welcome', 'path', 'interests', 'courses', 'cohort', 'complete'],
+  learner: ['welcome', 'path', 'about', 'interests', 'courses', 'cohort', 'complete'],
   educator: ['welcome', 'path', 'complete'],
   mentor: ['welcome', 'path', 'complete'],
   family: ['welcome', 'path', 'complete'],
 };
+
+const CURRENT_YEAR = new Date().getFullYear();
+const BIRTH_YEARS = Array.from({ length: 90 }, (_, i) => CURRENT_YEAR - 5 - i);
 
 const PATHS = [
   { id: 'learner', icon: GraduationCap, labelKey: 'path_learner', descKey: 'path_learner_desc' },
@@ -36,6 +39,7 @@ export default function OnboardingWizard({ user, onComplete }) {
   const navigate = useNavigate();
   const [step, setStep] = useState(0);
   const [intent, setIntent] = useState('learner');
+  const [birthYear, setBirthYear] = useState('');
   const [interests, setInterests] = useState([]);
   const [courses, setCourses] = useState([]);
   const [cohorts, setCohorts] = useState([]);
@@ -53,9 +57,11 @@ export default function OnboardingWizard({ user, onComplete }) {
 
   const handleFinish = async () => {
     try {
-      await apiPut('/api/auth/me/onboarding', { interests, intent });
+      const payload = { interests, intent };
+      if (birthYear) payload.birth_year = parseInt(birthYear, 10);
+      await apiPut('/api/auth/me/onboarding', payload);
       if (onComplete) onComplete();
-      navigate('/dashboard');
+      navigate(intent === 'family' ? '/family' : '/dashboard');
     } catch (e) { console.error(e); }
   };
 
@@ -153,6 +159,29 @@ export default function OnboardingWizard({ user, onComplete }) {
                   </button>
                 ))}
               </div>
+            </div>
+          )}
+
+          {/* Step: About you (birth year — minor-safety foundation) */}
+          {currentStep === 'about' && (
+            <div className="flex-1 flex flex-col items-center justify-center animate-fade-in" data-testid="onboarding-step-about">
+              <div className="text-center mb-5 max-w-sm">
+                <h2 className="text-lg text-[#F8FAFC]" style={{ fontFamily: 'Cormorant Garamond, serif' }}>
+                  {t('onboard_about')}
+                </h2>
+                <p className="text-xs text-[#94A3B8] mt-1">{t('onboard_about_sub')}</p>
+              </div>
+              <select
+                value={birthYear}
+                onChange={(e) => setBirthYear(e.target.value)}
+                className="w-48 px-3 py-2.5 rounded-md bg-[#050814] border border-[#1E293B] text-sm text-[#F8FAFC] focus:outline-none focus:border-[#D4AF37]/50"
+                data-testid="onboarding-birth-year"
+              >
+                <option value="">{t('onboard_birth_skip')}</option>
+                {BIRTH_YEARS.map(y => (
+                  <option key={y} value={y}>{y}</option>
+                ))}
+              </select>
             </div>
           )}
 

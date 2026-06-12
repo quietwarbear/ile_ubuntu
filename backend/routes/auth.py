@@ -886,6 +886,7 @@ def get_me(current_user: dict = Depends(get_current_user)):
         "language": current_user.get("language", "en"),
         "interests": current_user.get("interests", []),
         "intent": current_user.get("intent", "learner"),
+        "is_minor": current_user.get("is_minor", False),
     }
 
 
@@ -980,6 +981,11 @@ async def complete_onboarding(request: Request, current_user: dict = Depends(get
     # personalizes the experience and tells admins who to elevate to faculty.
     if data.get("intent") in ("learner", "educator", "mentor", "family"):
         update["intent"] = data["intent"]
+    # Minor-safety foundation: optional birth year → is_minor flag (<18).
+    birth_year = data.get("birth_year")
+    if isinstance(birth_year, int) and 1900 < birth_year <= datetime.now(timezone.utc).year:
+        update["birth_year"] = birth_year
+        update["is_minor"] = (datetime.now(timezone.utc).year - birth_year) < 18
     users_col.update_one({"id": current_user["id"]}, {"$set": update})
     emit("user.onboarded", current_user, "user", current_user["id"],
          meta={"intent": update.get("intent", "learner"), "interests": len(update.get("interests", []))})

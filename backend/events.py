@@ -29,6 +29,9 @@ EVENT_TYPES = {
     "user.deleted",
     "user.password_reset",
     "user.onboarded",
+    # family / minor safety
+    "family.linked",
+    "family.unlinked",
     # learning
     "course.created",
     "course.enrolled",

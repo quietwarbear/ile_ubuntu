@@ -21,6 +21,7 @@ import {
   Megaphone,
   Newspaper,
   ChalkboardTeacher,
+  HouseLine,
 } from '@phosphor-icons/react';
 import { clearCookie, apiPut } from '../../lib/api';
 import { useI18n } from '../../i18n';
@@ -46,6 +47,13 @@ const navSections = [
       { to: '/spaces', labelKey: 'spaces', icon: ShieldCheck },
       { to: '/blog', labelKey: 'blog', icon: Newspaper },
       { to: '/messages', labelKey: 'messages', icon: Bell },
+    ],
+  },
+  {
+    labelKey: 'nav_family',
+    familyOnly: true, // family-intent accounts and minors
+    items: [
+      { to: '/family', labelKey: 'family_my', icon: HouseLine },
     ],
   },
   {
@@ -86,14 +94,16 @@ export default function Sidebar({ user, onLogout }) {
 
   const visibleSections = useMemo(() => {
     const isFaculty = FACULTY_ROLES.includes(user?.role);
+    const isFamily = user?.intent === 'family' || user?.is_minor;
     return navSections
       .filter(section => !section.facultyOnly || isFaculty)
+      .filter(section => !section.familyOnly || isFamily)
       .map(section => ({
         ...section,
         items: section.items.filter(item => !item.facultyOnly || isFaculty),
       }))
       .filter(section => section.items.length > 0);
-  }, [user?.role]);
+  }, [user?.role, user?.intent, user?.is_minor]);
 
   const linkClass = ({ isActive }) =>
     `flex items-center gap-3 px-4 py-3 text-sm font-medium transition-all duration-200 border-l-2 ${
