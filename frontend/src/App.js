@@ -14,6 +14,7 @@ import FamilyPage from './pages/FamilyPage';
 import MentorshipPage from './pages/MentorshipPage';
 import CommunityDashboardPage from './pages/CommunityDashboardPage';
 import VillagesPage, { VillageDetail } from './pages/VillagesPage';
+import VillageHomePage, { VillageHomeGate } from './pages/VillageHomePage';
 import DashboardPage from './pages/DashboardPage';
 import CoursesPage from './pages/CoursesPage';
 import CourseDetailPage from './pages/CourseDetailPage';
@@ -268,6 +269,10 @@ function App() {
         <PendingInviteRedirect />
         <AppLayout user={user} onLogout={handleLogout}>
           <Routes>
+            {/* Phase 2 (deep migration): home is the village. One village →
+                its feed; multiple → picker; none → commons dashboard. */}
+            <Route path="/" element={<VillageHomeGate user={user} />} />
+            <Route path="/village/:villageId" element={<VillageHomePage user={user} />} />
             <Route path="/dashboard" element={<DashboardPage user={user} />} />
             <Route path="/courses" element={<CoursesPage user={user} />} />
             <Route path="/courses/:courseId" element={<CourseDetailPage user={user} />} />

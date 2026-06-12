@@ -16,7 +16,10 @@ from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 
-from database import villages_col, users_col, cohorts_col, courses_col, live_sessions_col
+from database import (
+    villages_col, users_col, cohorts_col, courses_col, live_sessions_col,
+    mentorship_pairs_col, family_links_col, posts_col,
+)
 from middleware import get_current_user
 from models.user import has_permission, UserRole
 from events import emit
@@ -243,6 +246,89 @@ def detach_live_session(village_id: str, session_id: str, current_user: dict = D
     if result.matched_count == 0:
         raise HTTPException(status_code=404, detail="Session is not attached to this village")
     return {"success": True}
+
+
+# --- Village home feed (deep migration Phase 2): the member's home is their
+# village. One endpoint feeds the whole VillageHomePage. ---
+
+# Elder prompt v1: static rotation, deterministic per village per day.
+# Ubuntu Intelligence replaces this slot later (see VILLAGE_MIGRATION_PLAN.md).
+ELDER_PROMPTS = [
+    "I am because we are. Who lifted you this week — and have you told them?",
+    "A single bracelet does not jingle. What are you carrying alone that the village could carry with you?",
+    "However far the stream flows, it never forgets its source. Reach out to someone who taught you something.",
+    "If you want to go fast, go alone. If you want to go far, go together. What's one goal you can walk toward with another member today?",
+    "The child who is not embraced by the village will burn it down to feel its warmth. Who haven't you welcomed yet?",
+    "Knowledge is like a garden: if it is not cultivated, it cannot be harvested. What did you learn this week worth sharing?",
+    "Many hands make light work. Where can you lend yours before the week ends?",
+]
+
+
+@router.get("/{village_id}/home")
+def village_home(village_id: str, current_user: dict = Depends(get_current_user)):
+    """Everything the village feed needs in one call: today's sessions, my
+    circle (mentors/mentees + family), goal progress, latest member posts,
+    and the elder prompt. Members only (faculty+ may look in)."""
+    v = _get_village(village_id)
+    me = current_user["id"]
+    members = v.get("members", [])
+    my_membership = next((m for m in members if m["user_id"] == me), None)
+    if not my_membership and not has_permission(current_user["role"], UserRole.FACULTY):
+        raise HTTPException(status_code=403, detail="This village's circle isn't yours yet")
+
+    member_ids = [m["user_id"] for m in members]
+
+    # Sessions: live first, then upcoming, scoped to this village
+    sessions = list(live_sessions_col.find(
+        {"village_id": village_id, "status": {"$in": ["live", "scheduled"]}},
+        {"_id": 0, "id": 1, "title": 1, "status": 1, "scheduled_at": 1,
+         "host_name": 1, "host_picture": 1},
+    ).sort([("status", 1), ("scheduled_at", 1)]).limit(6))
+
+    # My circle: mentorship pairs + family links, annotated with village co-membership
+    circle = []
+    for p in mentorship_pairs_col.find(
+            {"$or": [{"mentor_id": me}, {"mentee_id": me}]}, {"_id": 0}):
+        other_id = p["mentee_id"] if p["mentor_id"] == me else p["mentor_id"]
+        circle.append({**_brief(other_id),
+                       "relationship": "mentee" if p["mentor_id"] == me else "mentor",
+                       "in_village": other_id in member_ids})
+    for l in family_links_col.find({"guardian_id": me}, {"_id": 0, "youth_id": 1}):
+        circle.append({**_brief(l["youth_id"]), "relationship": "family",
+                       "in_village": l["youth_id"] in member_ids})
+    for l in family_links_col.find({"youth_id": me}, {"_id": 0, "guardian_id": 1}):
+        circle.append({**_brief(l["guardian_id"]), "relationship": "family",
+                       "in_village": l["guardian_id"] in member_ids})
+
+    # Latest community posts authored by village members
+    posts = []
+    for p in posts_col.find(
+            {"author_id": {"$in": member_ids}},
+            {"_id": 0, "id": 1, "title": 1, "content": 1, "author_name": 1,
+             "author_picture": 1, "category": 1, "created_at": 1, "replies": 1, "likes": 1},
+    ).sort("created_at", -1).limit(5):
+        posts.append({
+            **p,
+            "content": (p.get("content") or "")[:240],
+            "reply_count": len(p.get("replies", [])),
+            "like_count": len(p.get("likes", [])),
+        })
+
+    goals = v.get("goals", [])
+    day_key = datetime.now(timezone.utc).strftime("%Y-%m-%d") + village_id
+    prompt = ELDER_PROMPTS[sum(ord(ch) for ch in day_key) % len(ELDER_PROMPTS)]
+
+    return {
+        "village": {k: v.get(k) for k in ("id", "name", "season", "place", "description")},
+        "member_count": len(members),
+        "my_village_role": my_membership["village_role"] if my_membership else None,
+        "sessions": sessions,
+        "circle": circle,
+        "goals": goals,
+        "goals_done": sum(1 for g in goals if g.get("done")),
+        "posts": posts,
+        "elder_prompt": prompt,
+    }
 
 
 def is_village_member(village_id: str, user_id: str) -> bool:

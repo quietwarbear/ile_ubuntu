@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import BrandMark from '../brand/BrandMark';
 import {
@@ -25,7 +25,7 @@ import {
   HandHeart,
   TreeEvergreen,
 } from '@phosphor-icons/react';
-import { clearCookie, apiPut } from '../../lib/api';
+import { clearCookie, apiPut, apiGet } from '../../lib/api';
 import { useI18n } from '../../i18n';
 import SearchBar from './SearchBar';
 
@@ -83,8 +83,15 @@ const FACULTY_ROLES = ['admin', 'elder', 'faculty'];
 
 export default function Sidebar({ user, onLogout }) {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [myVillages, setMyVillages] = useState([]);
   const navigate = useNavigate();
   const { t, lang, setLang, LANG_NAMES } = useI18n();
+
+  // Phase 2 (deep migration): when the user belongs to a village, a VILLAGE
+  // section is pinned above everything else (eval §8 tree).
+  useEffect(() => {
+    apiGet('/api/villages').then(d => setMyVillages(d.mine || [])).catch(() => {});
+  }, []);
 
   const handleLogout = () => {
     clearCookie('session_id');
@@ -100,7 +107,7 @@ export default function Sidebar({ user, onLogout }) {
   const visibleSections = useMemo(() => {
     const isFaculty = FACULTY_ROLES.includes(user?.role);
     const isFamily = user?.intent === 'family' || user?.is_minor;
-    return navSections
+    const sections = navSections
       .filter(section => !section.facultyOnly || isFaculty)
       .filter(section => !section.familyOnly || isFamily)
       .map(section => ({
@@ -108,7 +115,20 @@ export default function Sidebar({ user, onLogout }) {
         items: section.items.filter(item => !item.facultyOnly || isFaculty),
       }))
       .filter(section => section.items.length > 0);
-  }, [user?.role, user?.intent, user?.is_minor]);
+    if (myVillages.length > 0) {
+      sections.unshift({
+        labelKey: 'nav_village',
+        items: [{
+          // One village → straight to its feed; several → the picker at "/"
+          to: myVillages.length === 1 ? `/village/${myVillages[0].id}` : '/',
+          end: myVillages.length !== 1,
+          labelKey: 'village_home',
+          icon: TreeEvergreen,
+        }],
+      });
+    }
+    return sections;
+  }, [user?.role, user?.intent, user?.is_minor, myVillages]);
 
   const linkClass = ({ isActive }) =>
     `flex items-center gap-3 px-4 py-3 text-sm font-medium transition-all duration-200 border-l-2 ${
@@ -151,6 +171,7 @@ export default function Sidebar({ user, onLogout }) {
                 <NavLink
                   key={item.to}
                   to={item.to}
+                  end={item.end}
                   className={linkClass}
                   onClick={() => setMobileOpen(false)}
                   data-testid={`nav-${item.labelKey}`}

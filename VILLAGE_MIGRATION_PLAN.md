@@ -28,7 +28,14 @@ membership (tier gate unchanged).*
 4. Enrollment/join rules: village-scoped content joinable by village members
    without invite codes.
 
-## Phase 2 — Village feed as home (frontend)
+## Phase 2 — Village feed as home (frontend) ✅ SHIPPED 2026-06-12
+
+*All four items landed. GET /api/villages/{id}/home feeds the whole page
+(sessions, circle, goals, member posts, elder prompt — static rotation,
+deterministic per village per day). Routes: "/" → VillageHomeGate (one
+village → /village/:id, multiple → picker, none → /dashboard); DashboardPage
+untouched. Sidebar pins a VILLAGE section on top when the user has one.
+15 i18n keys added to en/es/yo. Standalone suite now 22 checks.*
 
 1. New `VillageHomePage`: today's sessions, my circle (mentor/mentee + family),
    village goals progress, latest community posts from village members, an

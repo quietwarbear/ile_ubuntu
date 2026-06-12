@@ -89,6 +89,23 @@ const en = {
   about_hero: 'The Living Learning Commons',
   about_subtitle: 'A sacred space where knowledge, community, and culture converge',
   about_tagline: 'Built for those who teach, learn, and preserve wisdom across generations',
+
+  // Village home (deep migration Phase 2)
+  nav_village: 'Village',
+  village_home: 'My Village',
+  village_entering: 'Entering the village…',
+  village_full: 'Full village',
+  village_elder_word: "An elder's word",
+  village_sessions: 'Gatherings',
+  village_no_sessions: 'No gatherings on the horizon — your stewards will call the next one.',
+  village_circle: 'My circle',
+  village_no_circle: 'Your circle is still forming — mentors and family will appear here.',
+  village_goals: 'Our goals this season',
+  village_no_goals: 'No goals named yet this season.',
+  village_voices: 'Voices of the village',
+  village_no_posts: 'Quiet for now — be the first voice this week.',
+  village_pick: 'Choose your village',
+  village_pick_sub: 'You belong to more than one — where are you headed today?',
 };
 
 export default en;

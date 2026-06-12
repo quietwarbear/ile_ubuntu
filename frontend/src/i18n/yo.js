@@ -89,6 +89,23 @@ const yo = {
   about_hero: 'Ilé Ẹ̀kọ́ Aláàyè',
   about_subtitle: 'Àyè mímọ́ níbi tí ìmọ̀, àwùjọ àti àṣà pàdé',
   about_tagline: 'A kọ́ fún àwọn tí ń kọ́ni, tí ń kọ́, tí ń pa ọgbọ́n mọ́',
+
+  // Village home (deep migration Phase 2)
+  nav_village: 'Abúlé',
+  village_home: 'Abúlé Mi',
+  village_entering: 'À ń wọ abúlé…',
+  village_full: 'Gbogbo abúlé',
+  village_elder_word: 'Ọ̀rọ̀ àgbà',
+  village_sessions: 'Àpèjọ',
+  village_no_sessions: 'Kò sí àpèjọ lọ́nà — àwọn olùtọ́jú yóò pe èyí tó kàn.',
+  village_circle: 'Àyíká mi',
+  village_no_circle: 'Àyíká rẹ ṣì ń dàgbà — àwọn olùdámọ̀ràn àti ẹbí yóò hàn níbí.',
+  village_goals: 'Àwọn èròngbà wa ní àsìkò yìí',
+  village_no_goals: 'Kò tíì sí èròngbà tí a dárúkọ ní àsìkò yìí.',
+  village_voices: 'Ohùn abúlé',
+  village_no_posts: 'Ìdákẹ́jẹ́ fún ìsinsìnyí — jẹ́ ohùn àkọ́kọ́ ní ọ̀sẹ̀ yìí.',
+  village_pick: 'Yan abúlé rẹ',
+  village_pick_sub: 'O jẹ́ ti ju ọ̀kan lọ — níbo ni o ń lọ lónìí?',
 };
 
 export default yo;

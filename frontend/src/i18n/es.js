@@ -89,6 +89,23 @@ const es = {
   about_hero: 'El Espacio de Aprendizaje Vivo',
   about_subtitle: 'Un espacio sagrado donde el conocimiento, la comunidad y la cultura convergen',
   about_tagline: 'Creado para quienes enseñan, aprenden y preservan la sabiduría',
+
+  // Village home (deep migration Phase 2)
+  nav_village: 'Aldea',
+  village_home: 'Mi Aldea',
+  village_entering: 'Entrando a la aldea…',
+  village_full: 'Aldea completa',
+  village_elder_word: 'Palabra de un mayor',
+  village_sessions: 'Encuentros',
+  village_no_sessions: 'No hay encuentros en el horizonte — tus guías convocarán el próximo.',
+  village_circle: 'Mi círculo',
+  village_no_circle: 'Tu círculo aún se está formando — mentores y familia aparecerán aquí.',
+  village_goals: 'Nuestras metas esta temporada',
+  village_no_goals: 'Aún no se han nombrado metas esta temporada.',
+  village_voices: 'Voces de la aldea',
+  village_no_posts: 'Silencio por ahora — sé la primera voz esta semana.',
+  village_pick: 'Elige tu aldea',
+  village_pick_sub: 'Perteneces a más de una — ¿a dónde vas hoy?',
 };
 
 export default es;
