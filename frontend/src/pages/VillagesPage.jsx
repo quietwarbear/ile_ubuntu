@@ -201,10 +201,19 @@ export default function VillagesPage({ user }) {
   const [creating, setCreating] = useState(false);
   const [form, setForm] = useState({ name: '', season: '', place: '', description: '' });
   const [busy, setBusy] = useState(false);
+  const [looseCohorts, setLooseCohorts] = useState([]);
 
   const isFaculty = ['faculty', 'elder', 'admin'].includes(user?.role);
   const load = useCallback(() => { apiGet('/api/villages').then(setData).catch(console.error); }, []);
   useEffect(() => { load(); }, [load]);
+
+  // Phase 4 backfill: cohorts not yet inside any village — offered, never
+  // auto-created. Founding one does NOT auto-add the cohort's members.
+  useEffect(() => {
+    if (isFaculty) {
+      apiGet('/api/cohorts').then(cs => setLooseCohorts((cs || []).filter(c => !c.village_id))).catch(() => {});
+    }
+  }, [isFaculty]);
 
   const villages = data ? (isFaculty ? (data.all || []) : data.mine) : [];
 
@@ -251,6 +260,45 @@ export default function VillagesPage({ user }) {
             >
               Found this village
             </Button>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Backfill: found a village from a cohort that has none */}
+      {isFaculty && looseCohorts.length > 0 && (
+        <Card className="bg-[#0F172A] border-[#1E293B]" data-testid="cohort-backfill">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm text-[#F8FAFC]" style={{ fontFamily: 'Cormorant Garamond, serif' }}>
+              Cohorts not yet in a village
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              {looseCohorts.map(c => (
+                <div key={c.id} className="flex items-center justify-between gap-2 p-2 rounded bg-[#050814] border border-[#1E293B]">
+                  <span className="text-xs text-[#F8FAFC] min-w-0 truncate">
+                    {c.name} <span className="text-[#475569]">· {(c.members || []).length} members</span>
+                  </span>
+                  <Button
+                    size="sm"
+                    disabled={busy}
+                    onClick={async () => {
+                      setBusy(true);
+                      try {
+                        const v = await apiPost('/api/villages/from-cohort', { cohort_id: c.id });
+                        navigate(`/villages/${v.id}`);
+                      } catch (e) { alert(e.message); setBusy(false); }
+                    }}
+                    className="bg-[#D4AF37]/15 text-[#D4AF37] border border-[#D4AF37]/30 hover:bg-[#D4AF37]/25 h-7 text-xs flex-shrink-0"
+                  >
+                    Found a village from it
+                  </Button>
+                </div>
+              ))}
+            </div>
+            <p className="text-[10px] text-[#475569] mt-2">
+              The cohort is attached; its people are not auto-added — welcome each member with a role.
+            </p>
           </CardContent>
         </Card>
       )}

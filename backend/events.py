@@ -49,6 +49,8 @@ EVENT_TYPES = {
     "village.goal_completed",
     "village.course_attached",
     "village.session_attached",
+    "village.session_held",
+    "village.goal_progress",
     # learning
     "course.created",
     "course.enrolled",

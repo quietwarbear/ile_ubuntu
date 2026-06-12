@@ -121,6 +121,11 @@ def end_live_session(session_id: str, current_user: dict = Depends(get_current_u
     )
     emit("live_session.ended", current_user, "live_session", session_id,
          meta={"participants": len(session.get("participants", []))})
+    # Phase 4: the village's own pulse. Counts only — events are
+    # faculty-readable, so never anything sensitive in meta.
+    if session.get("village_id"):
+        emit("village.session_held", current_user, "village", session["village_id"],
+             meta={"session_id": session_id, "participants": len(session.get("participants", []))})
     return {"success": True}
 
 

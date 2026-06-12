@@ -64,7 +64,14 @@ this also fixed the pre-existing cohort dashboard. Suite now 32 checks.*
 3. Attention list at village level; mentors of the village surfaced for routing
    ("suggest a mentor check-in" — precursor to eval §7.5 interventions).
 
-## Phase 4 — Migration & cleanup
+## Phase 4 — Migration & cleanup ✅ SHIPPED 2026-06-12 — MIGRATION COMPLETE
+
+*POST /api/villages/from-cohort (faculty+): founds a village named after the
+cohort, attaches it, founder is sole member — membership stays explicit, no
+auto-add (honored as decided). VillagesPage offers it per unattached cohort.
+Events village.session_held (on village session end) and
+village.goal_progress (counts-only meta, both directions) registered and
+emitted. Suite: 41 checks. All four phases of the deep migration are done.*
 
 1. Backfill script: for each existing cohort, offer steward UI to create a
    village from it (cohort name → village name) — do NOT auto-create.

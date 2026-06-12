@@ -171,6 +171,11 @@ def toggle_goal(village_id: str, goal_id: str, current_user: dict = Depends(get_
     )
     if new_done:
         emit("village.goal_completed", current_user, "village", village_id)
+    # Phase 4: progress signal either direction (counts only in meta).
+    goals = v.get("goals", [])
+    done_count = sum(1 for g in goals if g.get("done")) + (1 if new_done else -1)
+    emit("village.goal_progress", current_user, "village", village_id,
+         meta={"done": max(0, done_count), "total": len(goals)})
     return {"success": True, "done": new_done}
 
 
@@ -186,6 +191,47 @@ async def attach_cohort(village_id: str, request: Request, current_user: dict = 
     villages_col.update_one({"id": village_id}, {"$addToSet": {"cohort_ids": cohort_id}})
     cohorts_col.update_one({"id": cohort_id}, {"$set": {"village_id": village_id}})
     return {"success": True}
+
+
+# --- Backfill (deep migration Phase 4): offer to found a village from an
+# existing cohort — never auto-create, and membership stays EXPLICIT: the
+# cohort's people are NOT auto-added (decided in the foundation session;
+# revisit only with Doc). ---
+
+@router.post("/from-cohort")
+async def found_village_from_cohort(request: Request, current_user: dict = Depends(get_current_user)):
+    if not has_permission(current_user["role"], UserRole.FACULTY):
+        raise HTTPException(status_code=403, detail="Only faculty+ can found a village")
+    data = await request.json()
+    cohort_id = data.get("cohort_id")
+    cohort = cohorts_col.find_one({"id": cohort_id}, {"_id": 0})
+    if not cohort:
+        raise HTTPException(status_code=404, detail="Cohort not found")
+    if cohort.get("village_id"):
+        raise HTTPException(status_code=400, detail="This cohort already lives in a village")
+
+    village = {
+        "id": str(uuid.uuid4()),
+        "name": (data.get("name") or cohort["name"]).strip()[:120],
+        "description": (data.get("description") or "").strip()[:1000],
+        "season": (data.get("season") or "").strip()[:60],
+        "place": (data.get("place") or "").strip()[:120],
+        "members": [{
+            "user_id": current_user["id"],
+            "village_role": "elder" if current_user["role"] in ("elder", "admin") else "educator",
+            "joined_at": datetime.now(timezone.utc),
+        }],
+        "goals": [],
+        "cohort_ids": [cohort_id],
+        "created_by": current_user["id"],
+        "created_at": datetime.now(timezone.utc),
+    }
+    villages_col.insert_one(village)
+    village.pop("_id", None)
+    cohorts_col.update_one({"id": cohort_id}, {"$set": {"village_id": village["id"]}})
+    emit("village.created", current_user, "village", village["id"],
+         meta={"name": village["name"], "from_cohort": cohort_id})
+    return village
 
 
 # --- Content scoping (deep migration Phase 1): courses & live sessions live
