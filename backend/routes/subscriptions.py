@@ -11,7 +11,9 @@ load_dotenv()
 
 router = APIRouter(prefix="/api/subscriptions", tags=["subscriptions"])
 
-STRIPE_API_KEY = os.environ.get("STRIPE_API_KEY")
+# .strip(" ,\n\t"): env values pasted from dashboards/chats often carry a
+# trailing comma or space, which Stripe rejects as an invalid key.
+STRIPE_API_KEY = (os.environ.get("STRIPE_API_KEY") or "").strip(" ,\n\t\r")
 
 # Owner/admin emails that always receive top-tier ("elder_circle") access
 ADMIN_EMAILS = {

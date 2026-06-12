@@ -27,8 +27,10 @@ router = APIRouter(prefix="/api/marketplace", tags=["marketplace"])
 # single-account setups. IMPORTANT: every Stripe call below passes api_key
 # explicitly — never set stripe.api_key globally here, the subscriptions code
 # owns that global and handlers run concurrently.
-MARKETPLACE_KEY = os.environ.get("STRIPE_MARKETPLACE_API_KEY", "") or os.environ.get("STRIPE_API_KEY", "")
-MARKETPLACE_WEBHOOK_SECRET = os.environ.get("STRIPE_MARKETPLACE_WEBHOOK_SECRET", "")
+# .strip(" ,\n\t\r"): env values pasted from dashboards/chats often carry a
+# trailing comma or space, which Stripe rejects as an invalid key.
+MARKETPLACE_KEY = (os.environ.get("STRIPE_MARKETPLACE_API_KEY", "") or os.environ.get("STRIPE_API_KEY", "")).strip(" ,\n\t\r")
+MARKETPLACE_WEBHOOK_SECRET = os.environ.get("STRIPE_MARKETPLACE_WEBHOOK_SECRET", "").strip(" ,\n\t\r")
 PUBLIC_SITE_URL = os.environ.get("PUBLIC_SITE_URL", "https://www.ile-ubuntu.org").rstrip("/")
 
 # Platform fee — 15% per the marketing copy; override with MARKETPLACE_FEE_PCT.

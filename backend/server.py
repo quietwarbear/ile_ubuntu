@@ -131,8 +131,9 @@ async def stripe_webhook(request: Request):
     body = await request.body()
     stripe_signature = request.headers.get("Stripe-Signature")
 
-    api_key = os.environ.get("STRIPE_API_KEY")
-    webhook_secret = os.environ.get("STRIPE_WEBHOOK_SECRET")
+    # strip(): paste artifacts (trailing comma/space) break Stripe auth.
+    api_key = (os.environ.get("STRIPE_API_KEY") or "").strip(" ,\n\t\r")
+    webhook_secret = (os.environ.get("STRIPE_WEBHOOK_SECRET") or "").strip(" ,\n\t\r")
     if not api_key:
         return {"status": "error", "message": "Stripe not configured"}
 
