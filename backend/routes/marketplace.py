@@ -78,8 +78,16 @@ def connect_status(current_user: dict = Depends(get_current_user)):
             "payouts_enabled": bool(acct.get("payouts_enabled")),
             "details_submitted": bool(acct.get("details_submitted")),
         }
-    except stripe.error.StripeError:
-        return {"connected": True, "charges_enabled": False, "payouts_enabled": False}
+    except Exception as e:
+        # Status is informational — degrade with the reason, never 500.
+        import logging
+        logging.getLogger(__name__).exception("connect_status failed for %s", account_id)
+        return {
+            "connected": True,
+            "charges_enabled": False,
+            "payouts_enabled": False,
+            "status_error": str(e),
+        }
 
 
 @router.post("/connect/onboard")

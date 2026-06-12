@@ -20,21 +20,21 @@ export default function TeacherDashboardPage({ user }) {
   const [statusMessage, setStatusMessage] = useState(null);
 
   const fetchAll = useCallback(async () => {
-    try {
-      const [status, earningsRes, coursesRes] = await Promise.all([
-        apiGet('/api/marketplace/connect/status'),
-        apiGet('/api/marketplace/earnings').catch(() => null),
-        apiGet('/api/courses'),
-      ]);
-      setConnectStatus(status);
-      setEarnings(earningsRes);
-      // Only show courses created by this teacher
-      setMyCourses(coursesRes.filter(c => c.instructor_id === user?.id));
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setLoading(false);
+    // Each call degrades independently — a failing payment-status check must
+    // never blank the course list (and vice versa).
+    const [status, earningsRes, coursesRes] = await Promise.all([
+      apiGet('/api/marketplace/connect/status').catch(e => ({ connected: false, charges_enabled: false, _error: e.message })),
+      apiGet('/api/marketplace/earnings').catch(() => null),
+      apiGet('/api/courses').catch(e => { console.error('courses load failed:', e); return []; }),
+    ]);
+    setConnectStatus(status);
+    if (status?._error || status?.status_error) {
+      setStatusMessage({ type: 'error', text: `Payment account status check failed: ${status._error || status.status_error}` });
     }
+    setEarnings(earningsRes);
+    // Only show courses created by this teacher
+    setMyCourses((coursesRes || []).filter(c => c.instructor_id === user?.id));
+    setLoading(false);
   }, [user?.id]);
 
   useEffect(() => { fetchAll(); }, [fetchAll]);
