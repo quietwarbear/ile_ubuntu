@@ -49,6 +49,14 @@ def _require_stripe():
         raise HTTPException(status_code=503, detail="Stripe is not configured")
 
 
+def _client() -> "stripe.StripeClient":
+    """Scoped client for the marketplace account (stripe-python v15 style).
+    The classic module-level resource API misbehaves with per-call api_key
+    under v15 — always go through this client."""
+    _require_stripe()
+    return stripe.StripeClient(MARKETPLACE_KEY)
+
+
 def _require_faculty(user: dict):
     if not has_permission(user["role"], UserRole.FACULTY):
         raise HTTPException(status_code=403, detail="Faculty access required")
@@ -69,9 +77,8 @@ def connect_status(current_user: dict = Depends(get_current_user)):
     account_id = current_user.get("stripe_account_id")
     if not account_id:
         return {"connected": False, "charges_enabled": False, "payouts_enabled": False}
-    _require_stripe()
     try:
-        acct = stripe.Account.retrieve(account_id, api_key=MARKETPLACE_KEY)
+        acct = _client().v1.accounts.retrieve(account_id)
         return {
             "connected": True,
             "charges_enabled": bool(acct.get("charges_enabled")),
@@ -101,30 +108,29 @@ async def connect_onboard(request: Request, current_user: dict = Depends(get_cur
 
     account_id = current_user.get("stripe_account_id")
     try:
+        client = _client()
         if not account_id:
-            acct = stripe.Account.create(
-                api_key=MARKETPLACE_KEY,
-                type="express",
-                email=current_user.get("email"),
-                capabilities={
+            acct = client.v1.accounts.create(params={
+                "type": "express",
+                "email": current_user.get("email"),
+                "capabilities": {
                     "card_payments": {"requested": True},
                     "transfers": {"requested": True},
                 },
-                metadata={"user_id": current_user["id"]},
-            )
+                "metadata": {"user_id": current_user["id"]},
+            })
             account_id = acct["id"]
             users_col.update_one({"id": current_user["id"]}, {"$set": {"stripe_account_id": account_id}})
 
-        link = stripe.AccountLink.create(
-            api_key=MARKETPLACE_KEY,
-            account=account_id,
-            refresh_url=refresh_url,
-            return_url=return_url,
-            type="account_onboarding",
-        )
+        link = client.v1.account_links.create(params={
+            "account": account_id,
+            "refresh_url": refresh_url,
+            "return_url": return_url,
+            "type": "account_onboarding",
+        })
         return {"url": link["url"]}
-    except stripe.error.StripeError as e:
-        raise HTTPException(status_code=502, detail=f"Stripe error: {e.user_message or str(e)}")
+    except stripe.StripeError as e:
+        raise HTTPException(status_code=502, detail=f"Stripe error: {getattr(e, 'user_message', None) or str(e)}")
 
 
 @router.get("/connect/dashboard-link")
@@ -134,11 +140,18 @@ def connect_dashboard_link(current_user: dict = Depends(get_current_user)):
     if not account_id:
         raise HTTPException(status_code=400, detail="No connected Stripe account")
     _require_stripe()
-    try:
-        link = stripe.Account.create_login_link(account_id, api_key=MARKETPLACE_KEY)
-        return {"url": link["url"]}
-    except stripe.error.StripeError as e:
-        raise HTTPException(status_code=502, detail=f"Stripe error: {e.user_message or str(e)}")
+    # v15's StripeClient has no login-link service; hit the endpoint directly.
+    import requests as _requests
+    resp = _requests.post(
+        f"https://api.stripe.com/v1/accounts/{account_id}/login_links",
+        auth=(MARKETPLACE_KEY, ""),
+        timeout=20,
+    )
+    body = resp.json()
+    if resp.status_code >= 400:
+        msg = (body.get("error") or {}).get("message", "Stripe error")
+        raise HTTPException(status_code=502, detail=f"Stripe error: {msg}")
+    return {"url": body["url"]}
 
 
 # --- Premium pricing ---
@@ -201,10 +214,9 @@ async def course_checkout(course_id: str, request: Request, current_user: dict =
     fee_cents = int(round(amount_cents * FEE_PCT))
 
     try:
-        session = stripe.checkout.Session.create(
-            api_key=MARKETPLACE_KEY,
-            mode="payment",
-            line_items=[{
+        session = _client().v1.checkout.sessions.create(params={
+            "mode": "payment",
+            "line_items": [{
                 "quantity": 1,
                 "price_data": {
                     "currency": "usd",
@@ -212,22 +224,22 @@ async def course_checkout(course_id: str, request: Request, current_user: dict =
                     "product_data": {"name": course["title"], "description": "Premium course — The Ile Ubuntu"},
                 },
             }],
-            payment_intent_data={
+            "payment_intent_data": {
                 "application_fee_amount": fee_cents,
                 "transfer_data": {"destination": teacher_account},
             },
-            customer_email=current_user.get("email"),
-            success_url=success_url,
-            cancel_url=cancel_url,
-            metadata={
+            "customer_email": current_user.get("email"),
+            "success_url": success_url,
+            "cancel_url": cancel_url,
+            "metadata": {
                 "kind": "course_purchase",
                 "course_id": course_id,
                 "user_id": current_user["id"],
                 "teacher_id": course["instructor_id"],
             },
-        )
-    except stripe.error.StripeError as e:
-        raise HTTPException(status_code=502, detail=f"Stripe error: {e.user_message or str(e)}")
+        })
+    except stripe.StripeError as e:
+        raise HTTPException(status_code=502, detail=f"Stripe error: {getattr(e, 'user_message', None) or str(e)}")
 
     payment_transactions_col.insert_one({
         "id": str(uuid.uuid4()),
