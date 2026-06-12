@@ -1007,7 +1007,12 @@ def list_users(current_user: dict = Depends(get_current_user)):
     from models.user import has_permission, UserRole
     if not has_permission(current_user["role"], UserRole.FACULTY):
         raise HTTPException(status_code=403, detail="Insufficient permissions")
-    users = list(users_col.find({}, {"_id": 0}))
+    # Safe projection only — never ship password hashes, tokens, or codes.
+    users = list(users_col.find({}, {
+        "_id": 0, "id": 1, "name": 1, "email": 1, "picture": 1, "role": 1,
+        "intent": 1, "is_minor": 1, "subscription_tier": 1, "created_at": 1,
+        "onboarding_complete": 1,
+    }))
     return users
 
 

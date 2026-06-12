@@ -18,6 +18,7 @@ const yo = {
   nav_learn: 'Ẹ̀kọ́',
   nav_family: 'Ìdílé',
   family_my: 'Ìdílé Mi',
+  mentorship: 'Amọ̀nà',
   onboard_about: 'Díẹ̀ nípa rẹ',
   onboard_about_sub: 'Ọdún ìbí rẹ ń ràn wá lọ́wọ́ láti dáàbò bo àwọn ọ̀dọ́ nínú abúlé. Kò pọn dandan.',
   onboard_birth_skip: 'Mi ò fẹ́ sọ',

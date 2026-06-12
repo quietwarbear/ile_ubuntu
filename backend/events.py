@@ -33,6 +33,12 @@ EVENT_TYPES = {
     "family.linked",
     "family.unlinked",
     "family.digest_sent",
+    # mentorship
+    "mentorship.paired",
+    "mentorship.unpaired",
+    "mentorship.goal_added",
+    "mentorship.goal_completed",
+    "mentorship.note_added",
     # learning
     "course.created",
     "course.enrolled",

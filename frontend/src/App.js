@@ -11,6 +11,7 @@ import LoginPage from './pages/LoginPage';
 import ResetPasswordPage from './pages/ResetPasswordPage';
 import JoinCoursePage, { PendingInviteRedirect } from './pages/JoinCoursePage';
 import FamilyPage from './pages/FamilyPage';
+import MentorshipPage from './pages/MentorshipPage';
 import DashboardPage from './pages/DashboardPage';
 import CoursesPage from './pages/CoursesPage';
 import CourseDetailPage from './pages/CourseDetailPage';
@@ -289,6 +290,7 @@ function App() {
             <Route path="/teacher-dashboard" element={<TeacherDashboardPage user={user} />} />
             <Route path="/join/:code" element={<JoinCoursePage user={user} />} />
             <Route path="/family" element={<FamilyPage user={user} />} />
+            <Route path="/mentorship" element={<MentorshipPage user={user} />} />
             <Route path="/about" element={<AboutPage />} />
             <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
             <Route path="/terms" element={<TermsPage />} />

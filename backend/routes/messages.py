@@ -21,7 +21,11 @@ def _dm_allowed(sender: dict, recipient: dict) -> bool:
     if has_permission(sender.get("role"), _STAFF) or has_permission(recipient.get("role"), _STAFF):
         return True
     from routes.family import is_guardian_of
-    return is_guardian_of(sender["id"], recipient["id"]) or is_guardian_of(recipient["id"], sender["id"])
+    if is_guardian_of(sender["id"], recipient["id"]) or is_guardian_of(recipient["id"], sender["id"]):
+        return True
+    # Faculty-blessed mentorship pairings open the channel too
+    from routes.mentorship import are_mentor_pair
+    return are_mentor_pair(sender["id"], recipient["id"])
 
 
 @router.post("/messages")

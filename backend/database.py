@@ -49,6 +49,11 @@ family_links_col = db.family_links
 # Weekly family digest send log (idempotency: one digest per guardian per week)
 digest_log_col = db.digest_log
 
+# Mentorship: faculty-blessed mentor <-> mentee pairings + shared goals/journal
+mentorship_pairs_col = db.mentorship_pairs
+mentorship_goals_col = db.mentorship_goals
+mentorship_notes_col = db.mentorship_notes
+
 
 def ensure_indexes():
     """Create the indexes the hot query paths rely on. Idempotent; called at startup.
@@ -115,6 +120,11 @@ def ensure_indexes():
         (users_col, [("family_code", 1)], {"sparse": True}),
         # Digest log: idempotent weekly sends (duplicate triggers are no-ops)
         (digest_log_col, [("guardian_id", 1), ("week_key", 1)], {"unique": True}),
+        # Mentorship: pair uniqueness + lookups from both sides + per-pairing content
+        (mentorship_pairs_col, [("mentor_id", 1), ("mentee_id", 1)], {"unique": True}),
+        (mentorship_pairs_col, [("mentee_id", 1)], {}),
+        (mentorship_goals_col, [("pairing_id", 1)], {}),
+        (mentorship_notes_col, [("pairing_id", 1), ("created_at", -1)], {}),
     ]
 
     for col, keys, kwargs in specs:

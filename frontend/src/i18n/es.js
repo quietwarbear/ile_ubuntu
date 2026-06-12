@@ -18,6 +18,7 @@ const es = {
   nav_learn: 'Aprender',
   nav_family: 'Familia',
   family_my: 'Mi Familia',
+  mentorship: 'Mentoría',
   onboard_about: 'Un poco sobre ti',
   onboard_about_sub: 'Tu año de nacimiento nos ayuda a proteger a los jóvenes de la aldea. Opcional.',
   onboard_birth_skip: 'Prefiero no decirlo',
