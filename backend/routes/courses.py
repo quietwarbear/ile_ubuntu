@@ -2,12 +2,14 @@ from fastapi import APIRouter, HTTPException, Query, Request, Depends
 from datetime import datetime, timezone
 import uuid
 import secrets
-from database import courses_col, lessons_col, files_col, enrollments_col, course_invites_col
+from database import courses_col, lessons_col, files_col, enrollments_col, course_invites_col, villages_col
 from middleware import get_current_user
 from models.user import has_permission, UserRole
 from models.course import CourseStatus
 from tier_gating import check_enrollment_limit
 from events import emit
+# Acyclic: villages.py only imports from database/middleware/models, never routes.
+from routes.villages import is_village_member, user_village_ids, _get_village, _can_steward
 
 router = APIRouter(prefix="/api/courses", tags=["courses"])
 
@@ -18,6 +20,15 @@ async def create_course(request: Request, current_user: dict = Depends(get_curre
         raise HTTPException(status_code=403, detail="Only faculty+ can create courses")
 
     data = await request.json()
+
+    # Village scoping (deep migration Phase 1): a course may be born inside a
+    # village. Nullable — platform-wide "commons" content has no village.
+    village_id = data.get("village_id")
+    if village_id:
+        village = _get_village(village_id)
+        if not _can_steward(village, current_user):
+            raise HTTPException(status_code=403, detail="Only the village's stewards create courses inside it")
+
     course = {
         "id": str(uuid.uuid4()),
         "title": data["title"],
@@ -26,6 +37,7 @@ async def create_course(request: Request, current_user: dict = Depends(get_curre
         "instructor_id": current_user["id"],
         "instructor_name": current_user["name"],
         "status": CourseStatus.DRAFT,
+        "village_id": village_id,
         # Closed-ecosystem default: new courses are invite-only until the
         # teacher explicitly lists them. (Existing courses without the field
         # are treated as listed for backward compatibility.)
@@ -36,6 +48,8 @@ async def create_course(request: Request, current_user: dict = Depends(get_curre
         "created_at": datetime.now(timezone.utc),
         "updated_at": datetime.now(timezone.utc),
     }
+    if course["visibility"] == "village" and not village_id:
+        raise HTTPException(status_code=400, detail="village visibility requires a village_id")
     courses_col.insert_one(course)
     course.pop("_id", None)
     emit("course.created", current_user, "course", course["id"], meta={"title": course["title"]})
@@ -45,6 +59,7 @@ async def create_course(request: Request, current_user: dict = Depends(get_curre
 @router.get("")
 def list_courses(
     status: str = None,
+    village_id: str = None,
     limit: int = Query(100, ge=1, le=200),
     skip: int = Query(0, ge=0),
     current_user: dict = Depends(get_current_user),
@@ -52,23 +67,32 @@ def list_courses(
     query = {}
     if status:
         query["status"] = status
+    if village_id:
+        # Scope the catalog to one village. Visibility rules below still apply,
+        # so a non-member filtering by a village only sees its listed courses.
+        query["village_id"] = village_id
 
     # Catalog rules (closed ecosystem):
     # - listed = visibility "listed" OR no visibility field (pre-feature courses)
-    # - students/assistants: active + listed only
-    # - faculty/elder: active+listed community courses PLUS their own (any state)
+    # - village = visible only to members of course.village_id (third tier)
+    # - students/assistants: active + (listed OR their villages' courses)
+    # - faculty/elder: the same community view PLUS their own (any state)
     # - admin: everything
-    listed_clause = {"$or": [{"visibility": "listed"}, {"visibility": {"$exists": False}}]}
+    visible_or = [{"visibility": "listed"}, {"visibility": {"$exists": False}}]
+    my_villages = user_village_ids(current_user["id"])
+    if my_villages:
+        visible_or.append({"visibility": "village", "village_id": {"$in": my_villages}})
+    visible_clause = {"$or": visible_or}
     if current_user["role"] == UserRole.ADMIN:
         pass
     elif has_permission(current_user["role"], UserRole.FACULTY):
         query["$or"] = [
-            {"$and": [{"status": CourseStatus.ACTIVE}, listed_clause]},
+            {"$and": [{"status": CourseStatus.ACTIVE}, visible_clause]},
             {"instructor_id": current_user["id"]},
         ]
     else:
         query["status"] = CourseStatus.ACTIVE
-        query.update(listed_clause)
+        query.update(visible_clause)
 
     courses = list(
         courses_col.find(query, {"_id": 0}).sort("created_at", -1).skip(skip).limit(limit)
@@ -85,6 +109,16 @@ def get_course(course_id: str, current_user: dict = Depends(get_current_user)):
     # (Unlisted ACTIVE courses are intentionally reachable by direct link/invite.)
     if course.get("status") == CourseStatus.DRAFT:
         if course["instructor_id"] != current_user["id"] and current_user["role"] != UserRole.ADMIN:
+            raise HTTPException(status_code=404, detail="Course not found")
+    # Village privacy: members-only, even by direct link (404, like drafts,
+    # so existence isn't leaked). Instructor and faculty+ pass.
+    if course.get("visibility") == "village":
+        allowed = (
+            course["instructor_id"] == current_user["id"]
+            or has_permission(current_user["role"], UserRole.FACULTY)
+            or (course.get("village_id") and is_village_member(course["village_id"], current_user["id"]))
+        )
+        if not allowed:
             raise HTTPException(status_code=404, detail="Course not found")
     return course
 
@@ -212,6 +246,13 @@ def enroll_in_course(course_id: str, current_user: dict = Depends(get_current_us
     existing = enrollments_col.find_one({"user_id": current_user["id"], "course_id": course_id})
     if existing:
         raise HTTPException(status_code=400, detail="Already enrolled")
+
+    # Village-only courses: members of the village enroll directly (no invite
+    # code needed); everyone else needs to belong to the village first.
+    if course.get("visibility") == "village":
+        is_staff = course["instructor_id"] == current_user["id"] or has_permission(current_user["role"], UserRole.FACULTY)
+        if not is_staff and not (course.get("village_id") and is_village_member(course["village_id"], current_user["id"])):
+            raise HTTPException(status_code=403, detail="This course lives inside a village — join the village first")
 
     # Premium courses require purchase (fulfilled via Stripe webhook) — free
     # enrollment is blocked unless you're the instructor or faculty+.
@@ -355,12 +396,16 @@ def _require_course_owner(course_id: str, current_user: dict) -> dict:
 
 @router.post("/{course_id}/visibility")
 async def set_visibility(course_id: str, request: Request, current_user: dict = Depends(get_current_user)):
-    """Toggle a course between 'listed' (community catalog) and 'unlisted' (invite-only)."""
-    _require_course_owner(course_id, current_user)
+    """Set course visibility: 'listed' (community catalog), 'unlisted'
+    (invite-only), or 'village' (village members only — requires the course
+    to be attached to a village)."""
+    course = _require_course_owner(course_id, current_user)
     data = await request.json()
     visibility = data.get("visibility")
-    if visibility not in ("listed", "unlisted"):
-        raise HTTPException(status_code=400, detail="visibility must be 'listed' or 'unlisted'")
+    if visibility not in ("listed", "unlisted", "village"):
+        raise HTTPException(status_code=400, detail="visibility must be 'listed', 'unlisted', or 'village'")
+    if visibility == "village" and not course.get("village_id"):
+        raise HTTPException(status_code=400, detail="Attach the course to a village before making it village-only")
     courses_col.update_one({"id": course_id}, {"$set": {"visibility": visibility}})
     return {"success": True, "visibility": visibility}
 
@@ -422,6 +467,12 @@ def accept_invite(code: str, current_user: dict = Depends(get_current_user)):
 
     if enrollments_col.find_one({"user_id": current_user["id"], "course_id": course["id"]}):
         return {"enrolled": True, "course_id": course["id"], "message": "Already enrolled"}
+
+    # Invite codes don't pierce village privacy: village-only courses still
+    # require village membership (members never needed the code anyway).
+    if course.get("visibility") == "village":
+        if not (course.get("village_id") and is_village_member(course["village_id"], current_user["id"])):
+            raise HTTPException(status_code=403, detail="This course lives inside a village — join the village first")
 
     if course.get("is_premium") and (course.get("premium_price") or 0) > 0:
         return {

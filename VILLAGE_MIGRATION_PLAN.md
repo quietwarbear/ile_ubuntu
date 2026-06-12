@@ -10,7 +10,15 @@ Make the village, not the course, the primitive. Courses, cohorts, live sessions
 and spaces become things *inside* a village. The member's home becomes their
 village feed. The dashboard, digest, and attention signals scope to the village.
 
-## Phase 1 — Scope content into villages (backend)
+## Phase 1 — Scope content into villages (backend) ✅ SHIPPED 2026-06-12
+
+*All four items below landed (commit "feat: Phase 1 of village deep migration").
+Verified by backend/tests/standalone_test_village_scoping.py (17 checks).
+Notes for Phase 2: attach/detach lives on the villages router
+(POST/DELETE /api/villages/{id}/courses and /live-sessions); detaching a
+village-visibility course resets it to unlisted; village privacy 404s like
+drafts; invite codes do not pierce it; village-scoped session join requires
+membership (tier gate unchanged).*
 
 1. `course.village_id`, `live_session.village_id` (nullable — platform-wide
    content remains legal; "commons" content has no village).

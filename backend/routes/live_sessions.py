@@ -7,6 +7,8 @@ from middleware import get_current_user
 from models.user import has_permission, UserRole
 from tier_gating import require_tier
 from events import emit
+# Acyclic: villages.py only imports from database/middleware/models, never routes.
+from routes.villages import is_village_member, _get_village, _can_steward
 
 router = APIRouter(prefix="/api/live-sessions", tags=["live-sessions"])
 
@@ -31,11 +33,19 @@ async def create_live_session(request: Request, current_user: dict = Depends(get
     data = await request.json()
     session_id = str(uuid.uuid4())
 
+    # Village scoping (deep migration Phase 1): nullable; steward-gated when set.
+    village_id = data.get("village_id")
+    if village_id:
+        village = _get_village(village_id)
+        if not _can_steward(village, current_user):
+            raise HTTPException(status_code=403, detail="Only the village's stewards schedule sessions inside it")
+
     session = {
         "id": session_id,
         "title": data["title"],
         "description": data.get("description", ""),
         "course_id": data.get("course_id"),
+        "village_id": village_id,
         "course_title": None,
         "host_id": current_user["id"],
         "host_name": current_user["name"],
@@ -63,10 +73,12 @@ async def create_live_session(request: Request, current_user: dict = Depends(get
 
 
 @router.get("")
-def list_live_sessions(status: str = None, current_user: dict = Depends(get_current_user)):
+def list_live_sessions(status: str = None, village_id: str = None, current_user: dict = Depends(get_current_user)):
     query = {}
     if status:
         query["status"] = status
+    if village_id:
+        query["village_id"] = village_id
     sessions = list(live_sessions_col.find(query, {"_id": 0}).sort("created_at", -1))
     return sessions
 
@@ -117,6 +129,13 @@ def join_live_session(session_id: str, current_user: dict = Depends(get_current_
     session = live_sessions_col.find_one({"id": session_id})
     if not session:
         raise HTTPException(status_code=404, detail="Session not found")
+
+    # Village-scoped sessions: members of the village join; others don't.
+    # (Hosts and faculty+ bypass, mirroring course village privacy.)
+    if session.get("village_id") and session["host_id"] != current_user["id"] \
+            and not has_permission(current_user["role"], UserRole.FACULTY):
+        if not is_village_member(session["village_id"], current_user["id"]):
+            raise HTTPException(status_code=403, detail="This session belongs to a village — join the village first")
 
     # Tier gating: Elder Circle required to join live sessions (hosts bypass)
     if session["host_id"] != current_user["id"]:

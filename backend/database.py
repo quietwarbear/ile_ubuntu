@@ -136,6 +136,10 @@ def ensure_indexes():
         # Villages: id + membership lookups
         (villages_col, [("id", 1)], {"unique": True}),
         (villages_col, [("members.user_id", 1)], {}),
+        # Village scoping (deep migration Phase 1): ?village_id= filters and
+        # village-visibility catalog clauses. Sparse — commons content has none.
+        (courses_col, [("village_id", 1)], {"sparse": True}),
+        (live_sessions_col, [("village_id", 1)], {"sparse": True}),
     ]
 
     for col, keys, kwargs in specs:

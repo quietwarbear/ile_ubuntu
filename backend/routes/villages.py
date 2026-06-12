@@ -16,7 +16,7 @@ from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 
-from database import villages_col, users_col, cohorts_col
+from database import villages_col, users_col, cohorts_col, courses_col, live_sessions_col
 from middleware import get_current_user
 from models.user import has_permission, UserRole
 from events import emit
@@ -183,3 +183,75 @@ async def attach_cohort(village_id: str, request: Request, current_user: dict = 
     villages_col.update_one({"id": village_id}, {"$addToSet": {"cohort_ids": cohort_id}})
     cohorts_col.update_one({"id": cohort_id}, {"$set": {"village_id": village_id}})
     return {"success": True}
+
+
+# --- Content scoping (deep migration Phase 1): courses & live sessions live
+# inside a village. Attach/detach mirrors cohort attachment: steward-gated,
+# the content document carries village_id. ---
+
+@router.post("/{village_id}/courses")
+async def attach_course(village_id: str, request: Request, current_user: dict = Depends(get_current_user)):
+    v = _get_village(village_id)
+    if not _can_steward(v, current_user):
+        raise HTTPException(status_code=403, detail="Only stewards bring courses into the village")
+    data = await request.json()
+    course_id = data.get("course_id")
+    if not courses_col.find_one({"id": course_id}):
+        raise HTTPException(status_code=404, detail="Course not found")
+    courses_col.update_one({"id": course_id}, {"$set": {"village_id": village_id}})
+    emit("village.course_attached", current_user, "village", village_id, meta={"course_id": course_id})
+    return {"success": True}
+
+
+@router.delete("/{village_id}/courses/{course_id}")
+def detach_course(village_id: str, course_id: str, current_user: dict = Depends(get_current_user)):
+    v = _get_village(village_id)
+    if not _can_steward(v, current_user):
+        raise HTTPException(status_code=403, detail="Only stewards can do that")
+    course = courses_col.find_one({"id": course_id, "village_id": village_id})
+    if not course:
+        raise HTTPException(status_code=404, detail="Course is not attached to this village")
+    update = {"village_id": None}
+    # A course can't stay members-only with no village to be a member of.
+    if course.get("visibility") == "village":
+        update["visibility"] = "unlisted"
+    courses_col.update_one({"id": course_id}, {"$set": update})
+    return {"success": True}
+
+
+@router.post("/{village_id}/live-sessions")
+async def attach_live_session(village_id: str, request: Request, current_user: dict = Depends(get_current_user)):
+    v = _get_village(village_id)
+    if not _can_steward(v, current_user):
+        raise HTTPException(status_code=403, detail="Only stewards bring sessions into the village")
+    data = await request.json()
+    session_id = data.get("session_id")
+    if not live_sessions_col.find_one({"id": session_id}):
+        raise HTTPException(status_code=404, detail="Session not found")
+    live_sessions_col.update_one({"id": session_id}, {"$set": {"village_id": village_id}})
+    emit("village.session_attached", current_user, "village", village_id, meta={"session_id": session_id})
+    return {"success": True}
+
+
+@router.delete("/{village_id}/live-sessions/{session_id}")
+def detach_live_session(village_id: str, session_id: str, current_user: dict = Depends(get_current_user)):
+    v = _get_village(village_id)
+    if not _can_steward(v, current_user):
+        raise HTTPException(status_code=403, detail="Only stewards can do that")
+    result = live_sessions_col.update_one(
+        {"id": session_id, "village_id": village_id}, {"$set": {"village_id": None}})
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Session is not attached to this village")
+    return {"success": True}
+
+
+def is_village_member(village_id: str, user_id: str) -> bool:
+    """Membership check for other routes (courses, live sessions)."""
+    return villages_col.find_one(
+        {"id": village_id, "members.user_id": user_id}, {"_id": 1}) is not None
+
+
+def user_village_ids(user_id: str) -> list:
+    """All village ids the user belongs to (for catalog visibility clauses)."""
+    return [v["id"] for v in villages_col.find(
+        {"members.user_id": user_id}, {"_id": 0, "id": 1})]
