@@ -77,6 +77,23 @@ export default function TeacherDashboardPage({ user }) {
     }
   };
 
+  const handleToggleVisibility = async (course) => {
+    const isListed = course.visibility !== 'unlisted';
+    const next = isListed ? 'unlisted' : 'listed';
+    try {
+      await apiPost(`/api/courses/${course.id}/visibility`, { visibility: next });
+      setStatusMessage({
+        type: 'success',
+        text: next === 'listed'
+          ? `"${course.title}" is now listed in the community catalog`
+          : `"${course.title}" is now invite-only`,
+      });
+      fetchAll();
+    } catch (e) {
+      setStatusMessage({ type: 'error', text: e.message || 'Failed to update visibility' });
+    }
+  };
+
   const handleSetPremium = async (courseId) => {
     const price = parseFloat(priceInput);
     if (isNaN(price) || price < 0) {
@@ -294,6 +311,18 @@ export default function TeacherDashboardPage({ user }) {
                           }`}>
                             {course.status}
                           </Badge>
+                          <button
+                            onClick={() => handleToggleVisibility(course)}
+                            title="Toggle whether this course appears in the community catalog"
+                            className={`text-[8px] uppercase tracking-wider px-1.5 py-0.5 rounded border shrink-0 transition-colors ${
+                              course.visibility !== 'unlisted'
+                                ? 'bg-sky-500/10 text-sky-400 border-sky-500/20 hover:bg-sky-500/20'
+                                : 'bg-[#D4AF37]/10 text-[#D4AF37] border-[#D4AF37]/20 hover:bg-[#D4AF37]/20'
+                            }`}
+                            data-testid={`visibility-${course.id}`}
+                          >
+                            {course.visibility !== 'unlisted' ? 'Listed' : 'Invite-only'}
+                          </button>
                         </div>
                         {courseEarnings && (
                           <p className="text-[10px] text-[#94A3B8]">

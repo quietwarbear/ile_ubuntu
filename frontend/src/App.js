@@ -9,6 +9,7 @@ import BrandMark from './components/brand/BrandMark';
 import OnboardingWizard from './components/OnboardingWizard';
 import LoginPage from './pages/LoginPage';
 import ResetPasswordPage from './pages/ResetPasswordPage';
+import JoinCoursePage, { PendingInviteRedirect } from './pages/JoinCoursePage';
 import DashboardPage from './pages/DashboardPage';
 import CoursesPage from './pages/CoursesPage';
 import CourseDetailPage from './pages/CourseDetailPage';
@@ -93,6 +94,7 @@ function PublicRoutes({ handlePasswordLogin }) {
       <Route path="/blog" element={<PublicBlogPage onLogin={handleLogin} />} />
       <Route path="/login" element={<LoginPage onLogin={handleGoogleFromLogin} onPasswordLogin={handlePasswordLogin} />} />
       <Route path="/reset-password" element={<ResetPasswordPage />} />
+      <Route path="/join/:code" element={<JoinCoursePage />} />
       <Route path="*" element={<LandingPage onLogin={handleLogin} />} />
     </Routes>
   );
@@ -259,6 +261,7 @@ function App() {
             onComplete={() => setShowOnboarding(false)}
           />
         )}
+        <PendingInviteRedirect />
         <AppLayout user={user} onLogout={handleLogout}>
           <Routes>
             <Route path="/dashboard" element={<DashboardPage user={user} />} />
@@ -283,6 +286,7 @@ function App() {
             <Route path="/blog/edit/:postId" element={<BlogEditorPage user={user} />} />
             <Route path="/blog/:slug" element={<BlogPostPage user={user} />} />
             <Route path="/teacher-dashboard" element={<TeacherDashboardPage user={user} />} />
+            <Route path="/join/:code" element={<JoinCoursePage user={user} />} />
             <Route path="/about" element={<AboutPage />} />
             <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
             <Route path="/terms" element={<TermsPage />} />

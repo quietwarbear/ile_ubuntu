@@ -40,6 +40,9 @@ events_col = db.events
 # Attendance v0 (one record per session+user; eval §10 Quick Win 4)
 attendance_col = db.attendance
 
+# Course invite codes (closed-ecosystem joining)
+course_invites_col = db.course_invites
+
 
 def ensure_indexes():
     """Create the indexes the hot query paths rely on. Idempotent; called at startup.
@@ -97,6 +100,9 @@ def ensure_indexes():
         # Attendance: one record per session+user; per-user history
         (attendance_col, [("session_id", 1), ("user_id", 1)], {"unique": True}),
         (attendance_col, [("user_id", 1), ("marked_at", -1)], {}),
+        # Course invites: resolve by code, list per course
+        (course_invites_col, [("code", 1)], {"unique": True}),
+        (course_invites_col, [("course_id", 1)], {}),
     ]
 
     for col, keys, kwargs in specs:

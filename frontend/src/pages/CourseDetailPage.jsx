@@ -22,6 +22,8 @@ export default function CourseDetailPage({ user }) {
   const [course, setCourse] = useState(null);
   const [lessons, setLessons] = useState([]);
   const [enrollment, setEnrollment] = useState(null);
+  const [inviteCode, setInviteCode] = useState(null);
+  const [inviteCopied, setInviteCopied] = useState(false);
   const [progress, setProgress] = useState(null);
   const [enrollments, setEnrollments] = useState([]);
   const [filesMap, setFilesMap] = useState({});
@@ -228,6 +230,53 @@ export default function CourseDetailPage({ user }) {
         user={user} isInstructor={isInstructor}
         onEnroll={handleEnroll} onUnenroll={handleUnenroll}
       />
+
+      {/* Invite students (instructor only) */}
+      {isInstructor && (
+        <div className="p-4 rounded-md bg-[#0F172A] border border-[#1E293B]">
+          {!inviteCode ? (
+            <button
+              onClick={async () => {
+                try {
+                  const res = await apiPost(`/api/courses/${courseId}/invite-code`, {});
+                  setInviteCode(res.code);
+                } catch (e) { alert(e.message); }
+              }}
+              className="text-sm text-[#D4AF37] hover:underline"
+              data-testid="invite-students-btn"
+            >
+              Invite students to this course →
+            </button>
+          ) : (
+            <div className="flex flex-col sm:flex-row items-center gap-4">
+              <img
+                src={`https://api.qrserver.com/v1/create-qr-code/?size=120x120&bgcolor=15-23-42&color=212-175-55&data=${encodeURIComponent(`${window.location.origin}/join/${inviteCode}`)}`}
+                alt="Course invite QR code"
+                className="w-[120px] h-[120px] rounded border border-[#1E293B] flex-shrink-0"
+              />
+              <div className="flex-1 min-w-0 text-center sm:text-left">
+                <p className="text-xs tracking-[0.15em] uppercase text-[#D4AF37] mb-1">Invite link</p>
+                <p className="text-sm text-[#F8FAFC] break-all">{window.location.origin}/join/{inviteCode}</p>
+                <p className="text-xs text-[#94A3B8] mt-1">
+                  Share the link or let students scan the code. Anyone with it can join
+                  {course.is_premium && course.premium_price > 0 ? ' after purchasing' : ''} — even if the course is unlisted.
+                </p>
+                <button
+                  onClick={() => {
+                    navigator.clipboard.writeText(`${window.location.origin}/join/${inviteCode}`);
+                    setInviteCopied(true);
+                    setTimeout(() => setInviteCopied(false), 2000);
+                  }}
+                  className="mt-2 px-3 py-1.5 rounded text-xs bg-[#D4AF37]/15 text-[#D4AF37] border border-[#D4AF37]/30 hover:bg-[#D4AF37]/25"
+                  data-testid="copy-invite-link"
+                >
+                  {inviteCopied ? 'Copied!' : 'Copy link'}
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Curriculum */}
       <div>

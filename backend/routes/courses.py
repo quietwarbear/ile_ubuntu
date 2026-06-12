@@ -1,7 +1,8 @@
 from fastapi import APIRouter, HTTPException, Query, Request, Depends
 from datetime import datetime, timezone
 import uuid
-from database import courses_col, lessons_col, files_col, enrollments_col
+import secrets
+from database import courses_col, lessons_col, files_col, enrollments_col, course_invites_col
 from middleware import get_current_user
 from models.user import has_permission, UserRole
 from models.course import CourseStatus
@@ -25,6 +26,10 @@ async def create_course(request: Request, current_user: dict = Depends(get_curre
         "instructor_id": current_user["id"],
         "instructor_name": current_user["name"],
         "status": CourseStatus.DRAFT,
+        # Closed-ecosystem default: new courses are invite-only until the
+        # teacher explicitly lists them. (Existing courses without the field
+        # are treated as listed for backward compatibility.)
+        "visibility": data.get("visibility", "unlisted"),
         "tags": data.get("tags", []),
         "lessons": [],
         "enrolled_count": 0,
@@ -47,9 +52,23 @@ def list_courses(
     query = {}
     if status:
         query["status"] = status
-    # Faculty+ see all; students see only active
-    if not has_permission(current_user["role"], UserRole.FACULTY):
+
+    # Catalog rules (closed ecosystem):
+    # - listed = visibility "listed" OR no visibility field (pre-feature courses)
+    # - students/assistants: active + listed only
+    # - faculty/elder: active+listed community courses PLUS their own (any state)
+    # - admin: everything
+    listed_clause = {"$or": [{"visibility": "listed"}, {"visibility": {"$exists": False}}]}
+    if current_user["role"] == UserRole.ADMIN:
+        pass
+    elif has_permission(current_user["role"], UserRole.FACULTY):
+        query["$or"] = [
+            {"$and": [{"status": CourseStatus.ACTIVE}, listed_clause]},
+            {"instructor_id": current_user["id"]},
+        ]
+    else:
         query["status"] = CourseStatus.ACTIVE
+        query.update(listed_clause)
 
     courses = list(
         courses_col.find(query, {"_id": 0}).sort("created_at", -1).skip(skip).limit(limit)
@@ -62,6 +81,11 @@ def get_course(course_id: str, current_user: dict = Depends(get_current_user)):
     course = courses_col.find_one({"id": course_id}, {"_id": 0})
     if not course:
         raise HTTPException(status_code=404, detail="Course not found")
+    # Draft privacy: only the instructor or an admin can see a draft.
+    # (Unlisted ACTIVE courses are intentionally reachable by direct link/invite.)
+    if course.get("status") == CourseStatus.DRAFT:
+        if course["instructor_id"] != current_user["id"] and current_user["role"] != UserRole.ADMIN:
+            raise HTTPException(status_code=404, detail="Course not found")
     return course
 
 
@@ -316,3 +340,112 @@ def list_course_enrollments(course_id: str, current_user: dict = Depends(get_cur
 
     enrollments = list(enrollments_col.find({"course_id": course_id}, {"_id": 0}))
     return enrollments
+
+
+# --- Visibility & invites (closed-ecosystem joining) ---
+
+def _require_course_owner(course_id: str, current_user: dict) -> dict:
+    course = courses_col.find_one({"id": course_id})
+    if not course:
+        raise HTTPException(status_code=404, detail="Course not found")
+    if course["instructor_id"] != current_user["id"] and current_user["role"] != UserRole.ADMIN:
+        raise HTTPException(status_code=403, detail="Only the course instructor can do this")
+    return course
+
+
+@router.post("/{course_id}/visibility")
+async def set_visibility(course_id: str, request: Request, current_user: dict = Depends(get_current_user)):
+    """Toggle a course between 'listed' (community catalog) and 'unlisted' (invite-only)."""
+    _require_course_owner(course_id, current_user)
+    data = await request.json()
+    visibility = data.get("visibility")
+    if visibility not in ("listed", "unlisted"):
+        raise HTTPException(status_code=400, detail="visibility must be 'listed' or 'unlisted'")
+    courses_col.update_one({"id": course_id}, {"$set": {"visibility": visibility}})
+    return {"success": True, "visibility": visibility}
+
+
+@router.post("/{course_id}/invite-code")
+def get_or_create_invite_code(course_id: str, current_user: dict = Depends(get_current_user)):
+    """Return the course's invite code, creating it on first call."""
+    course = _require_course_owner(course_id, current_user)
+    existing = course_invites_col.find_one({"course_id": course_id, "active": True}, {"_id": 0})
+    if existing:
+        return {"code": existing["code"]}
+    code = secrets.token_urlsafe(6)[:8].replace("_", "x").replace("-", "y").upper()
+    course_invites_col.insert_one({
+        "id": str(uuid.uuid4()),
+        "code": code,
+        "course_id": course_id,
+        "course_title": course["title"],
+        "created_by": current_user["id"],
+        "created_at": datetime.now(timezone.utc),
+        "active": True,
+        "uses": 0,
+    })
+    return {"code": code}
+
+
+# NOTE: registered on the courses router but addressed by code, not course id.
+@router.get("/invites/{code}/resolve")
+def resolve_invite(code: str):
+    """PUBLIC: resolve an invite code to course info for the join page.
+    No session required — shows enough to decide to sign in and join."""
+    invite = course_invites_col.find_one({"code": code.upper(), "active": True}, {"_id": 0})
+    if not invite:
+        raise HTTPException(status_code=404, detail="Invite not found or no longer active")
+    course = courses_col.find_one({"id": invite["course_id"]}, {"_id": 0})
+    if not course or course.get("status") != CourseStatus.ACTIVE:
+        raise HTTPException(status_code=404, detail="This course is not currently open")
+    return {
+        "code": invite["code"],
+        "course_id": course["id"],
+        "title": course["title"],
+        "description": course.get("description", ""),
+        "instructor_name": course.get("instructor_name", ""),
+        "image_url": course.get("image_url", ""),
+        "is_premium": bool(course.get("is_premium")) and (course.get("premium_price") or 0) > 0,
+        "premium_price": course.get("premium_price", 0),
+    }
+
+
+@router.post("/invites/{code}/accept")
+def accept_invite(code: str, current_user: dict = Depends(get_current_user)):
+    """Join a course via invite. Free → enroll immediately; premium → tell the
+    client to start checkout (fulfillment stays webhook-only)."""
+    invite = course_invites_col.find_one({"code": code.upper(), "active": True})
+    if not invite:
+        raise HTTPException(status_code=404, detail="Invite not found or no longer active")
+    course = courses_col.find_one({"id": invite["course_id"]})
+    if not course or course.get("status") != CourseStatus.ACTIVE:
+        raise HTTPException(status_code=404, detail="This course is not currently open")
+
+    if enrollments_col.find_one({"user_id": current_user["id"], "course_id": course["id"]}):
+        return {"enrolled": True, "course_id": course["id"], "message": "Already enrolled"}
+
+    if course.get("is_premium") and (course.get("premium_price") or 0) > 0:
+        return {
+            "enrolled": False,
+            "course_id": course["id"],
+            "premium_required": True,
+            "premium_price": course["premium_price"],
+        }
+
+    check_enrollment_limit(current_user)
+    enrollment = {
+        "id": str(uuid.uuid4()),
+        "user_id": current_user["id"],
+        "user_name": current_user["name"],
+        "course_id": course["id"],
+        "enrolled_at": datetime.now(timezone.utc),
+        "completed_lessons": [],
+        "progress": 0.0,
+        "status": "active",
+        "completed_at": None,
+        "via_invite": invite["code"],
+    }
+    enrollments_col.insert_one(enrollment)
+    courses_col.update_one({"id": course["id"]}, {"$inc": {"enrolled_count": 1}})
+    course_invites_col.update_one({"code": invite["code"]}, {"$inc": {"uses": 1}})
+    emit("course.enrolled", current_user, "course", course["id"], meta={"via": "invite"})
+    return {"enrolled": True, "course_id": course["id"]}
