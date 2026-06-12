@@ -20,6 +20,7 @@ const es = {
   family_my: 'Mi Familia',
   mentorship: 'Mentoría',
   community_dashboard: 'Panel Comunitario',
+  villages: 'Aldeas',
   onboard_about: 'Un poco sobre ti',
   onboard_about_sub: 'Tu año de nacimiento nos ayuda a proteger a los jóvenes de la aldea. Opcional.',
   onboard_birth_skip: 'Prefiero no decirlo',

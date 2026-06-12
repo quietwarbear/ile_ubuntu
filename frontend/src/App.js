@@ -13,6 +13,7 @@ import JoinCoursePage, { PendingInviteRedirect } from './pages/JoinCoursePage';
 import FamilyPage from './pages/FamilyPage';
 import MentorshipPage from './pages/MentorshipPage';
 import CommunityDashboardPage from './pages/CommunityDashboardPage';
+import VillagesPage, { VillageDetail } from './pages/VillagesPage';
 import DashboardPage from './pages/DashboardPage';
 import CoursesPage from './pages/CoursesPage';
 import CourseDetailPage from './pages/CourseDetailPage';
@@ -293,6 +294,8 @@ function App() {
             <Route path="/family" element={<FamilyPage user={user} />} />
             <Route path="/mentorship" element={<MentorshipPage user={user} />} />
             <Route path="/community-dashboard" element={<CommunityDashboardPage user={user} />} />
+            <Route path="/villages" element={<VillagesPage user={user} />} />
+            <Route path="/villages/:villageId" element={<VillageDetail user={user} />} />
             <Route path="/about" element={<AboutPage />} />
             <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
             <Route path="/terms" element={<TermsPage />} />

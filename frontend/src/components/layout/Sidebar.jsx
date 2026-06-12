@@ -23,6 +23,7 @@ import {
   ChalkboardTeacher,
   HouseLine,
   HandHeart,
+  TreeEvergreen,
 } from '@phosphor-icons/react';
 import { clearCookie, apiPut } from '../../lib/api';
 import { useI18n } from '../../i18n';
@@ -44,6 +45,7 @@ const navSections = [
   {
     labelKey: 'nav_belong',
     items: [
+      { to: '/villages', labelKey: 'villages', icon: TreeEvergreen },
       { to: '/community', labelKey: 'community', icon: Chats },
       { to: '/mentorship', labelKey: 'mentorship', icon: HandHeart },
       { to: '/spaces', labelKey: 'spaces', icon: ShieldCheck },

@@ -20,6 +20,7 @@ const en = {
   family_my: 'My Family',
   mentorship: 'Mentorship',
   community_dashboard: 'Community Dashboard',
+  villages: 'Villages',
   onboard_about: 'A little about you',
   onboard_about_sub: 'Your birth year helps us keep young people safe in the village. Optional.',
   onboard_birth_skip: 'Prefer not to say',

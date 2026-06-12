@@ -82,6 +82,7 @@ from routes.family import router as family_router
 from routes.mentorship import router as mentorship_router
 from routes.community_dashboard import router as community_dashboard_router
 from routes.checkins import router as checkins_router
+from routes.villages import router as villages_router
 
 app.include_router(auth_router)
 app.include_router(courses_router)
@@ -111,6 +112,7 @@ app.include_router(family_router)
 app.include_router(mentorship_router)
 app.include_router(community_dashboard_router)
 app.include_router(checkins_router)
+app.include_router(villages_router)
 
 
 @app.get("/")

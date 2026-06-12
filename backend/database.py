@@ -52,6 +52,9 @@ digest_log_col = db.digest_log
 # SEL check-ins (scores feed dashboard wellness; notes stay private)
 checkins_col = db.checkins
 
+# Villages — the community container (eval §6.1)
+villages_col = db.villages
+
 # Mentorship: faculty-blessed mentor <-> mentee pairings + shared goals/journal
 mentorship_pairs_col = db.mentorship_pairs
 mentorship_goals_col = db.mentorship_goals
@@ -130,6 +133,9 @@ def ensure_indexes():
         (mentorship_notes_col, [("pairing_id", 1), ("created_at", -1)], {}),
         # Check-ins: one per user per day; window queries for wellness
         (checkins_col, [("user_id", 1), ("day", -1)], {"unique": True}),
+        # Villages: id + membership lookups
+        (villages_col, [("id", 1)], {"unique": True}),
+        (villages_col, [("members.user_id", 1)], {}),
     ]
 
     for col, keys, kwargs in specs:
