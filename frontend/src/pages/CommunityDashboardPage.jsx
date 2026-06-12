@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import {
   UsersThree, Compass, HandsClapping, Handshake, Sparkle, Heart, HandHeart, Bell,
+  ArrowLeft,
 } from '@phosphor-icons/react';
 import { apiGet } from '../lib/api';
 
@@ -30,30 +31,45 @@ const ScoreRing = ({ score }) => (
 );
 
 export default function CommunityDashboardPage({ user }) {
+  // Phase 3 (deep migration): the village, not just the cohort, is a scope.
+  // scope = "village:<id>" | "cohort:<id>"; cohort drill-down stays inside.
+  const [villages, setVillages] = useState([]);
   const [cohorts, setCohorts] = useState([]);
-  const [cohortId, setCohortId] = useState('');
+  const [scope, setScope] = useState('');
   const [data, setData] = useState(null);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    apiGet('/api/cohorts').then(cs => {
+    Promise.all([
+      apiGet('/api/villages').catch(() => ({ mine: [] })),
+      apiGet('/api/cohorts').catch(() => []),
+    ]).then(([vData, cs]) => {
+      const vs = vData.all || vData.mine || [];
+      setVillages(vs);
       setCohorts(cs);
-      if (cs.length > 0) setCohortId(cs[0].id);
+      // Villages first: the village is the primitive.
+      if (vs.length > 0) setScope(`village:${vs[0].id}`);
+      else if (cs.length > 0) setScope(`cohort:${cs[0].id}`);
     }).catch(e => setError(e.message));
   }, []);
 
   const load = useCallback(() => {
-    if (!cohortId) return;
+    if (!scope) return;
+    const [kind, id] = scope.split(':');
     setLoading(true);
     setError('');
-    apiGet(`/api/dashboard/community/${cohortId}`)
+    apiGet(kind === 'village' ? `/api/dashboard/village/${id}` : `/api/dashboard/community/${id}`)
       .then(setData)
       .catch(e => setError(e.message))
       .finally(() => setLoading(false));
-  }, [cohortId]);
+  }, [scope]);
 
   useEffect(() => { load(); }, [load]);
+
+  const isVillageScope = scope.startsWith('village:');
+  const parentVillage = isVillageScope ? null
+    : villages.find(v => (v.cohort_ids || []).includes(scope.split(':')[1]));
 
   return (
     <div className="space-y-6 animate-fade-in-up" data-testid="community-dashboard-page">
@@ -70,15 +86,32 @@ export default function CommunityDashboardPage({ user }) {
           </p>
         </div>
         <select
-          value={cohortId}
-          onChange={e => setCohortId(e.target.value)}
+          value={scope}
+          onChange={e => setScope(e.target.value)}
           className="px-3 py-2 rounded-md bg-[#0F172A] border border-[#1E293B] text-xs text-[#F8FAFC] focus:outline-none focus:border-[#D4AF37]/50"
-          data-testid="dashboard-cohort-select"
+          data-testid="dashboard-scope-select"
         >
-          {cohorts.length === 0 && <option value="">No cohorts yet</option>}
-          {cohorts.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+          {villages.length === 0 && cohorts.length === 0 && <option value="">Nothing to measure yet</option>}
+          {villages.length > 0 && (
+            <optgroup label="Villages">
+              {villages.map(v => <option key={v.id} value={`village:${v.id}`}>{v.name}</option>)}
+            </optgroup>
+          )}
+          {cohorts.length > 0 && (
+            <optgroup label="Cohorts">
+              {cohorts.map(c => <option key={c.id} value={`cohort:${c.id}`}>{c.name}</option>)}
+            </optgroup>
+          )}
         </select>
       </div>
+
+      {/* Drill-down breadcrumb: back from a cohort to its village */}
+      {parentVillage && (
+        <button onClick={() => setScope(`village:${parentVillage.id}`)}
+          className="flex items-center gap-1.5 text-xs text-[#94A3B8] hover:text-[#D4AF37]" data-testid="back-to-village">
+          <ArrowLeft size={13} /> Back to {parentVillage.name}
+        </button>
+      )}
 
       {error && <p className="text-sm text-red-400 bg-red-400/10 rounded-md px-4 py-3">{error}</p>}
       {loading && <p className="text-sm text-[#94A3B8]">Listening to the village…</p>}
@@ -108,8 +141,41 @@ export default function CommunityDashboardPage({ user }) {
                 <p className="text-[10px] text-[#94A3B8] mt-2 italic">
                   An invitation, not a verdict — a check-in, a call, a word of welcome.
                 </p>
+                {/* Mentors of the village, ready to carry an attention name
+                    (precursor to eval §7.5 interventions) */}
+                {data.village_mentors?.length > 0 && (
+                  <div className="mt-3 pt-3 border-t border-[#1E293B]">
+                    <p className="text-[10px] tracking-[0.15em] uppercase text-[#D4AF37] mb-1.5 flex items-center gap-1">
+                      <HandHeart size={11} weight="duotone" /> Suggest a mentor check-in
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      {data.village_mentors.map(m => (
+                        <span key={m.id} className="flex items-center gap-1.5 text-xs text-[#F8FAFC] bg-[#050814] border border-[#D4AF37]/20 rounded-full px-2.5 py-1">
+                          <img src={m.picture || `https://ui-avatars.com/api/?name=${encodeURIComponent(m.name)}&background=0F172A&color=D4AF37`} alt="" className="w-4 h-4 rounded-full" />
+                          {m.name}
+                        </span>
+                      ))}
+                    </div>
+                    <p className="text-[10px] text-[#475569] mt-1.5 italic">
+                      These members hold mentor or elder roles here — a quiet name above could be theirs to reach.
+                    </p>
+                  </div>
+                )}
               </CardContent>
             </Card>
+          )}
+
+          {/* Village scope: cohort drill-down stays one click away */}
+          {data.cohorts?.length > 0 && (
+            <div className="flex flex-wrap items-center gap-2" data-testid="cohort-drilldown">
+              <span className="text-[10px] tracking-[0.15em] uppercase text-[#475569]">Drill into a cohort:</span>
+              {data.cohorts.map(c => (
+                <button key={c.id} onClick={() => setScope(`cohort:${c.id}`)}
+                  className="text-xs text-[#F8FAFC] bg-[#0F172A] border border-[#1E293B] rounded-md px-3 py-1.5 hover:border-[#D4AF37]/30">
+                  {c.name} <span className="text-[#475569]">· {c.member_count}</span>
+                </button>
+              ))}
+            </div>
           )}
 
           {/* Village dimensions */}

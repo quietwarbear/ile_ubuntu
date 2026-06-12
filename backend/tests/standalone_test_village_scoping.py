@@ -15,9 +15,10 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from middleware import get_current_user
 import routes.villages as villages, routes.courses as courses, routes.live_sessions as live_sessions
+import routes.community_dashboard as community_dashboard, routes.family as family
 
 app = FastAPI()
-for m in (villages, courses, live_sessions):
+for m in (villages, courses, live_sessions, community_dashboard, family):
     app.include_router(m.router)
 
 USERS = {
@@ -112,6 +113,37 @@ check("home sessions include village session", any(x["id"] == s["id"] for x in h
 check("home role is youth", h["my_village_role"] == "youth")
 as_user("bob")
 check("non-member home feed -> 403", c.get(f"/api/villages/{v['id']}/home").status_code == 403)
+
+# Phase 3: measures go village-wide
+as_user("fac")
+r = c.get(f"/api/dashboard/village/{v['id']}")
+check("village dashboard (faculty) -> 200", r.status_code == 200)
+d = r.json()
+check("village dashboard sections", all(k in d for k in ("village", "dimensions", "members", "attention", "village_mentors", "cohorts")))
+check("village dashboard counts all members", d["village"]["member_count"] == 2)  # fac + alice
+check("members carry village_role", all("village_role" in m for m in d["members"]))
+
+# mentors surface for check-in routing
+import database as _db
+_db.users_col.insert_one({"id": "mona", "email": "m@x.co", "name": "Mona", "role": "student", "subscription_tier": "elder_circle"})
+c.post(f"/api/villages/{v['id']}/members", json={"user_id": "mona", "village_role": "mentor"})
+d = c.get(f"/api/dashboard/village/{v['id']}").json()
+check("village mentors surfaced", any(m["id"] == "mona" for m in d["village_mentors"]))
+
+as_user("bob")
+check("non-steward village dashboard -> 403", c.get(f"/api/dashboard/village/{v['id']}").status_code == 403)
+
+# family digest: youth section carries village + goal progress
+as_user("fac")
+c.post(f"/api/villages/{v['id']}/goals", json={"text": "Read together"})
+from routes.family import _build_youth_summary, _digest_section_html
+s = _build_youth_summary("alice")
+check("youth summary carries village", s["village"] and s["village"]["name"] == "Oak Circle")
+check("youth summary goal counts", s["village"]["goals_total"] == 1 and s["village"]["goals_done"] == 0)
+html = _digest_section_html(s)
+check("digest section names the village", "Oak Circle" in html and "0 of 1 goals" in html)
+s2 = _build_youth_summary("bob")
+check("villageless youth -> no village block", s2["village"] is None and "Oak Circle" not in _digest_section_html(s2))
 
 print(f"\n{ok} passed, {fail} failed")
 exit(1 if fail else 0)

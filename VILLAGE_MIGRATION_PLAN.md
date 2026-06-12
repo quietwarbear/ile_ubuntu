@@ -46,7 +46,16 @@ untouched. Sidebar pins a VILLAGE section on top when the user has one.
 4. DashboardPage's learner content folds into the village feed over time —
    don't delete it; commons users still need it.
 
-## Phase 3 — Measures go village-wide
+## Phase 3 — Measures go village-wide ✅ SHIPPED 2026-06-12
+
+*All three items landed. GET /api/dashboard/village/{id} shares
+_compute_dashboard() with the cohort view; access = faculty+ OR that
+village's stewards. Response adds village_mentors (mentor/elder roles, for
+check-in routing) and cohorts (drill-down chips in the UI; breadcrumb back).
+Digest youth sections name the village + goals carried home; villageless
+youth get no village line. BONUS FIX: attention-list datetime comparison
+500'd on real PyMongo (naive vs aware) — normalized in _compute_dashboard;
+this also fixed the pre-existing cohort dashboard. Suite now 32 checks.*
 
 1. Community Dashboard: village selector (members = village.members), not just
    cohorts. Keep cohort drill-down inside it.

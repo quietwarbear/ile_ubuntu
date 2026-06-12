@@ -15,7 +15,7 @@ from datetime import datetime, timezone, timedelta
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 
-from database import users_col, family_links_col, enrollments_col, courses_col, events_col
+from database import users_col, family_links_col, enrollments_col, courses_col, events_col, villages_col
 from middleware import get_current_user
 from events import emit
 
@@ -124,8 +124,24 @@ def _build_youth_summary(youth_id: str) -> dict:
     for row in events_col.aggregate(pipeline):
         week_counts[row["_id"]] = row["count"]
 
+    # Their village (Phase 3: measures go village-wide). First village if
+    # several — the digest is a warm note, not an exhaustive report.
+    village = villages_col.find_one(
+        {"members.user_id": youth_id},
+        {"_id": 0, "id": 1, "name": 1, "season": 1, "goals": 1})
+    village_info = None
+    if village:
+        goals = village.get("goals", [])
+        village_info = {
+            "name": village["name"],
+            "season": village.get("season", ""),
+            "goals_done": sum(1 for g in goals if g.get("done")),
+            "goals_total": len(goals),
+        }
+
     return {
         "youth": youth,
+        "village": village_info,
         "enrollments": enrollments,
         "this_week": {
             "lessons_completed": week_counts.get("lesson.completed", 0),
@@ -187,8 +203,22 @@ def _digest_section_html(s: dict) -> str:
     if done:
         journey += f"<p>Already carried home: {', '.join(e['course_title'] for e in done)}. 🏆</p>"
 
+    # Their village walks with them (Phase 3): name + collective goal progress.
+    village_html = ""
+    v = s.get("village")
+    if v:
+        if v["goals_total"]:
+            village_html = (
+                f"<p style='color:#94A3B8'>{first}'s village, <strong style='color:#D4AF37'>{v['name']}</strong>, "
+                f"has carried home {v['goals_done']} of {v['goals_total']} goals"
+                f"{' this ' + v['season'] if v['season'] else ' this season'}.</p>")
+        else:
+            village_html = (
+                f"<p style='color:#94A3B8'>{first} belongs to the "
+                f"<strong style='color:#D4AF37'>{v['name']}</strong> village.</p>")
+
     return (f"<h3 style='color:#D4AF37;font-size:15px;margin:18px 0 6px'>{name}</h3>"
-            f"{week_html}{journey}")
+            f"{week_html}{village_html}{journey}")
 
 
 def _send_guardian_digest(guardian: dict, youth_ids: list) -> bool:

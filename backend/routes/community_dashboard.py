@@ -15,7 +15,7 @@ from datetime import datetime, timezone, timedelta
 
 from fastapi import APIRouter, Depends, HTTPException
 
-from database import cohorts_col, users_col, events_col, mentorship_pairs_col, checkins_col
+from database import cohorts_col, users_col, events_col, mentorship_pairs_col, checkins_col, villages_col
 from middleware import get_current_user
 from models.user import has_permission, UserRole
 
@@ -47,19 +47,9 @@ def _score(counts: dict, dimension: str) -> int:
     return min(100, total)
 
 
-@router.get("/community/{cohort_id}")
-def community_dashboard(cohort_id: str, current_user: dict = Depends(get_current_user)):
-    if not has_permission(current_user["role"], UserRole.FACULTY):
-        raise HTTPException(status_code=403, detail="Faculty access required")
-
-    cohort = cohorts_col.find_one({"id": cohort_id}, {"_id": 0, "id": 1, "name": 1, "members": 1})
-    if not cohort:
-        raise HTTPException(status_code=404, detail="Cohort not found")
-    member_ids = cohort.get("members", [])
-    if not member_ids:
-        return {"cohort": cohort, "dimensions": None, "members": [], "attention": [],
-                "message": "No members yet — the dashboard comes alive as the village does."}
-
+def _compute_dashboard(member_ids: list) -> dict:
+    """The five Ubuntu dimensions for any set of members — shared by the
+    cohort view and the village view (Phase 3: measures go village-wide)."""
     since = datetime.now(timezone.utc) - timedelta(days=WINDOW_DAYS)
     attention_cutoff = datetime.now(timezone.utc) - timedelta(days=ATTENTION_DAYS)
 
@@ -140,6 +130,11 @@ def community_dashboard(cohort_id: str, current_user: dict = Depends(get_current
             agg[k] += m["scores"][k]
 
         seen = last_seen.get(uid)
+        # PyMongo (tz_aware=False, our default client) returns NAIVE UTC
+        # datetimes; attention_cutoff is aware. Normalize before comparing —
+        # without this the whole dashboard 500s for any scope with activity.
+        if seen is not None and seen.tzinfo is None:
+            seen = seen.replace(tzinfo=timezone.utc)
         if seen is None or seen < attention_cutoff:
             attention.append({**u, "last_seen": seen})
 
@@ -160,9 +155,79 @@ def community_dashboard(cohort_id: str, current_user: dict = Depends(get_current
     members.sort(key=lambda m: (m["name"] or "").lower())
 
     return {
-        "cohort": {"id": cohort["id"], "name": cohort["name"], "member_count": n},
         "window_days": WINDOW_DAYS,
         "dimensions": dimensions,
         "members": members,
         "attention": attention,
     }
+
+
+@router.get("/community/{cohort_id}")
+def community_dashboard(cohort_id: str, current_user: dict = Depends(get_current_user)):
+    if not has_permission(current_user["role"], UserRole.FACULTY):
+        raise HTTPException(status_code=403, detail="Faculty access required")
+
+    cohort = cohorts_col.find_one({"id": cohort_id}, {"_id": 0, "id": 1, "name": 1, "members": 1})
+    if not cohort:
+        raise HTTPException(status_code=404, detail="Cohort not found")
+    member_ids = cohort.get("members", [])
+    if not member_ids:
+        return {"cohort": cohort, "dimensions": None, "members": [], "attention": [],
+                "message": "No members yet — the dashboard comes alive as the village does."}
+
+    result = _compute_dashboard(member_ids)
+    return {
+        "cohort": {"id": cohort["id"], "name": cohort["name"], "member_count": len(member_ids)},
+        **result,
+    }
+
+
+@router.get("/village/{village_id}")
+def village_dashboard(village_id: str, current_user: dict = Depends(get_current_user)):
+    """The same five dimensions, scoped to the whole village (Phase 3).
+    Faculty+ or the village's own stewards (educators/elders) may look.
+    Adds: the village's mentors (for 'suggest a mentor check-in' routing —
+    precursor to eval §7.5 interventions) and its cohorts for drill-down."""
+    village = villages_col.find_one({"id": village_id}, {"_id": 0})
+    if not village:
+        raise HTTPException(status_code=404, detail="Village not found")
+
+    is_steward = any(
+        m["user_id"] == current_user["id"] and m["village_role"] in ("educator", "elder")
+        for m in village.get("members", []))
+    if not is_steward and not has_permission(current_user["role"], UserRole.FACULTY):
+        raise HTTPException(status_code=403, detail="Only the village's stewards see its dashboard")
+
+    member_ids = [m["user_id"] for m in village.get("members", [])]
+    scope = {"id": village["id"], "name": village["name"], "member_count": len(member_ids)}
+    if not member_ids:
+        return {"village": scope, "dimensions": None, "members": [], "attention": [],
+                "village_mentors": [], "cohorts": [],
+                "message": "No members yet — the dashboard comes alive as the village does."}
+
+    result = _compute_dashboard(member_ids)
+
+    # Mentors of the village, for routing an attention name to a human.
+    role_by_user = {m["user_id"]: m["village_role"] for m in village.get("members", [])}
+    mentor_ids = [uid for uid, r in role_by_user.items() if r in ("mentor", "elder")]
+    village_mentors = [
+        users_col.find_one({"id": uid}, {"_id": 0, "id": 1, "name": 1, "picture": 1})
+        or {"id": uid, "name": "Unknown"}
+        for uid in mentor_ids
+    ]
+
+    # Annotate members and attention with how each belongs to this village.
+    for m in result["members"]:
+        m["village_role"] = role_by_user.get(m["id"])
+    for a in result["attention"]:
+        a["village_role"] = role_by_user.get(a["id"])
+
+    # Cohort drill-down stays available inside the village view.
+    cohorts = [
+        {"id": c["id"], "name": c["name"], "member_count": len(c.get("members", []))}
+        for c in cohorts_col.find(
+            {"id": {"$in": village.get("cohort_ids", [])}},
+            {"_id": 0, "id": 1, "name": 1, "members": 1})
+    ]
+
+    return {"village": scope, **result, "village_mentors": village_mentors, "cohorts": cohorts}
