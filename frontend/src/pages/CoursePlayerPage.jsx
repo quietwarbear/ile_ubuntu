@@ -2,10 +2,11 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useParams, useNavigate, Navigate } from 'react-router-dom';
 import {
   ArrowLeft, CheckCircle, Circle, CaretRight, List, X,
-  FilePdf, File as FileIcon, DownloadSimple, Eye,
+  FilePdf, File as FileIcon, DownloadSimple, Eye, PencilSimple,
 } from '@phosphor-icons/react';
-import { apiGet, apiPost, BACKEND_URL } from '../lib/api';
+import { apiGet, apiPost, apiPut, BACKEND_URL } from '../lib/api';
 import LessonContentViewer from '../components/LessonContentViewer';
+import MarkdownEditor from '../components/course/MarkdownEditor';
 import { LessonVideoPlayer } from '../components/course/LessonVideoPlayer';
 import { LessonQuiz } from '../components/course/LessonQuiz';
 import { LessonComments } from '../components/course/LessonComments';
@@ -38,6 +39,9 @@ export default function CoursePlayerPage({ user }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [viewingPdf, setViewingPdf] = useState(null);
   const [completing, setCompleting] = useState(false);
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState({ content: '', banner_url: '' });
+  const [savingContent, setSavingContent] = useState(false);
 
   const isInstructor = ['faculty', 'elder', 'admin'].includes(user?.role) && course?.instructor_id === user?.id;
 
@@ -106,6 +110,22 @@ export default function CoursePlayerPage({ user }) {
   };
 
   const files = filesMap[current.id] || [];
+
+  const startEdit = () => {
+    setDraft({ content: current.content || '', banner_url: current.banner_url || '' });
+    setEditing(true);
+  };
+  const saveContent = async () => {
+    setSavingContent(true);
+    try {
+      await apiPut(`/api/courses/${courseId}/lessons/${current.id}`, {
+        content: draft.content, banner_url: draft.banner_url,
+      });
+      await load();
+      setEditing(false);
+    } catch (e) { alert(e.message); }
+    setSavingContent(false);
+  };
 
   const SidebarInner = (
     <div className="flex flex-col h-full">
@@ -185,12 +205,46 @@ export default function CoursePlayerPage({ user }) {
           </div>
         )}
 
-        {/* Banner + rich content, full width */}
-        {(current.content || current.banner_url) && (
-          <div className="mb-5">
-            <LessonContentViewer content={current.content} banner={current.banner_url} />
-          </div>
-        )}
+        {/* Banner + rich content, full width — instructors can edit inline */}
+        <div className="mb-5">
+          {editing ? (
+            <div className="space-y-2">
+              <input
+                value={draft.banner_url}
+                onChange={e => setDraft(d => ({ ...d, banner_url: e.target.value }))}
+                placeholder="Banner image URL (optional)"
+                className="w-full px-3 py-2 rounded-md bg-[#050814] border border-[#1E293B] text-xs text-[#F8FAFC] placeholder-[#475569] focus:outline-none focus:border-[#D4AF37]/50"
+              />
+              <MarkdownEditor
+                value={draft.content}
+                onChange={(v) => setDraft(d => ({ ...d, content: v }))}
+                placeholder="Write the lesson — toolbar inserts images, video, PDFs, links…"
+                minHeight={220}
+                testId="player-content-editor"
+              />
+              <div className="flex gap-2">
+                <button onClick={saveContent} disabled={savingContent}
+                  className="px-4 py-1.5 rounded-md bg-[#D4AF37] text-[#050814] text-xs font-medium hover:bg-[#F3E5AB] disabled:opacity-60">
+                  {savingContent ? 'Saving…' : 'Save'}
+                </button>
+                <button onClick={() => setEditing(false)} className="px-4 py-1.5 rounded-md text-[#94A3B8] text-xs hover:text-[#F8FAFC]">Cancel</button>
+              </div>
+            </div>
+          ) : (
+            <>
+              {(current.content || current.banner_url) ? (
+                <LessonContentViewer content={current.content} banner={current.banner_url} />
+              ) : (
+                isInstructor && <p className="text-xs text-[#475569] italic">No content yet.</p>
+              )}
+              {isInstructor && (
+                <button onClick={startEdit} className="mt-2 flex items-center gap-1.5 text-[11px] text-[#94A3B8] hover:text-[#D4AF37]" data-testid="edit-content">
+                  <PencilSimple size={13} /> {current.content || current.banner_url ? 'Edit content' : 'Add content'}
+                </button>
+              )}
+            </>
+          )}
+        </div>
 
         {/* Materials */}
         {files.length > 0 && (

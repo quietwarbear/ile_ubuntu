@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { Card, CardContent } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
-import { Textarea } from '../components/ui/textarea';
+import MarkdownEditor from '../components/course/MarkdownEditor';
 import {
   ArrowLeft, BookOpenText, Plus,
 } from '@phosphor-icons/react';
@@ -351,9 +351,12 @@ export default function CourseDetailPage({ user }) {
               <Input placeholder="Brief description" value={lessonForm.description}
                 onChange={e => setLessonForm({ ...lessonForm, description: e.target.value })}
                 className="bg-[#050814] border-[#1E293B] text-[#F8FAFC]" data-testid="new-lesson-desc" />
-              <Textarea placeholder="Lesson content — markdown, with image/PDF/YouTube/Vimeo/Slides links to embed inline" value={lessonForm.content}
-                onChange={e => setLessonForm({ ...lessonForm, content: e.target.value })}
-                className="bg-[#050814] border-[#1E293B] text-[#F8FAFC] min-h-[80px]" data-testid="new-lesson-content" />
+              <MarkdownEditor
+                value={lessonForm.content}
+                onChange={(v) => setLessonForm({ ...lessonForm, content: v })}
+                placeholder="Lesson content — write, and use the toolbar to insert images, video, PDFs, links…"
+                testId="new-lesson-content"
+              />
               <div className="flex flex-col sm:flex-row gap-2">
                 <select value={lessonForm.module_id}
                   onChange={e => setLessonForm({ ...lessonForm, module_id: e.target.value })}
