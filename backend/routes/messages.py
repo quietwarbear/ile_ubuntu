@@ -23,9 +23,9 @@ def _dm_allowed(sender: dict, recipient: dict) -> bool:
     from routes.family import is_guardian_of
     if is_guardian_of(sender["id"], recipient["id"]) or is_guardian_of(recipient["id"], sender["id"]):
         return True
-    # Faculty-blessed mentorship pairings open the channel too
-    from routes.mentorship import are_mentor_pair
-    return are_mentor_pair(sender["id"], recipient["id"])
+    # Faculty-blessed learning circles open the channel too
+    from routes.learning_circles import are_co_learners
+    return are_co_learners(sender["id"], recipient["id"])
 
 
 @router.post("/messages")

@@ -15,7 +15,7 @@ from datetime import datetime, timezone, timedelta
 
 from fastapi import APIRouter, Depends, HTTPException
 
-from database import cohorts_col, users_col, events_col, mentorship_pairs_col, checkins_col, villages_col
+from database import cohorts_col, users_col, events_col, learning_circles_col, checkins_col, villages_col
 from middleware import get_current_user
 from models.user import has_permission, UserRole
 
@@ -28,8 +28,8 @@ ATTENTION_DAYS = 14
 DIMENSIONS = {
     "participation": ["lesson.completed", "live_session.joined", "quiz.attempted", "course.enrolled"],
     "contribution": ["post.created", "post.replied", "lesson.commented"],
-    "collaboration": ["post.replied", "live_session.joined", "cohort.joined", "mentorship.note_added"],
-    "leadership": ["post.created", "mentorship.goal_completed", "live_session.started", "course.created"],
+    "collaboration": ["post.replied", "live_session.joined", "cohort.joined", "circle.note_added"],
+    "leadership": ["post.created", "circle.goal_completed", "live_session.started", "course.created"],
 }
 
 # Per-event weights toward a 0–100 dimension score (capped). Deliberately
@@ -37,8 +37,8 @@ DIMENSIONS = {
 WEIGHTS = {
     "lesson.completed": 8, "live_session.joined": 12, "quiz.attempted": 8,
     "course.enrolled": 6, "post.created": 10, "post.replied": 6,
-    "lesson.commented": 6, "cohort.joined": 5, "mentorship.note_added": 8,
-    "mentorship.goal_completed": 15, "live_session.started": 12, "course.created": 15,
+    "lesson.commented": 6, "cohort.joined": 5, "circle.note_added": 8,
+    "circle.goal_completed": 15, "live_session.started": 12, "course.created": 15,
 }
 
 
@@ -82,9 +82,15 @@ def _compute_dashboard(member_ids: list) -> dict:
     ]
     active_days = {row["_id"]: row["active_days"] for row in events_col.aggregate(days_pipeline)}
 
-    # Mentor roles (leadership signal)
-    mentors = {p["mentor_id"] for p in mentorship_pairs_col.find(
-        {"mentor_id": {"$in": member_ids}}, {"_id": 0, "mentor_id": 1})}
+    # In a learning circle (belonging + leadership signal). Reciprocal: both
+    # co-learners count, neither is "the mentor."
+    circle_members = set()
+    for c in learning_circles_col.find(
+        {"$or": [{"co_learner_a_id": {"$in": member_ids}}, {"co_learner_b_id": {"$in": member_ids}}]},
+        {"_id": 0, "co_learner_a_id": 1, "co_learner_b_id": 1},
+    ):
+        circle_members.add(c["co_learner_a_id"])
+        circle_members.add(c["co_learner_b_id"])
 
     # Wellness: average of check-in scores (1–5 → 0–100) over the window.
     # Notes are NEVER read here — scores only.
@@ -112,15 +118,15 @@ def _compute_dashboard(member_ids: list) -> dict:
         m = {
             **u,
             "active_days": days,
-            "is_mentor": uid in mentors,
+            "in_circle": uid in circle_members,
             "last_seen": last_seen.get(uid),
             "scores": {
                 # Belonging: how regularly they show up (days, not volume).
-                "belonging": min(100, days * 8 + (10 if uid in mentors else 0)),
+                "belonging": min(100, days * 8 + (10 if uid in circle_members else 0)),
                 "participation": _score(counts, "participation"),
                 "contribution": _score(counts, "contribution"),
                 "collaboration": _score(counts, "collaboration"),
-                "leadership": min(100, _score(counts, "leadership") + (25 if uid in mentors else 0)),
+                "leadership": min(100, _score(counts, "leadership") + (25 if uid in circle_members else 0)),
                 "wellness": wellness_by_member.get(uid, {}).get("score"),
             },
             "raw": counts,

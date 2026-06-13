@@ -16,9 +16,10 @@ from fastapi.testclient import TestClient
 from middleware import get_current_user
 import routes.villages as villages, routes.courses as courses, routes.live_sessions as live_sessions
 import routes.community_dashboard as community_dashboard, routes.family as family
+import routes.learning_circles as learning_circles
 
 app = FastAPI()
-for m in (villages, courses, live_sessions, community_dashboard, family):
+for m in (villages, courses, live_sessions, community_dashboard, family, learning_circles):
     app.include_router(m.router)
 
 USERS = {
@@ -181,6 +182,33 @@ check("admin catalog hides another teacher's draft", all(x["id"] != draft["id"] 
 check("admin can still open the draft by link", c.get(f"/api/courses/{draft['id']}").status_code == 200)
 as_user("shy")
 check("owner still sees own draft in catalog", any(x["id"] == draft["id"] for x in c.get("/api/courses").json()))
+
+# Learning circles (reciprocal co-learner rename)
+as_user("alice")
+check("non-faculty can't form a circle", c.post("/api/learning-circles/form", json={"co_learner_a_id":"alice","co_learner_b_id":"bob"}).status_code == 403)
+as_user("fac")
+circ = c.post("/api/learning-circles/form", json={"co_learner_a_id":"alice","co_learner_b_id":"bob"})
+check("faculty forms a circle -> 200", circ.status_code == 200, circ.text)
+circ = circ.json()
+check("circle carries both co-learners", circ["co_learner_a"]["id"]=="alice" and circ["co_learner_b"]["id"]=="bob")
+check("duplicate circle (reverse order) -> 400", c.post("/api/learning-circles/form", json={"co_learner_a_id":"bob","co_learner_b_id":"alice"}).status_code == 400)
+# reciprocity: BOTH co-learners can add goals
+as_user("alice")
+check("co-learner A adds goal", c.post(f"/api/learning-circles/{circ['id']}/goals", json={"text":"read together"}).status_code == 200)
+check("alice sees the circle in mine", any(x["id"]==circ["id"] for x in c.get("/api/learning-circles").json()["mine"]))
+as_user("bob")
+check("co-learner B adds goal too (reciprocal)", c.post(f"/api/learning-circles/{circ['id']}/goals", json={"text":"build together"}).status_code == 200)
+check("co-learner B writes journal", c.post(f"/api/learning-circles/{circ['id']}/notes", json={"text":"good week"}).status_code == 200)
+# outsider can't peek
+as_user("fac")
+_db4.users_col.insert_one({"id":"zia","email":"z@x.co","name":"Zia","role":"student","subscription_tier":"elder_circle"})
+USERS["zia"]=_db4.users_col.find_one({"id":"zia"})
+as_user("zia")
+check("outsider can't open the circle -> 403", c.get(f"/api/learning-circles/{circ['id']}").status_code == 403)
+# are_co_learners powers messaging permission
+from routes.learning_circles import are_co_learners
+check("are_co_learners true for the pair", are_co_learners("alice","bob") and are_co_learners("bob","alice"))
+check("are_co_learners false for outsider", not are_co_learners("alice","zia"))
 
 print(f"\n{ok} passed, {fail} failed")
 exit(1 if fail else 0)

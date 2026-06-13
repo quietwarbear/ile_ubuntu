@@ -56,9 +56,9 @@ checkins_col = db.checkins
 villages_col = db.villages
 
 # Mentorship: faculty-blessed mentor <-> mentee pairings + shared goals/journal
-mentorship_pairs_col = db.mentorship_pairs
-mentorship_goals_col = db.mentorship_goals
-mentorship_notes_col = db.mentorship_notes
+learning_circles_col = db.learning_circles
+circle_goals_col = db.circle_goals
+circle_notes_col = db.circle_notes
 
 
 def ensure_indexes():
@@ -127,10 +127,14 @@ def ensure_indexes():
         # Digest log: idempotent weekly sends (duplicate triggers are no-ops)
         (digest_log_col, [("guardian_id", 1), ("week_key", 1)], {"unique": True}),
         # Mentorship: pair uniqueness + lookups from both sides + per-pairing content
-        (mentorship_pairs_col, [("mentor_id", 1), ("mentee_id", 1)], {"unique": True}),
-        (mentorship_pairs_col, [("mentee_id", 1)], {}),
-        (mentorship_goals_col, [("pairing_id", 1)], {}),
-        (mentorship_notes_col, [("pairing_id", 1), ("created_at", -1)], {}),
+        # Learning circles: one circle per co-learner pair (either seat order is
+        # the same pair, but the unique index only blocks exact a/b dupes —
+        # are_co_learners() guards the reverse). Lookups from both seats.
+        (learning_circles_col, [("co_learner_a_id", 1), ("co_learner_b_id", 1)], {"unique": True}),
+        (learning_circles_col, [("co_learner_a_id", 1)], {}),
+        (learning_circles_col, [("co_learner_b_id", 1)], {}),
+        (circle_goals_col, [("circle_id", 1)], {}),
+        (circle_notes_col, [("circle_id", 1), ("created_at", -1)], {}),
         # Check-ins: one per user per day; window queries for wellness
         (checkins_col, [("user_id", 1), ("day", -1)], {"unique": True}),
         # Villages: id + membership lookups

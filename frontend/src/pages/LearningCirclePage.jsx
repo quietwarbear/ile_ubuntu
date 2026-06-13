@@ -15,7 +15,9 @@ const Avatar = ({ person, size = 'w-7 h-7' }) => (
   />
 );
 
-function PairingCard({ pairing, currentUserId, onEnded }) {
+// Reciprocal: a circle has two co-learners, neither above the other. "other"
+// is simply whichever co-learner isn't me.
+function CircleCard({ circle, currentUserId, onEnded }) {
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [detail, setDetail] = useState(null);
@@ -23,46 +25,44 @@ function PairingCard({ pairing, currentUserId, onEnded }) {
   const [noteInput, setNoteInput] = useState('');
   const [busy, setBusy] = useState(false);
 
-  const other = pairing.my_side === 'mentor' ? pairing.mentee : pairing.mentor;
+  const other = circle.co_learner_a?.id === currentUserId ? circle.co_learner_b : circle.co_learner_a;
 
   const loadDetail = useCallback(() => {
-    apiGet(`/api/mentorship/${pairing.id}`).then(setDetail).catch(console.error);
-  }, [pairing.id]);
+    apiGet(`/api/learning-circles/${circle.id}`).then(setDetail).catch(console.error);
+  }, [circle.id]);
 
   useEffect(() => { if (open && !detail) loadDetail(); }, [open, detail, loadDetail]);
 
   const addGoal = async () => {
     if (!goalInput.trim()) return;
     setBusy(true);
-    try { await apiPost(`/api/mentorship/${pairing.id}/goals`, { text: goalInput }); setGoalInput(''); loadDetail(); }
+    try { await apiPost(`/api/learning-circles/${circle.id}/goals`, { text: goalInput }); setGoalInput(''); loadDetail(); }
     catch (e) { alert(e.message); }
     setBusy(false);
   };
 
   const toggleGoal = async (goalId) => {
-    try { await apiPut(`/api/mentorship/${pairing.id}/goals/${goalId}/toggle`, {}); loadDetail(); }
+    try { await apiPut(`/api/learning-circles/${circle.id}/goals/${goalId}/toggle`, {}); loadDetail(); }
     catch (e) { alert(e.message); }
   };
 
   const addNote = async () => {
     if (!noteInput.trim()) return;
     setBusy(true);
-    try { await apiPost(`/api/mentorship/${pairing.id}/notes`, { text: noteInput }); setNoteInput(''); loadDetail(); }
+    try { await apiPost(`/api/learning-circles/${circle.id}/notes`, { text: noteInput }); setNoteInput(''); loadDetail(); }
     catch (e) { alert(e.message); }
     setBusy(false);
   };
 
   return (
-    <Card className="bg-[#0F172A] border-[#1E293B]" data-testid={`pairing-${pairing.id}`}>
+    <Card className="bg-[#0F172A] border-[#1E293B]" data-testid={`circle-${circle.id}`}>
       <CardHeader className="pb-2 cursor-pointer" onClick={() => setOpen(o => !o)}>
         <div className="flex items-center justify-between">
           <CardTitle className="text-sm text-[#F8FAFC] flex items-center gap-2" style={{ fontFamily: 'Cormorant Garamond, serif' }}>
             <Avatar person={other} />
             <span>
               {other?.name}
-              <span className="text-[10px] text-[#94A3B8] ml-2">
-                {pairing.my_side === 'mentor' ? 'your mentee' : 'your mentor'}
-              </span>
+              <span className="text-[10px] text-[#94A3B8] ml-2">your co-learner</span>
             </span>
           </CardTitle>
           {open ? <CaretUp size={14} className="text-[#94A3B8]" /> : <CaretDown size={14} className="text-[#94A3B8]" />}
@@ -153,50 +153,50 @@ function PairingCard({ pairing, currentUserId, onEnded }) {
   );
 }
 
-export default function MentorshipPage({ user }) {
+export default function LearningCirclePage({ user }) {
   const [data, setData] = useState(null);
   const [users, setUsers] = useState([]);
-  const [mentorId, setMentorId] = useState('');
-  const [menteeId, setMenteeId] = useState('');
+  const [aId, setAId] = useState('');
+  const [bId, setBId] = useState('');
   const [message, setMessage] = useState(null);
   const [busy, setBusy] = useState(false);
 
   const isFaculty = ['faculty', 'elder', 'admin'].includes(user?.role);
 
   const load = useCallback(() => {
-    apiGet('/api/mentorship').then(setData).catch(e => setMessage({ type: 'error', text: e.message }));
+    apiGet('/api/learning-circles').then(setData).catch(e => setMessage({ type: 'error', text: e.message }));
     if (isFaculty) apiGet('/api/auth/users').then(setUsers).catch(() => {});
   }, [isFaculty]);
 
   useEffect(() => { load(); }, [load]);
 
-  const handlePair = async () => {
+  const handleForm = async () => {
     setBusy(true);
     try {
-      const res = await apiPost('/api/mentorship/pair', { mentor_id: mentorId, mentee_id: menteeId });
-      setMessage({ type: 'success', text: `${res.mentor.name} is now walking with ${res.mentee.name}.` });
-      setMentorId(''); setMenteeId('');
+      const res = await apiPost('/api/learning-circles/form', { co_learner_a_id: aId, co_learner_b_id: bId });
+      setMessage({ type: 'success', text: `${res.co_learner_a.name} and ${res.co_learner_b.name} are now walking together.` });
+      setAId(''); setBId('');
       load();
     } catch (e) { setMessage({ type: 'error', text: e.message }); }
     setBusy(false);
   };
 
-  const handleEnd = async (pairingId) => {
-    if (!window.confirm('End this mentorship pairing? Goals and journal entries are kept.')) return;
-    try { await apiDelete(`/api/mentorship/pair/${pairingId}`); load(); }
+  const handleEnd = async (circleId) => {
+    if (!window.confirm('Close this learning circle? Goals and journal entries are kept.')) return;
+    try { await apiDelete(`/api/learning-circles/${circleId}`); load(); }
     catch (e) { setMessage({ type: 'error', text: e.message }); }
   };
 
   const selectCls = "flex-1 px-3 py-2 rounded-md bg-[#050814] border border-[#1E293B] text-xs text-[#F8FAFC] focus:outline-none focus:border-[#D4AF37]/50";
 
   return (
-    <div className="space-y-6 animate-fade-in-up max-w-3xl" data-testid="mentorship-page">
+    <div className="space-y-6 animate-fade-in-up max-w-3xl" data-testid="learning-circle-page">
       <div>
         <div className="flex items-center gap-2 mb-1">
           <HandHeart size={20} weight="duotone" className="text-[#D4AF37]" />
-          <h1 className="text-xl text-[#F8FAFC]" style={{ fontFamily: 'Cormorant Garamond, serif' }}>Mentorship</h1>
+          <h1 className="text-xl text-[#F8FAFC]" style={{ fontFamily: 'Cormorant Garamond, serif' }}>Learning Circles</h1>
         </div>
-        <p className="text-xs text-[#94A3B8]">Wisdom flows in all directions — walked one pairing at a time.</p>
+        <p className="text-xs text-[#94A3B8]">Wisdom flows in every direction — co-learners walking together, one circle at a time.</p>
       </div>
 
       {message && (
@@ -209,66 +209,66 @@ export default function MentorshipPage({ user }) {
         </div>
       )}
 
-      {/* My pairings */}
+      {/* My circles */}
       {data?.mine?.length > 0 ? (
         <div className="space-y-3">
-          {data.mine.map(p => (
-            <PairingCard key={p.id} pairing={p} currentUserId={user?.id} onEnded={load} />
+          {data.mine.map(c => (
+            <CircleCard key={c.id} circle={c} currentUserId={user?.id} onEnded={load} />
           ))}
         </div>
       ) : (
         <Card className="bg-[#0F172A] border-[#1E293B]">
           <CardContent className="p-6 text-center">
             <p className="text-sm text-[#94A3B8]">
-              No mentorship pairings yet. Pairings are made by your facilitators —
+              No learning circles yet. Circles are formed by your facilitators —
               {user?.intent === 'mentor'
-                ? " they know you're here to mentor, and they'll reach out."
-                : ' let them know if you\'d like a mentor to walk with.'}
+                ? " they know you're here to walk with others, and they'll reach out."
+                : ' let them know if you\'d like a co-learner to walk with.'}
             </p>
           </CardContent>
         </Card>
       )}
 
-      {/* Faculty: create + manage pairings */}
+      {/* Faculty: form + manage circles */}
       {isFaculty && (
         <Card className="bg-[#0F172A] border-[#1E293B]">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm text-[#F8FAFC]" style={{ fontFamily: 'Cormorant Garamond, serif' }}>
-              Pair a mentor with a mentee
+              Form a learning circle
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex flex-col sm:flex-row gap-2 mb-2">
-              <select value={mentorId} onChange={e => setMentorId(e.target.value)} className={selectCls} data-testid="mentor-select">
-                <option value="">Mentor…</option>
-                {users.map(u => (
-                  <option key={u.id} value={u.id}>{u.name} ({u.intent || u.role})</option>
-                ))}
-              </select>
-              <select value={menteeId} onChange={e => setMenteeId(e.target.value)} className={selectCls} data-testid="mentee-select">
-                <option value="">Mentee…</option>
+              <select value={aId} onChange={e => setAId(e.target.value)} className={selectCls} data-testid="co-learner-a-select">
+                <option value="">A co-learner…</option>
                 {users.map(u => (
                   <option key={u.id} value={u.id}>{u.name}{u.is_minor ? ' · youth' : ''} ({u.intent || u.role})</option>
                 ))}
               </select>
-              <Button onClick={handlePair} disabled={busy || !mentorId || !menteeId} className="bg-[#D4AF37] text-[#050814] hover:bg-[#F3E5AB]">
-                Pair
+              <select value={bId} onChange={e => setBId(e.target.value)} className={selectCls} data-testid="co-learner-b-select">
+                <option value="">Another co-learner…</option>
+                {users.map(u => (
+                  <option key={u.id} value={u.id}>{u.name}{u.is_minor ? ' · youth' : ''} ({u.intent || u.role})</option>
+                ))}
+              </select>
+              <Button onClick={handleForm} disabled={busy || !aId || !bId} className="bg-[#D4AF37] text-[#050814] hover:bg-[#F3E5AB]">
+                Form
               </Button>
             </div>
             <p className="text-[10px] text-[#475569] mb-3">
-              Pairing opens a direct message channel between them — including for youth — so pair with care.
+              Forming a circle opens a direct message channel between them — including for youth — so pair with care.
             </p>
             {data?.all?.length > 0 && (
               <div className="space-y-1.5">
-                <p className="text-[10px] tracking-[0.15em] uppercase text-[#D4AF37]">All pairings</p>
-                {data.all.map(p => (
-                  <div key={p.id} className="flex items-center gap-2 p-2 rounded bg-[#050814] border border-[#1E293B]">
-                    <Avatar person={p.mentor} size="w-5 h-5" />
-                    <span className="text-xs text-[#F8FAFC]">{p.mentor?.name}</span>
+                <p className="text-[10px] tracking-[0.15em] uppercase text-[#D4AF37]">All circles</p>
+                {data.all.map(c => (
+                  <div key={c.id} className="flex items-center gap-2 p-2 rounded bg-[#050814] border border-[#1E293B]">
+                    <Avatar person={c.co_learner_a} size="w-5 h-5" />
+                    <span className="text-xs text-[#F8FAFC]">{c.co_learner_a?.name}</span>
                     <span className="text-[10px] text-[#475569]">walks with</span>
-                    <Avatar person={p.mentee} size="w-5 h-5" />
-                    <span className="text-xs text-[#F8FAFC] flex-1">{p.mentee?.name}</span>
-                    <button onClick={() => handleEnd(p.id)} className="text-[#475569] hover:text-red-400" title="End pairing">
+                    <Avatar person={c.co_learner_b} size="w-5 h-5" />
+                    <span className="text-xs text-[#F8FAFC] flex-1">{c.co_learner_b?.name}</span>
+                    <button onClick={() => handleEnd(c.id)} className="text-[#475569] hover:text-red-400" title="Close circle">
                       <Trash size={13} />
                     </button>
                   </div>

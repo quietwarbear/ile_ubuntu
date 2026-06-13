@@ -79,7 +79,7 @@ from routes.lesson_comments import router as lesson_comments_router
 from routes.events import router as events_router
 from routes.marketplace import router as marketplace_router
 from routes.family import router as family_router
-from routes.mentorship import router as mentorship_router
+from routes.learning_circles import router as learning_circles_router
 from routes.community_dashboard import router as community_dashboard_router
 from routes.checkins import router as checkins_router
 from routes.villages import router as villages_router
@@ -109,7 +109,7 @@ app.include_router(lesson_comments_router)
 app.include_router(events_router)
 app.include_router(marketplace_router)
 app.include_router(family_router)
-app.include_router(mentorship_router)
+app.include_router(learning_circles_router)
 app.include_router(community_dashboard_router)
 app.include_router(checkins_router)
 app.include_router(villages_router)

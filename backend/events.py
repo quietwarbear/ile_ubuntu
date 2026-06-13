@@ -33,12 +33,12 @@ EVENT_TYPES = {
     "family.linked",
     "family.unlinked",
     "family.digest_sent",
-    # mentorship
-    "mentorship.paired",
-    "mentorship.unpaired",
-    "mentorship.goal_added",
-    "mentorship.goal_completed",
-    "mentorship.note_added",
+    # learning circles (reciprocal co-learner pairings)
+    "circle.formed",
+    "circle.ended",
+    "circle.goal_added",
+    "circle.goal_completed",
+    "circle.note_added",
     # wellness (the event never carries scores — see routes/checkins.py)
     "wellness.checked_in",
     # village

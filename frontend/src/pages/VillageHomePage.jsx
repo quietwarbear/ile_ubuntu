@@ -16,7 +16,7 @@ const Avatar = ({ person, size = 'w-7 h-7' }) => (
   />
 );
 
-const REL_LABELS = { mentor: 'My mentor', mentee: 'My mentee', family: 'Family' };
+const REL_LABELS = { co_learner: 'Co-learner', family: 'Family' };
 
 function fmtWhen(iso) {
   if (!iso) return '';
@@ -113,7 +113,7 @@ export default function VillageHomePage({ user }) {
           </CardHeader>
           <CardContent className="space-y-1.5">
             {circle.map((p, i) => (
-              <button key={`${p.id}-${i}`} onClick={() => navigate(p.relationship === 'family' ? '/family' : '/mentorship')}
+              <button key={`${p.id}-${i}`} onClick={() => navigate(p.relationship === 'family' ? '/family' : '/learning-circles')}
                 className="w-full flex items-center gap-2.5 p-2 rounded bg-[#050814] border border-[#1E293B] text-left hover:border-[#D4AF37]/25">
                 <Avatar person={p} size="w-6 h-6" />
                 <span className="flex-1 min-w-0">

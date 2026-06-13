@@ -18,7 +18,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request
 
 from database import (
     villages_col, users_col, cohorts_col, courses_col, live_sessions_col,
-    mentorship_pairs_col, family_links_col, posts_col,
+    learning_circles_col, family_links_col, posts_col,
 )
 from middleware import get_current_user
 from models.user import has_permission, UserRole
@@ -331,13 +331,13 @@ def village_home(village_id: str, current_user: dict = Depends(get_current_user)
          "host_name": 1, "host_picture": 1},
     ).sort([("status", 1), ("scheduled_at", 1)]).limit(6))
 
-    # My circle: mentorship pairs + family links, annotated with village co-membership
+    # My circle: learning circles + family links, annotated with village co-membership
     circle = []
-    for p in mentorship_pairs_col.find(
-            {"$or": [{"mentor_id": me}, {"mentee_id": me}]}, {"_id": 0}):
-        other_id = p["mentee_id"] if p["mentor_id"] == me else p["mentor_id"]
+    for c in learning_circles_col.find(
+            {"$or": [{"co_learner_a_id": me}, {"co_learner_b_id": me}]}, {"_id": 0}):
+        other_id = c["co_learner_b_id"] if c["co_learner_a_id"] == me else c["co_learner_a_id"]
         circle.append({**_brief(other_id),
-                       "relationship": "mentee" if p["mentor_id"] == me else "mentor",
+                       "relationship": "co_learner",
                        "in_village": other_id in member_ids})
     for l in family_links_col.find({"guardian_id": me}, {"_id": 0, "youth_id": 1}):
         circle.append({**_brief(l["youth_id"]), "relationship": "family",

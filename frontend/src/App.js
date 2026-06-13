@@ -11,7 +11,7 @@ import LoginPage from './pages/LoginPage';
 import ResetPasswordPage from './pages/ResetPasswordPage';
 import JoinCoursePage, { PendingInviteRedirect } from './pages/JoinCoursePage';
 import FamilyPage from './pages/FamilyPage';
-import MentorshipPage from './pages/MentorshipPage';
+import LearningCirclePage from './pages/LearningCirclePage';
 import CommunityDashboardPage from './pages/CommunityDashboardPage';
 import VillagesPage, { VillageDetail } from './pages/VillagesPage';
 import VillageHomePage, { VillageHomeGate } from './pages/VillageHomePage';
@@ -297,7 +297,9 @@ function App() {
             <Route path="/teacher-dashboard" element={<TeacherDashboardPage user={user} />} />
             <Route path="/join/:code" element={<JoinCoursePage user={user} />} />
             <Route path="/family" element={<FamilyPage user={user} />} />
-            <Route path="/mentorship" element={<MentorshipPage user={user} />} />
+            <Route path="/learning-circles" element={<LearningCirclePage user={user} />} />
+            {/* Old path kept as a redirect — bookmarks and the renamed nav */}
+            <Route path="/mentorship" element={<Navigate to="/learning-circles" replace />} />
             <Route path="/community-dashboard" element={<CommunityDashboardPage user={user} />} />
             <Route path="/villages" element={<VillagesPage user={user} />} />
             <Route path="/villages/:villageId" element={<VillageDetail user={user} />} />
