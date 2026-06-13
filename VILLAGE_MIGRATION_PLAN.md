@@ -96,9 +96,28 @@ emitted. Suite: 41 checks. All four phases of the deep migration are done.*
 
 ## Open loops elsewhere (not this slice)
 
-- Marketplace rehearsal: sandbox webhook destination + secret swap, then re-test
-  the $5.07 purchase end-to-end.
-- Roll the exposed live key for the Give Lively account; Bitwarden everything.
-- Stripe live review pending on Ubuntu Markets Platform; after it clears:
+- ✅ MARKETPLACE IS LIVE (2026-06-12): live keys + webhook secret in Railway,
+  live Connect onboarding done (acct_1Therh4begVMbpO7, charges+payouts
+  enabled), $5.07 purchase fulfilled by webhook end-to-end, then fully
+  unwound (refund + reverse_transfer + refund_application_fee).
+- Stripe live review CLEARED on Ubuntu Markets Platform. Still to do:
   migrate subscriptions OFF the Give Lively account keys (own slice).
-- DIGEST_SECRET / FAMILY_DIGEST_KEY setup if not done.
+- ✅ DIGEST_SECRET set in Railway.
+- ROLL BOTH live secret keys + Bitwarden everything: both sk_live keys were
+  pasted into Railway's AI agent chat on 2026-06-12 — treat as exposed.
+  Stripe key roll has a grace window; roll → update Railway → done.
+
+## Marketplace live-cutover gotchas (2026-06-12, do not relearn)
+
+- stripe-python v15: Webhook.construct_event's Event object does NOT behave
+  like a dict (.get → AttributeError) — both webhook handlers verify the
+  signature, then json.loads the raw body. Keep it that way.
+- Stripe env values pasted from dashboards/chats carry trailing commas/spaces;
+  every read site strips ' ,\n\t\r'. Symptom: 401 Invalid API Key.
+- Webhook destinations: "Events from: Your account" is REQUIRED for
+  checkout.session.completed — a "Connected accounts" destination never
+  receives it. One destination per app URL, each with its own whsec_.
+- Each app on this Stripe account gets its own destination + secret
+  (kindred and legacy_table will need theirs when they go live).
+- Test-mode Connect account ids are invalid in live mode — clear
+  user.stripe_account_id and re-onboard when switching modes.
