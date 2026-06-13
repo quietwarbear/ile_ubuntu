@@ -6,7 +6,7 @@ import {
 } from '@phosphor-icons/react';
 import { apiGet, apiPost, apiPut, BACKEND_URL } from '../lib/api';
 import LessonContentViewer from '../components/LessonContentViewer';
-import MarkdownEditor from '../components/course/MarkdownEditor';
+import WysiwygEditor from '../components/course/WysiwygEditor';
 import { LessonVideoPlayer } from '../components/course/LessonVideoPlayer';
 import { LessonQuiz } from '../components/course/LessonQuiz';
 import { LessonComments } from '../components/course/LessonComments';
@@ -215,10 +215,10 @@ export default function CoursePlayerPage({ user }) {
                 placeholder="Banner image URL (optional)"
                 className="w-full px-3 py-2 rounded-md bg-[#050814] border border-[#1E293B] text-xs text-[#F8FAFC] placeholder-[#475569] focus:outline-none focus:border-[#D4AF37]/50"
               />
-              <MarkdownEditor
+              <WysiwygEditor
                 value={draft.content}
                 onChange={(v) => setDraft(d => ({ ...d, content: v }))}
-                placeholder="Write the lesson — toolbar inserts images, video, PDFs, links…"
+                placeholder="Write the lesson — format with the toolbar, insert images, video, PDFs, links…"
                 minHeight={220}
                 testId="player-content-editor"
               />

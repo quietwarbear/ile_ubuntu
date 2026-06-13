@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { Card, CardContent } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
-import MarkdownEditor from '../components/course/MarkdownEditor';
+import WysiwygEditor from '../components/course/WysiwygEditor';
 import {
   ArrowLeft, BookOpenText, Plus,
 } from '@phosphor-icons/react';
@@ -351,10 +351,10 @@ export default function CourseDetailPage({ user }) {
               <Input placeholder="Brief description" value={lessonForm.description}
                 onChange={e => setLessonForm({ ...lessonForm, description: e.target.value })}
                 className="bg-[#050814] border-[#1E293B] text-[#F8FAFC]" data-testid="new-lesson-desc" />
-              <MarkdownEditor
+              <WysiwygEditor
                 value={lessonForm.content}
                 onChange={(v) => setLessonForm({ ...lessonForm, content: v })}
-                placeholder="Lesson content — write, and use the toolbar to insert images, video, PDFs, links…"
+                placeholder="Write the lesson — format with the toolbar, insert images, video, PDFs, links…"
                 testId="new-lesson-content"
               />
               <div className="flex flex-col sm:flex-row gap-2">
