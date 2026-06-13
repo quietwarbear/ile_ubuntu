@@ -18,6 +18,7 @@ import VillageHomePage, { VillageHomeGate } from './pages/VillageHomePage';
 import DashboardPage from './pages/DashboardPage';
 import CoursesPage from './pages/CoursesPage';
 import CourseDetailPage from './pages/CourseDetailPage';
+import CoursePlayerPage from './pages/CoursePlayerPage';
 import CohortsPage from './pages/CohortsPage';
 import CommunityPage from './pages/CommunityPage';
 import ArchivesPage from './pages/ArchivesPage';
@@ -276,6 +277,8 @@ function App() {
             <Route path="/dashboard" element={<DashboardPage user={user} />} />
             <Route path="/courses" element={<CoursesPage user={user} />} />
             <Route path="/courses/:courseId" element={<CourseDetailPage user={user} />} />
+            <Route path="/courses/:courseId/learn" element={<CoursePlayerPage user={user} />} />
+            <Route path="/courses/:courseId/learn/:lessonId" element={<CoursePlayerPage user={user} />} />
             <Route path="/live" element={<LiveSessionsPage user={user} />} />
             <Route path="/live/:sessionId" element={<LiveRoomPage user={user} />} />
             <Route path="/cohorts" element={<CohortsPage user={user} />} />

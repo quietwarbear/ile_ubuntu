@@ -210,5 +210,30 @@ from routes.learning_circles import are_co_learners
 check("are_co_learners true for the pair", are_co_learners("alice","bob") and are_co_learners("bob","alice"))
 check("are_co_learners false for outsider", not are_co_learners("alice","zia"))
 
+# Course player: modules + lesson banner/module_id
+as_user("fac")
+pc = c.post("/api/courses", json={"title":"Player Course","visibility":"unlisted"}).json()
+mod = c.post(f"/api/courses/{pc['id']}/modules", json={"title":"Section One"})
+check("add module -> 200", mod.status_code == 200, mod.text)
+mod = mod.json()
+check("module has id+order", "id" in mod and mod["order"] == 0)
+les = c.post(f"/api/courses/{pc['id']}/lessons", json={"title":"L1","module_id":mod["id"],"banner_url":"https://x/b.png"}).json()
+check("lesson stores module_id", les.get("module_id") == mod["id"])
+check("lesson stores banner_url", les.get("banner_url") == "https://x/b.png")
+got = c.get(f"/api/courses/{pc['id']}").json()
+check("course returns modules", any(m["id"]==mod["id"] for m in got.get("modules",[])))
+# rename + delete module unsets lesson.module_id
+c.put(f"/api/courses/{pc['id']}/modules/{mod['id']}", json={"title":"Renamed"})
+got = c.get(f"/api/courses/{pc['id']}").json()
+check("module renamed", any(m["title"]=="Renamed" for m in got["modules"]))
+c.delete(f"/api/courses/{pc['id']}/modules/{mod['id']}")
+got = c.get(f"/api/courses/{pc['id']}").json()
+check("module deleted", all(m["id"]!=mod["id"] for m in got["modules"]))
+lessons_after = c.get(f"/api/courses/{pc['id']}/lessons").json()
+check("orphaned lesson module_id cleared", lessons_after[0].get("module_id") in (None, ""))
+# non-owner can't add a module
+as_user("alice")
+check("non-owner add module -> 403/404", c.post(f"/api/courses/{pc['id']}/modules", json={"title":"x"}).status_code in (403,404))
+
 print(f"\n{ok} passed, {fail} failed")
 exit(1 if fail else 0)

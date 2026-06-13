@@ -38,6 +38,9 @@ async def create_course(request: Request, current_user: dict = Depends(get_curre
         "instructor_name": current_user["name"],
         "status": CourseStatus.DRAFT,
         "village_id": village_id,
+        # Course-player modules (sections). Embedded list; lessons reference a
+        # module by id. Empty = flat course (backward compatible).
+        "modules": [],
         # Closed-ecosystem default: new courses are invite-only until the
         # teacher explicitly lists them. (Existing courses without the field
         # are treated as listed for backward compatibility.)
@@ -174,6 +177,10 @@ async def create_lesson(course_id: str, request: Request, current_user: dict = D
         "content": data.get("content", ""),
         "video_url": data.get("video_url", ""),
         "video_file_id": data.get("video_file_id", ""),
+        # Course player: which module (section) this lesson sits in, and an
+        # optional full-width hero image. Both nullable — flat lessons still work.
+        "module_id": data.get("module_id"),
+        "banner_url": (data.get("banner_url") or "").strip(),
         "order": data.get("order", 0),
         "files": [],
         "has_quiz": False,
@@ -205,7 +212,7 @@ async def update_lesson(course_id: str, lesson_id: str, request: Request, curren
 
     data = await request.json()
     update_fields = {}
-    for field in ["title", "description", "content", "video_url", "video_file_id", "order"]:
+    for field in ["title", "description", "content", "video_url", "video_file_id", "order", "module_id", "banner_url"]:
         if field in data:
             update_fields[field] = data[field]
     update_fields["updated_at"] = datetime.now(timezone.utc)
@@ -392,6 +399,47 @@ def _require_course_owner(course_id: str, current_user: dict) -> dict:
     if course["instructor_id"] != current_user["id"] and current_user["role"] != UserRole.ADMIN:
         raise HTTPException(status_code=403, detail="Only the course instructor can do this")
     return course
+
+
+# --- Modules (course-player sections) ---
+
+@router.post("/{course_id}/modules")
+async def add_module(course_id: str, request: Request, current_user: dict = Depends(get_current_user)):
+    course = _require_course_owner(course_id, current_user)
+    data = await request.json()
+    title = (data.get("title") or "").strip()
+    if not title:
+        raise HTTPException(status_code=400, detail="Module title required")
+    modules = course.get("modules", [])
+    module = {"id": str(uuid.uuid4()), "title": title[:160], "order": len(modules)}
+    courses_col.update_one({"id": course_id}, {"$push": {"modules": module}})
+    return module
+
+
+@router.put("/{course_id}/modules/{module_id}")
+async def update_module(course_id: str, module_id: str, request: Request, current_user: dict = Depends(get_current_user)):
+    course = _require_course_owner(course_id, current_user)
+    data = await request.json()
+    modules = course.get("modules", [])
+    if not any(m["id"] == module_id for m in modules):
+        raise HTTPException(status_code=404, detail="Module not found")
+    for m in modules:
+        if m["id"] == module_id:
+            if "title" in data:
+                m["title"] = (data.get("title") or "").strip()[:160] or m["title"]
+            if "order" in data:
+                m["order"] = data["order"]
+    courses_col.update_one({"id": course_id}, {"$set": {"modules": modules}})
+    return {"success": True, "modules": modules}
+
+
+@router.delete("/{course_id}/modules/{module_id}")
+def delete_module(course_id: str, module_id: str, current_user: dict = Depends(get_current_user)):
+    _require_course_owner(course_id, current_user)
+    courses_col.update_one({"id": course_id}, {"$pull": {"modules": {"id": module_id}}})
+    # Lessons that lived in this module become ungrouped (module_id cleared).
+    lessons_col.update_many({"course_id": course_id, "module_id": module_id}, {"$set": {"module_id": None}})
+    return {"success": True}
 
 
 @router.post("/{course_id}/visibility")
