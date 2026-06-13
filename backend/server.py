@@ -146,7 +146,12 @@ async def stripe_webhook(request: Request):
     stripe_lib.api_key = api_key
 
     try:
-        event = stripe_lib.Webhook.construct_event(body, stripe_signature, webhook_secret)
+        stripe_lib.Webhook.construct_event(body, stripe_signature, webhook_secret)
+        # Signature verified — parse the raw payload ourselves. stripe v15's
+        # Event object no longer behaves like a dict (.get raises
+        # AttributeError). Same fix as routes/marketplace.py.
+        import json as _json
+        event = _json.loads(body)
 
         if event.get("type") == "checkout.session.completed":
             session_data = event["data"]["object"]

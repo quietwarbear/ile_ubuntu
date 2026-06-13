@@ -327,9 +327,15 @@ async def marketplace_webhook(request: Request):
 
     body = await request.body()
     try:
-        event = stripe.Webhook.construct_event(body, signature, MARKETPLACE_WEBHOOK_SECRET)
+        stripe.Webhook.construct_event(body, signature, MARKETPLACE_WEBHOOK_SECRET)
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
+
+    # Signature verified above — parse the raw payload ourselves. stripe v15's
+    # Event object no longer behaves like a dict (.get raises AttributeError),
+    # which 500'd fulfillment during the live cutover. Plain dicts forever.
+    import json as _json
+    event = _json.loads(body)
 
     if event.get("type") == "checkout.session.completed":
         session_data = event["data"]["object"]
