@@ -392,6 +392,54 @@ async def login(request: Request):
     }
 
 
+@router.post("/exchange")
+async def exchange(request: Request):
+    """Ubuntu Markets single-identity exchange (federation).
+
+    A trusted sibling product (Kindred, Legacy Table) presents a verified user's email
+    plus the shared UBUNTU_SSO_SECRET; we find-or-create that user and open a normal Ile
+    Ubuntu session. No password is exchanged. The secret is server-side only and must be
+    set identically across the products' backends. Trust only products you control.
+
+    NOTE: PyMongo is synchronous here — collection calls are intentionally not awaited
+    (sync-handler rule), matching register/login above.
+    """
+    data = await request.json()
+    secret = data.get("secret") or ""
+    expected = os.environ.get("UBUNTU_SSO_SECRET", "")
+    if not expected or secret != expected:
+        raise HTTPException(status_code=403, detail="Invalid SSO secret")
+
+    email = (data.get("email") or "").strip().lower()
+    name = (data.get("name") or "").strip()
+    if not email or "@" not in email:
+        raise HTTPException(status_code=400, detail="A valid email is required")
+
+    user = users_col.find_one({"email": email})
+    if not user:
+        user = {
+            "id": str(uuid.uuid4()),
+            "email": email,
+            "name": name or email.split("@")[0],
+            "picture": "",
+            "role": UserRole.STUDENT,
+            "bio": "",
+            "auth_provider": "ubuntu-sso",
+            "password_hash": None,
+            "email_verified": True,  # identity already verified by the trusted sibling product
+            "created_at": datetime.now(timezone.utc),
+        }
+        users_col.insert_one(user)
+        emit("user.registered", user, meta={"provider": "ubuntu-sso"})
+
+    session = _create_session(user["id"])
+    return {
+        "success": True,
+        "user_id": user["id"],
+        **session,
+    }
+
+
 @router.get("/verify-email")
 def verify_email(token: str = ""):
     """Email verification link target. Marks the account verified and sends
