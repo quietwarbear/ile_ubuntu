@@ -110,6 +110,9 @@ def ensure_indexes():
         # Password reset tokens: lookup by token hash, TTL on expiry
         (password_resets_col, [("token_hash", 1)], {}),
         (password_resets_col, [("expires_at", 1)], {"expireAfterSeconds": 0}),
+        # One-time SSO handoff codes: lookup by code, TTL auto-purges spent/expired codes
+        (sso_codes_col, [("code", 1)], {}),
+        (sso_codes_col, [("expires_at", 1)], {"expireAfterSeconds": 0}),
         # Activity event stream: per-user timelines, per-type trends, per-entity history
         (events_col, [("user_id", 1), ("created_at", -1)], {}),
         (events_col, [("type", 1), ("created_at", -1)], {}),
