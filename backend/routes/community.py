@@ -1,11 +1,45 @@
 from fastapi import APIRouter, HTTPException, Query, Request, Depends
 from datetime import datetime, timezone
+import os
 import uuid
+import httpx
 from database import posts_col
 from middleware import get_current_user
 from events import emit
 
 router = APIRouter(prefix="/api/community", tags=["community"])
+
+KINDRED_API_URL = os.environ.get("KINDRED_API_URL", "https://kindred-production-badd.up.railway.app/api").rstrip("/")
+KINDRED_WEB_URL = os.environ.get("KINDRED_WEB_URL", "https://www.heykindred.org").rstrip("/")
+
+
+@router.post("/open-kindred")
+async def open_kindred(current_user: dict = Depends(get_current_user)):
+    """Start an 'Open in Kindred' jump from the community section.
+
+    Mints a single-use code at Kindred (server-to-server, shared UBUNTU_SSO_SECRET) and
+    returns the jump URL. Only a one-time code rides in the URL — never a session token.
+    """
+    secret = os.environ.get("UBUNTU_SSO_SECRET", "")
+    if not secret:
+        raise HTTPException(status_code=503, detail="Cross-product sign-in isn't configured.")
+    email = (current_user.get("email") or "").strip()
+    if not email:
+        raise HTTPException(status_code=400, detail="Your account has no email to carry over.")
+    try:
+        async with httpx.AsyncClient(timeout=20) as client:
+            resp = await client.post(
+                f"{KINDRED_API_URL}/auth/sso-code",
+                json={"email": email, "secret": secret, "name": current_user.get("name", "")},
+            )
+    except Exception as exc:
+        raise HTTPException(status_code=502, detail=f"Couldn't reach Kindred ({exc}).")
+    if resp.status_code != 200:
+        raise HTTPException(status_code=502, detail=f"Kindred declined the handoff (HTTP {resp.status_code}).")
+    code = resp.json().get("code")
+    if not code:
+        raise HTTPException(status_code=502, detail="Kindred returned no code.")
+    return {"url": f"{KINDRED_WEB_URL}/sso?code={code}"}
 
 
 @router.post("/posts")

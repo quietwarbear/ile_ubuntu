@@ -21,6 +21,13 @@ export default function CommunityPage({ user }) {
     try { setPosts(await apiGet('/api/community/posts')); } catch (e) { console.error(e); }
   };
 
+  const openKindred = async () => {
+    try {
+      const res = await apiPost('/api/community/open-kindred', {});
+      window.open(res.url, '_blank', 'noopener');
+    } catch (e) { alert(e.message || 'Could not open Kindred.'); }
+  };
+
   const handleCreate = async () => {
     try {
       await apiPost('/api/community/posts', form);
@@ -59,6 +66,9 @@ export default function CommunityPage({ user }) {
         <div>
           <h1 className="text-3xl font-light text-[#F8FAFC]" style={{ fontFamily: 'Cormorant Garamond, serif' }}>Community</h1>
           <p className="text-sm text-[#94A3B8]">Discussions, announcements, and shared knowledge</p>
+          <button onClick={openKindred} data-testid="open-kindred-btn" type="button" className="mt-2 inline-flex items-center gap-1.5 text-sm font-semibold text-[#D4AF37] hover:underline">
+            Open your circle in Kindred →
+          </button>
         </div>
         <Dialog open={createOpen} onOpenChange={setCreateOpen}>
           <DialogTrigger asChild>
