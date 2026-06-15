@@ -20,6 +20,7 @@ import hashlib
 from database import (
     users_col,
     sessions_col,
+    sso_codes_col,
     password_resets_col,
     enrollments_col,
     messages_col,
@@ -438,6 +439,72 @@ async def exchange(request: Request):
         "user_id": user["id"],
         **session,
     }
+
+
+@router.post("/sso-code")
+async def sso_mint_code(request: Request):
+    """Mint a short-lived, single-use SSO code (server-to-server, secret-gated). A trusted
+    sibling (Kindred) calls this for an 'Open in Ile Ubuntu' jump. PyMongo is sync here."""
+    data = await request.json()
+    secret = data.get("secret") or ""
+    expected = os.environ.get("UBUNTU_SSO_SECRET", "")
+    if not expected or secret != expected:
+        raise HTTPException(status_code=403, detail="Invalid SSO secret")
+    email = (data.get("email") or "").strip().lower()
+    name = (data.get("name") or "").strip()
+    if not email or "@" not in email:
+        raise HTTPException(status_code=400, detail="A valid email is required")
+
+    user = users_col.find_one({"email": email})
+    if not user:
+        user = {
+            "id": str(uuid.uuid4()),
+            "email": email,
+            "name": name or email.split("@")[0],
+            "picture": "",
+            "role": UserRole.STUDENT,
+            "bio": "",
+            "auth_provider": "ubuntu-sso",
+            "password_hash": None,
+            "email_verified": True,
+            "created_at": datetime.now(timezone.utc),
+        }
+        users_col.insert_one(user)
+        emit("user.registered", user, meta={"provider": "ubuntu-sso"})
+
+    code = uuid.uuid4().hex
+    sso_codes_col.insert_one({
+        "code": code,
+        "user_id": user["id"],
+        "expires_at": datetime.now(timezone.utc) + timedelta(minutes=5),
+        "used": False,
+        "created_at": datetime.now(timezone.utc),
+    })
+    return {"code": code, "expires_in": 300}
+
+
+@router.post("/sso-redeem")
+async def sso_redeem_code(request: Request):
+    """Redeem a single-use SSO code for an Ile Ubuntu session. The code is the one-time
+    credential; no secret needed."""
+    data = await request.json()
+    code = data.get("code") or ""
+    rec = sso_codes_col.find_one({"code": code})
+    now = datetime.now(timezone.utc)
+    if not rec or rec.get("used"):
+        raise HTTPException(status_code=400, detail="This sign-in link is invalid or already used.")
+    expires_at = rec.get("expires_at")
+    if isinstance(expires_at, datetime):
+        exp = expires_at if expires_at.tzinfo else expires_at.replace(tzinfo=timezone.utc)
+        if exp < now:
+            raise HTTPException(status_code=400, detail="This sign-in link has expired.")
+    sso_codes_col.update_one({"code": code}, {"$set": {"used": True, "used_at": now}})
+
+    user = users_col.find_one({"id": rec["user_id"]})
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found.")
+    session = _create_session(user["id"])
+    return {"success": True, "user_id": user["id"], **session}
 
 
 @router.get("/verify-email")

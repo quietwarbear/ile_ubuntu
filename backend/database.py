@@ -10,6 +10,7 @@ db = client[DB_NAME]
 # Collections
 users_col = db.users
 sessions_col = db.sessions
+sso_codes_col = db.sso_codes
 courses_col = db.courses
 lessons_col = db.lessons
 cohorts_col = db.cohorts

@@ -45,6 +45,34 @@ import TermsPage from './pages/TermsPage';
 import InviteLandingPage from './components/InviteLandingPage';
 import './App.css';
 
+// Ubuntu Markets SSO handoff — redeems a one-time code from a sibling product (Kindred)
+// and opens an Ile Ubuntu session. Reached at /sso?code=…
+function SSOHandoffPage() {
+  const [error, setError] = useState("");
+  useEffect(() => {
+    const code = new URLSearchParams(window.location.search).get("code");
+    if (!code) { setError("Missing sign-in code. Please try again from the other app."); return; }
+    (async () => {
+      try {
+        const res = await apiPost('/api/auth/sso-redeem', { code });
+        if (res && res.session_id) {
+          setCookie('session_id', res.session_id, 7);
+          window.location.replace('/dashboard');
+        } else {
+          setError("Sign-in failed. Please try again.");
+        }
+      } catch (e) {
+        setError("This sign-in link has expired or was already used. Please try again from the other app.");
+      }
+    })();
+  }, []);
+  return (
+    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#94A3B8', padding: 24, textAlign: 'center', background: '#050814' }}>
+      <p data-testid="ile-sso-status">{error || 'Signing you in to Ile Ubuntu…'}</p>
+    </div>
+  );
+}
+
 // Unauthenticated routes. This sits INSIDE <BrowserRouter> so it can use
 // useNavigate() — which is required because Capacitor's iOS webview does NOT
 // reliably navigate via `window.location.href = '/login'`. Apple rejected
@@ -99,6 +127,7 @@ function PublicRoutes({ handlePasswordLogin }) {
       <Route path="/terms" element={<TermsPage />} />
       <Route path="/blog" element={<PublicBlogPage onLogin={handleLogin} />} />
       <Route path="/login" element={<LoginPage onLogin={handleGoogleFromLogin} onPasswordLogin={handlePasswordLogin} />} />
+      <Route path="/sso" element={<SSOHandoffPage />} />
       <Route path="/reset-password" element={<ResetPasswordPage />} />
       <Route path="/join/:code" element={<JoinCoursePage />} />
       <Route path="*" element={<LandingPage onLogin={handleLogin} />} />
