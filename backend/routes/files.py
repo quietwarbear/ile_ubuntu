@@ -1,5 +1,5 @@
 from fastapi import APIRouter, HTTPException, Depends, File, UploadFile, Form
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, RedirectResponse
 from datetime import datetime, timezone
 from typing import Optional
 import uuid
@@ -8,9 +8,14 @@ import shutil
 from pathlib import Path
 from database import files_col, lessons_col
 from middleware import get_current_user
+import storage
 
 router = APIRouter(prefix="/api/files", tags=["files"])
 
+# Local disk is only a dev / legacy fallback. In production, files live in object storage
+# (see storage.py) because Railway's container disk is ephemeral. Existing records created
+# before the S3 migration still carry a "file_path" and are served from disk via the same
+# fallback, so old lessons keep working.
 UPLOADS_DIR = Path("uploads")
 UPLOADS_DIR.mkdir(exist_ok=True)
 
@@ -42,6 +47,14 @@ VIDEO_TYPES = {"video/mp4", "video/webm", "video/quicktime", "video/x-msvideo", 
 MAX_VIDEO_SIZE = 500 * 1024 * 1024  # 500MB
 
 
+def _renders_inline(file_data: dict) -> bool:
+    """PDFs, images, video and audio render in-browser; documents download."""
+    return (
+        file_data.get("file_category") in {"image", "video", "audio"}
+        or file_data.get("mime_type") == "application/pdf"
+    )
+
+
 @router.post("/upload")
 def upload_file(
     file: UploadFile = File(...),
@@ -57,16 +70,12 @@ def upload_file(
     file_id = str(uuid.uuid4())
     extension = ALLOWED_TYPES[file.content_type]
     filename = f"{file_id}{extension}"
-    file_path = UPLOADS_DIR / filename
 
-    with open(file_path, "wb") as buffer:
-        shutil.copyfileobj(file.file, buffer)
-
-    file_size = os.path.getsize(file_path)
-
-    # Enforce video size limit
+    # Size up-front (without reading into memory) so we can enforce the video cap.
+    file.file.seek(0, os.SEEK_END)
+    file_size = file.file.tell()
+    file.file.seek(0)
     if is_video and file_size > MAX_VIDEO_SIZE:
-        file_path.unlink()
         raise HTTPException(status_code=400, detail="Video file too large (max 500MB)")
 
     # Categorize file type
@@ -83,7 +92,6 @@ def upload_file(
         "id": file_id,
         "filename": filename,
         "original_filename": file.filename,
-        "file_path": str(file_path),
         "file_size": file_size,
         "mime_type": file.content_type,
         "file_category": file_category,
@@ -92,6 +100,23 @@ def upload_file(
         "uploaded_by": current_user["id"],
         "uploaded_at": datetime.now(timezone.utc),
     }
+
+    if storage.s3_enabled():
+        key = storage.build_key(filename)
+        try:
+            storage.upload_fileobj(file.file, key, file.content_type)
+        except Exception as exc:
+            raise HTTPException(status_code=502, detail=f"Upload failed: {exc}")
+        file_data["storage"] = "s3"
+        file_data["s3_key"] = key
+    else:
+        # Local fallback (dev only; not durable on Railway)
+        file_path = UPLOADS_DIR / filename
+        with open(file_path, "wb") as buffer:
+            shutil.copyfileobj(file.file, buffer)
+        file_data["storage"] = "local"
+        file_data["file_path"] = str(file_path)
+
     files_col.insert_one(file_data)
 
     if lesson_id:
@@ -104,45 +129,46 @@ def upload_file(
     return {"success": True, "file": file_data, "download_url": f"/api/files/{file_id}/download"}
 
 
+def _serve(file_data: dict, inline: Optional[bool] = None):
+    """Serve a stored file from S3 (presigned redirect) or local disk (fallback)."""
+    if inline is None:
+        inline = _renders_inline(file_data)
+    original = file_data.get("original_filename") or file_data.get("filename") or "file"
+    mime = file_data.get("mime_type") or "application/octet-stream"
+
+    if file_data.get("s3_key"):
+        url = storage.presigned_get(file_data["s3_key"], original, mime, inline=inline)
+        return RedirectResponse(url, status_code=307)
+
+    file_path = Path(file_data.get("file_path", ""))
+    if not file_path.exists():
+        raise HTTPException(status_code=404, detail="File not found on disk")
+    return FileResponse(
+        path=file_path,
+        filename=original,
+        media_type=mime,
+        content_disposition_type="inline" if inline else "attachment",
+    )
+
+
 @router.get("/{file_id}/download")
 def download_file(file_id: str):
-    """Download file - public access for enrolled users via direct link"""
+    """Download/view a file. Public access for enrolled users via direct link."""
     file_data = files_col.find_one({"id": file_id})
     if not file_data:
         raise HTTPException(status_code=404, detail="File not found")
-
-    file_path = Path(file_data["file_path"])
-    if not file_path.exists():
-        raise HTTPException(status_code=404, detail="File not found on disk")
-
-    return FileResponse(
-        path=file_path,
-        filename=file_data["original_filename"],
-        media_type=file_data["mime_type"],
-    )
+    return _serve(file_data)
 
 
 @router.get("/{file_id}/stream")
 def stream_video(file_id: str):
-    """Stream video file with range request support for seeking."""
-    from fastapi.responses import StreamingResponse
-    from starlette.responses import Response
-
+    """Stream a video. S3 presigned URLs support range requests natively (seeking)."""
     file_data = files_col.find_one({"id": file_id})
     if not file_data:
         raise HTTPException(status_code=404, detail="File not found")
     if file_data.get("file_category") != "video":
         raise HTTPException(status_code=400, detail="Not a video file")
-
-    file_path = Path(file_data["file_path"])
-    if not file_path.exists():
-        raise HTTPException(status_code=404, detail="File not found on disk")
-
-    return FileResponse(
-        path=file_path,
-        filename=file_data["original_filename"],
-        media_type=file_data["mime_type"],
-    )
+    return _serve(file_data, inline=True)
 
 
 @router.get("")
@@ -173,9 +199,12 @@ def delete_file(file_id: str, current_user: dict = Depends(get_current_user)):
     if file_data["uploaded_by"] != current_user["id"]:
         raise HTTPException(status_code=403, detail="Access denied")
 
-    file_path = Path(file_data["file_path"])
-    if file_path.exists():
-        file_path.unlink()
+    if file_data.get("s3_key"):
+        storage.delete_object(file_data["s3_key"])
+    elif file_data.get("file_path"):
+        file_path = Path(file_data["file_path"])
+        if file_path.exists():
+            file_path.unlink()
 
     files_col.delete_one({"id": file_id})
 
