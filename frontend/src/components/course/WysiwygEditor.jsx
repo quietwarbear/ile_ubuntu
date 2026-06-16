@@ -1,9 +1,10 @@
-import React, { useRef, useEffect, useCallback } from 'react';
+import React, { useRef, useEffect, useCallback, useState } from 'react';
 import {
   TextHOne, TextB, TextItalic, ListBullets, Quotes, LinkSimple,
   Image as ImageIcon, VideoCamera, FilePdf,
 } from '@phosphor-icons/react';
 import { mdToHtml, domToMd } from './wysiwygMarkdown';
+import { apiUpload, BACKEND_URL } from '../../lib/api';
 
 // Zero-dependency WYSIWYG. Markdown stays the stored format: we convert
 // markdown → HTML when loading the editor (mdToHtml), and serialize the live
@@ -15,6 +16,8 @@ import { mdToHtml, domToMd } from './wysiwygMarkdown';
 export default function WysiwygEditor({ value, onChange, placeholder, minHeight = 200, testId }) {
   const ref = useRef(null);
   const lastEmitted = useRef(null);
+  const pdfInputRef = useRef(null);
+  const [uploadingPdf, setUploadingPdf] = useState(false);
 
   // Initialise / re-initialise only when the incoming value isn't what we last
   // emitted (e.g. switching lessons) — never on our own keystrokes (caret jump).
@@ -57,6 +60,41 @@ export default function WysiwygEditor({ value, onChange, placeholder, minHeight 
     else insertHtml(`<div class="wys-embed" data-embed-url="${u}" contenteditable="false">▶ ${u}</div><p><br></p>`);
   };
 
+  // Upload a PDF from the user's device and embed it (the reported gap: the PDF button
+  // used to only accept a URL). Uses the existing /api/files/upload endpoint. The lesson
+  // viewer detects a PDF embed by a URL ending in ".pdf", and the file endpoint serves at
+  // /download, so we append the original filename as a query param to satisfy that match
+  // without any backend change. The download route is public, so the iframe loads fine.
+  // Appends at the end of the content (selection is lost during the async upload).
+  const handlePdfSelected = async (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+    setUploadingPdf(true);
+    try {
+      const fd = new FormData();
+      fd.append('file', file);
+      const res = await apiUpload('/api/files/upload', fd);
+      const dl = res?.download_url || (res?.file?.id ? `/api/files/${res.file.id}/download` : '');
+      if (!dl) throw new Error('Upload failed');
+      let name = res?.file?.original_filename || file.name || 'document.pdf';
+      if (!/\.pdf$/i.test(name)) name += '.pdf';
+      const safeName = name.replace(/[<>"]/g, '');
+      const url = `${BACKEND_URL}${dl}?file=${encodeURIComponent(name)}`.replace(/"/g, '%22');
+      if (ref.current) {
+        ref.current.insertAdjacentHTML(
+          'beforeend',
+          `<div class="wys-embed" data-embed-url="${url}" contenteditable="false">📄 ${safeName}</div><p><br></p>`,
+        );
+        emit();
+      }
+    } catch (err) {
+      window.alert(err?.message || 'Could not upload PDF.');
+    } finally {
+      setUploadingPdf(false);
+    }
+  };
+
   const Btn = ({ icon: Icon, label, onClick }) => (
     <button type="button" onMouseDown={(e) => { e.preventDefault(); onClick(); }} title={label}
       className="p-1.5 rounded text-[#94A3B8] hover:text-[#D4AF37] hover:bg-[#0F172A] transition-colors">
@@ -76,9 +114,14 @@ export default function WysiwygEditor({ value, onChange, placeholder, minHeight 
         <Btn icon={LinkSimple} label="Link" onClick={() => insertUrl('link')} />
         <Btn icon={ImageIcon} label="Image" onClick={() => insertUrl('image')} />
         <Btn icon={VideoCamera} label="Video (YouTube/Vimeo)" onClick={() => insertUrl('video')} />
-        <Btn icon={FilePdf} label="PDF" onClick={() => insertUrl('pdf')} />
-        <span className="ml-auto text-[9px] text-[#475569] pr-1.5 hidden sm:block">Live preview · saved as markdown</span>
+        <Btn icon={FilePdf} label={uploadingPdf ? 'Uploading PDF…' : 'Upload PDF from your device'}
+          onClick={() => !uploadingPdf && pdfInputRef.current?.click()} />
+        <span className="ml-auto text-[9px] text-[#475569] pr-1.5 hidden sm:block">
+          {uploadingPdf ? 'Uploading PDF…' : 'Live preview · saved as markdown'}
+        </span>
       </div>
+      <input ref={pdfInputRef} type="file" accept="application/pdf,.pdf" className="hidden"
+        onChange={handlePdfSelected} data-testid={testId ? `${testId}-pdf-upload` : undefined} />
       <div
         ref={ref}
         contentEditable
