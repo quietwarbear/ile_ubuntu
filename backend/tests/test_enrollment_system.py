@@ -440,6 +440,7 @@ class TestEnrollmentEndpoints(TestEnrollmentSetup):
         student_enrollment = next((e for e in data if e["user_id"] == test_users["student"]["id"]), None)
         assert student_enrollment is not None
         assert student_enrollment["user_name"] == test_users["student"]["name"]
+        assert student_enrollment["user_email"] == test_users["student"]["email"]
         assert "progress" in student_enrollment
         assert "enrolled_at" in student_enrollment
         print(f"✓ Faculty can see {len(data)} enrolled students")
