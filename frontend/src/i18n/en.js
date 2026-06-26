@@ -1,5 +1,33 @@
 const en = {
+  // Onboarding path fork
+  onboard_path: 'How will you walk with us?',
+  onboard_path_sub: 'Choose the path that fits — you can always grow into others.',
+  path_learner: "I'm here to learn",
+  path_learner_desc: 'Take courses, join cohorts, grow with the community.',
+  path_educator: "I'm here to teach",
+  path_educator_desc: 'Create courses and guide learners in the commons.',
+  path_mentor: "I'm here to walk with others",
+  path_mentor_desc: 'Share the road with young people as you grow together.',
+  path_family: "I'm supporting a young person",
+  path_family_desc: 'Follow and encourage a learner in your family.',
+  onboard_complete_educator: "Welcome, educator. Explore the commons while an elder confirms your teaching access — you'll be notified when your Facilitate tools open.",
+  onboard_complete_mentor: 'Welcome, co-learner. Learning circles are coming to the village soon — for now, make yourself at home in the community.',
+  onboard_complete_family: "Welcome to the village. The family experience — following your young person's growth — is on its way. We'll let you know the moment it opens.",
+
   // Nav
+  nav_learn: 'Learn',
+  nav_family: 'Family',
+  family_my: 'My Family',
+  learning_circles: 'Learning Circles',
+  community_dashboard: 'Community Dashboard',
+  villages: 'Villages',
+  onboard_about: 'A little about you',
+  onboard_about_sub: 'Your birth year helps us keep young people safe in the village. Optional.',
+  onboard_birth_skip: 'Prefer not to say',
+  nav_belong: 'Belong',
+  nav_facilitate: 'Facilitate',
+  nav_account: 'Account',
+  teacher_dashboard: 'Teacher Dashboard',
   dashboard: 'Dashboard',
   courses: 'Courses',
   live_teaching: 'Live Teaching',
@@ -61,6 +89,23 @@ const en = {
   about_hero: 'The Living Learning Commons',
   about_subtitle: 'A sacred space where knowledge, community, and culture converge',
   about_tagline: 'Built for those who teach, learn, and preserve wisdom across generations',
+
+  // Village home (deep migration Phase 2)
+  nav_village: 'Village',
+  village_home: 'My Village',
+  village_entering: 'Entering the village…',
+  village_full: 'Full village',
+  village_elder_word: "An elder's word",
+  village_sessions: 'Gatherings',
+  village_no_sessions: 'No gatherings on the horizon — your stewards will call the next one.',
+  village_circle: 'My circle',
+  village_no_circle: 'Your circle is still forming — co-learners and family will appear here.',
+  village_goals: 'Our goals this season',
+  village_no_goals: 'No goals named yet this season.',
+  village_voices: 'Voices of the village',
+  village_no_posts: 'Quiet for now — be the first voice this week.',
+  village_pick: 'Choose your village',
+  village_pick_sub: 'You belong to more than one — where are you headed today?',
 };
 
 export default en;

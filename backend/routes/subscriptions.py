@@ -11,7 +11,9 @@ load_dotenv()
 
 router = APIRouter(prefix="/api/subscriptions", tags=["subscriptions"])
 
-STRIPE_API_KEY = os.environ.get("STRIPE_API_KEY")
+# .strip(" ,\n\t"): env values pasted from dashboards/chats often carry a
+# trailing comma or space, which Stripe rejects as an invalid key.
+STRIPE_API_KEY = (os.environ.get("STRIPE_API_KEY") or "").strip(" ,\n\t\r")
 
 # Owner/admin emails that always receive top-tier ("elder_circle") access
 ADMIN_EMAILS = {
@@ -77,12 +79,12 @@ for tid, tinfo in MEMBERSHIP_TIERS.items():
 
 
 @router.get("/tiers")
-async def get_tiers():
+def get_tiers():
     return list(MEMBERSHIP_TIERS.values())
 
 
 @router.get("/my-subscription")
-async def get_my_subscription(current_user: dict = Depends(get_current_user)):
+def get_my_subscription(current_user: dict = Depends(get_current_user)):
     user = users_col.find_one({"id": current_user["id"]}, {"_id": 0})
 
     # Admin/owner email override — always top tier
@@ -253,7 +255,7 @@ async def create_checkout(request: Request, current_user: dict = Depends(get_cur
 
 
 @router.get("/checkout/status/{session_id}")
-async def check_checkout_status(session_id: str, request: Request, current_user: dict = Depends(get_current_user)):
+def check_checkout_status(session_id: str, request: Request, current_user: dict = Depends(get_current_user)):
     if not STRIPE_API_KEY:
         raise HTTPException(status_code=500, detail="Payment system not configured")
 
@@ -306,7 +308,7 @@ async def check_checkout_status(session_id: str, request: Request, current_user:
 
 
 @router.get("/transactions")
-async def list_transactions(current_user: dict = Depends(get_current_user)):
+def list_transactions(current_user: dict = Depends(get_current_user)):
     txns = list(payment_transactions_col.find(
         {"user_id": current_user["id"]}, {"_id": 0}
     ).sort("created_at", -1).limit(20))

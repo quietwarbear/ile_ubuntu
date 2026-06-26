@@ -5,10 +5,12 @@ import { Button } from '../../components/ui/button';
 import {
   CheckCircle, Circle, Paperclip, CaretDown, CaretUp,
   DownloadSimple, Trash, Plus, GoogleLogo, Presentation, Article, ArrowSquareOut,
-  File as FileIcon, FilePdf, FileDoc, FileXls, FilePpt, FileImage, Eye, X,
+  File as FileIcon, FilePdf, FileDoc, FileXls, FilePpt, FileImage, Eye, X, PencilSimple,
 } from '@phosphor-icons/react';
-import { BACKEND_URL } from '../../lib/api';
+import { BACKEND_URL, apiPut } from '../../lib/api';
+import { Input } from '../../components/ui/input';
 import LessonContentViewer from '../LessonContentViewer';
+import WysiwygEditor from './WysiwygEditor';
 import { LessonVideoPlayer } from './LessonVideoPlayer';
 import { LessonQuiz } from './LessonQuiz';
 import { LessonComments } from './LessonComments';
@@ -39,6 +41,36 @@ export function LessonCard({
   courseId, user, onReloadCourse,
 }) {
   const [viewingPdf, setViewingPdf] = useState(null);
+  const [editing, setEditing] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [editForm, setEditForm] = useState({ title: '', description: '', content: '' });
+
+  const startEdit = () => {
+    setEditForm({
+      title: lesson.title || '',
+      description: lesson.description || '',
+      content: lesson.content || '',
+    });
+    setEditing(true);
+  };
+
+  const saveEdit = async () => {
+    if (!editForm.title.trim()) { window.alert('A lesson title is required.'); return; }
+    setSaving(true);
+    try {
+      await apiPut(`/api/courses/${courseId}/lessons/${lesson.id}`, {
+        title: editForm.title.trim(),
+        description: editForm.description,
+        content: editForm.content,
+      });
+      setEditing(false);
+      onReloadCourse?.();
+    } catch (err) {
+      window.alert(err?.message || 'Could not save the lesson.');
+    } finally {
+      setSaving(false);
+    }
+  };
 
   return (
     <Card
@@ -102,10 +134,73 @@ export function LessonCard({
 
         {isExpanded && (
           <div className="mt-4 pt-4 border-t border-[#1E293B] space-y-4">
-            {lesson.content && (
-              <div className="p-3 bg-[#050814] rounded-md border border-[#1E293B]">
-                <LessonContentViewer content={lesson.content} />
+            {isInstructor && !editing && (
+              <div className="flex justify-end">
+                <Button
+                  size="sm" variant="ghost"
+                  onClick={startEdit}
+                  className="text-[#D4AF37] hover:text-[#F3E5AB] text-[10px] h-7"
+                  data-testid={`edit-lesson-${lesson.id}`}
+                >
+                  <PencilSimple size={12} className="mr-1" /> Edit lesson
+                </Button>
               </div>
+            )}
+
+            {editing ? (
+              <div className="p-3 bg-[#050814] rounded-md border border-[#D4AF37]/30 space-y-3" data-testid={`edit-lesson-form-${lesson.id}`}>
+                <div>
+                  <span className="text-[10px] tracking-[0.15em] uppercase text-[#D4AF37]">Lesson title</span>
+                  <Input
+                    value={editForm.title}
+                    onChange={e => setEditForm({ ...editForm, title: e.target.value })}
+                    className="mt-1 bg-[#0F172A] border-[#1E293B] text-[#F8FAFC] text-sm"
+                    data-testid={`edit-lesson-title-${lesson.id}`}
+                  />
+                </div>
+                <div>
+                  <span className="text-[10px] tracking-[0.15em] uppercase text-[#D4AF37]">Short description</span>
+                  <Input
+                    value={editForm.description}
+                    onChange={e => setEditForm({ ...editForm, description: e.target.value })}
+                    className="mt-1 bg-[#0F172A] border-[#1E293B] text-[#F8FAFC] text-sm"
+                    data-testid={`edit-lesson-desc-${lesson.id}`}
+                  />
+                </div>
+                <div>
+                  <span className="text-[10px] tracking-[0.15em] uppercase text-[#D4AF37]">Lesson text</span>
+                  <div className="mt-1">
+                    <WysiwygEditor
+                      value={editForm.content}
+                      onChange={v => setEditForm({ ...editForm, content: v })}
+                      placeholder="Write the lesson — format with the toolbar, insert images, video, PDFs, links…"
+                      testId={`edit-lesson-content-${lesson.id}`}
+                    />
+                  </div>
+                </div>
+                <div className="flex gap-2">
+                  <Button
+                    size="sm" onClick={saveEdit} disabled={saving}
+                    className="bg-[#D4AF37] text-[#050814] hover:bg-[#F3E5AB] text-xs"
+                    data-testid={`save-lesson-${lesson.id}`}
+                  >
+                    {saving ? 'Saving…' : 'Save changes'}
+                  </Button>
+                  <Button
+                    size="sm" variant="ghost" onClick={() => setEditing(false)} disabled={saving}
+                    className="text-[#94A3B8] text-xs"
+                    data-testid={`cancel-edit-lesson-${lesson.id}`}
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              lesson.content && (
+                <div className="p-3 bg-[#050814] rounded-md border border-[#1E293B]">
+                  <LessonContentViewer content={lesson.content} />
+                </div>
+              )
             )}
 
             <div>

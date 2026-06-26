@@ -12,7 +12,83 @@ import {
   Trophy,
   Certificate,
 } from '@phosphor-icons/react';
-import { apiGet, BACKEND_URL } from '../lib/api';
+import { apiGet, apiPost, BACKEND_URL } from '../lib/api';
+
+const CHECKIN_QUESTIONS = [
+  { key: 'mood', label: 'How are you feeling?' },
+  { key: 'connected', label: 'How connected to your people?' },
+  { key: 'confident', label: 'How confident in your path?' },
+];
+const FACES = ['😞', '😕', '😐', '🙂', '✨'];
+
+function CheckInCard({ onDone }) {
+  const [values, setValues] = useState({ mood: 0, connected: 0, confident: 0 });
+  const [note, setNote] = useState('');
+  const [saving, setSaving] = useState(false);
+  const ready = values.mood && values.connected && values.confident;
+
+  const submit = async () => {
+    setSaving(true);
+    try {
+      await apiPost('/api/checkins', { ...values, note });
+      onDone();
+    } catch (e) { console.error(e); setSaving(false); }
+  };
+
+  return (
+    <Card className="bg-[#0F172A] border-[#D4AF37]/25" style={{ order: 0 }} data-testid="checkin-card">
+      <CardContent className="p-5">
+        <p className="text-sm text-[#F8FAFC] mb-1" style={{ fontFamily: 'Cormorant Garamond, serif' }}>
+          How are you arriving today?
+        </p>
+        <p className="text-[10px] text-[#94A3B8] mb-4">
+          Your educators see how you're doing — never your words. Your note stays yours.
+        </p>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-3">
+          {CHECKIN_QUESTIONS.map(q => (
+            <div key={q.key}>
+              <p className="text-[10px] text-[#94A3B8] mb-1.5">{q.label}</p>
+              <div className="flex gap-1">
+                {FACES.map((face, i) => (
+                  <button
+                    key={i}
+                    onClick={() => setValues(v => ({ ...v, [q.key]: i + 1 }))}
+                    className={`w-8 h-8 rounded text-sm flex items-center justify-center border transition-all ${
+                      values[q.key] === i + 1
+                        ? 'bg-[#D4AF37]/20 border-[#D4AF37]/50 scale-110'
+                        : 'bg-[#050814] border-[#1E293B] opacity-60 hover:opacity-100'
+                    }`}
+                    data-testid={`checkin-${q.key}-${i + 1}`}
+                  >
+                    {face}
+                  </button>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+        <div className="flex gap-2">
+          <input
+            value={note}
+            onChange={e => setNote(e.target.value)}
+            placeholder="Anything on your heart? (private, optional)"
+            className="flex-1 px-3 py-1.5 rounded bg-[#050814] border border-[#1E293B] text-xs text-[#F8FAFC] placeholder-[#475569] focus:outline-none focus:border-[#D4AF37]/50"
+          />
+          <button
+            onClick={submit}
+            disabled={!ready || saving}
+            className={`px-4 py-1.5 rounded text-xs font-medium transition-all ${
+              ready ? 'bg-[#D4AF37] text-[#050814] hover:bg-[#F3E5AB]' : 'bg-[#1E293B] text-[#475569]'
+            }`}
+            data-testid="checkin-submit"
+          >
+            {saving ? '…' : 'Check in'}
+          </button>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
 
 const StatCard = ({ label, value, icon: Icon, color, to }) => {
   const navigate = useNavigate();
@@ -40,7 +116,14 @@ export default function DashboardPage({ user }) {
   const [recentCourses, setRecentCourses] = useState([]);
   const [myEnrollments, setMyEnrollments] = useState([]);
   const [certificates, setCertificates] = useState([]);
+  const [checkedInToday, setCheckedInToday] = useState(true); // assume done until we know
   const navigate = useNavigate();
+
+  useEffect(() => {
+    apiGet('/api/checkins/me')
+      .then(r => setCheckedInToday(r.checked_in_today))
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
     async function load() {
@@ -76,8 +159,26 @@ export default function DashboardPage({ user }) {
     return 'Good evening';
   };
 
+  // Role-aware content (product eval §3): learners see learner language and
+  // learner actions; course creation stays with faculty/elder/admin.
+  const isFaculty = ['admin', 'elder', 'faculty'].includes(user?.role);
+
+  const quickActions = isFaculty
+    ? [
+        { label: 'New Course', icon: BookOpenText, to: '/courses' },
+        { label: 'New Cohort', icon: UsersThree, to: '/cohorts' },
+        { label: 'Start Discussion', icon: Chats, to: '/community' },
+        { label: 'Browse Archives', icon: Archive, to: '/archives' },
+      ]
+    : [
+        { label: 'Browse Courses', icon: BookOpenText, to: '/courses' },
+        { label: 'Join a Cohort', icon: UsersThree, to: '/cohorts' },
+        { label: 'Start Discussion', icon: Chats, to: '/community' },
+        { label: 'Browse Archives', icon: Archive, to: '/archives' },
+      ];
+
   return (
-    <div className="space-y-8 animate-fade-in-up" data-testid="dashboard-page">
+    <div className="flex flex-col gap-8 animate-fade-in-up" data-testid="dashboard-page">
       {/* Welcome */}
       <div>
         <h1
@@ -91,22 +192,26 @@ export default function DashboardPage({ user }) {
         </p>
       </div>
 
+      {/* Daily check-in (everyone — wellness is for the whole village) */}
+      {!checkedInToday && <CheckInCard onDone={() => setCheckedInToday(true)} />}
+
       {/* Stats Grid */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4" style={{ order: 1 }}>
         <StatCard label="Courses" value={stats.courses} icon={BookOpenText} color="bg-[#D4AF37]/10 text-[#D4AF37]" to="/courses" />
         <StatCard label="Cohorts" value={stats.cohorts} icon={UsersThree} color="bg-blue-500/10 text-blue-400" to="/cohorts" />
         <StatCard label="Discussions" value={stats.posts} icon={Chats} color="bg-emerald-500/10 text-emerald-400" to="/community" />
         <StatCard label="Archives" value={stats.archives} icon={Archive} color="bg-purple-500/10 text-purple-400" to="/archives" />
       </div>
 
-      {/* Recent Courses */}
-      <Card className="bg-[#0F172A] border-[#1E293B]">
+      {/* Recent/Explore Courses */}
+      {/* Faculty see their recent courses first; learners see their own learning first */}
+      <Card className="bg-[#0F172A] border-[#1E293B]" style={{ order: isFaculty ? 2 : 3 }}>
         <CardHeader className="flex flex-row items-center justify-between pb-2">
           <CardTitle
             className="text-lg text-[#F8FAFC]"
             style={{ fontFamily: 'Cormorant Garamond, serif' }}
           >
-            Recent Courses
+            {isFaculty ? 'Recent Courses' : 'Explore Courses'}
           </CardTitle>
           <button
             className="text-xs text-[#D4AF37] flex items-center gap-1 hover:underline"
@@ -119,7 +224,9 @@ export default function DashboardPage({ user }) {
         <CardContent className="space-y-3">
           {recentCourses.length === 0 ? (
             <p className="text-sm text-[#94A3B8] py-4 text-center">
-              No courses yet. Create your first course to get started.
+              {isFaculty
+                ? 'No courses yet. Create your first course to get started.'
+                : 'No courses are open yet. Your community’s offerings will appear here.'}
             </p>
           ) : (
             recentCourses.map((course) => (
@@ -147,7 +254,7 @@ export default function DashboardPage({ user }) {
 
       {/* My Learning */}
       {myEnrollments.length > 0 && (
-        <Card className="bg-[#0F172A] border-[#1E293B]">
+        <Card className="bg-[#0F172A] border-[#1E293B]" style={{ order: isFaculty ? 3 : 2 }}>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle
               className="text-lg text-[#F8FAFC] flex items-center gap-2"
@@ -199,19 +306,14 @@ export default function DashboardPage({ user }) {
       )}
 
       {/* Quick Actions */}
-      <div>
+      <div style={{ order: 4 }}>
         <h3
           className="text-sm tracking-[0.15em] uppercase text-[#D4AF37] mb-3"
         >
           Quick Actions
         </h3>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          {[
-            { label: 'New Course', icon: BookOpenText, to: '/courses' },
-            { label: 'New Cohort', icon: UsersThree, to: '/cohorts' },
-            { label: 'Start Discussion', icon: Chats, to: '/community' },
-            { label: 'Browse Archives', icon: Archive, to: '/archives' },
-          ].map((action) => (
+          {quickActions.map((action) => (
             <button
               key={action.label}
               onClick={() => navigate(action.to)}
@@ -226,7 +328,7 @@ export default function DashboardPage({ user }) {
       </div>
       {/* My Certificates */}
       {certificates.length > 0 && (
-        <div data-testid="my-certificates">
+        <div data-testid="my-certificates" style={{ order: 5 }}>
           <div className="flex items-center gap-2 mb-3">
             <Certificate size={16} weight="duotone" className="text-[#D4AF37]" />
             <h2 className="text-xs tracking-[0.15em] uppercase text-[#D4AF37]">My Certificates</h2>

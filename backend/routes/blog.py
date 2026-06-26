@@ -44,12 +44,12 @@ def format_post(post: dict, include_content: bool = False) -> dict:
 # ─── Public endpoints ───
 
 @router.get("/categories")
-async def get_categories():
+def get_categories():
     return CATEGORIES
 
 
 @router.get("/posts/public")
-async def get_public_posts(
+def get_public_posts(
     category: Optional[str] = None,
     tag: Optional[str] = None,
     limit: int = Query(20, le=50),
@@ -70,7 +70,7 @@ async def get_public_posts(
 # ─── Authenticated endpoints ───
 
 @router.get("/posts")
-async def get_posts(
+def get_posts(
     category: Optional[str] = None,
     tag: Optional[str] = None,
     visibility: Optional[str] = None,
@@ -93,14 +93,14 @@ async def get_posts(
 
 
 @router.get("/posts/mine")
-async def get_my_posts(current_user: dict = Depends(get_current_user)):
+def get_my_posts(current_user: dict = Depends(get_current_user)):
     """Get posts authored by the current user."""
     posts = list(blog_posts_col.find({"author_id": current_user["id"]}, {"_id": 0}).sort("created_at", -1))
     return [format_post(p) for p in posts]
 
 
 @router.get("/posts/by-slug/{slug}")
-async def get_post_by_slug(slug: str, current_user: dict = Depends(get_current_user)):
+def get_post_by_slug(slug: str, current_user: dict = Depends(get_current_user)):
     post = blog_posts_col.find_one({"slug": slug, "status": "published"}, {"_id": 0})
     if not post:
         raise HTTPException(status_code=404, detail="Post not found")
@@ -110,7 +110,7 @@ async def get_post_by_slug(slug: str, current_user: dict = Depends(get_current_u
 
 
 @router.get("/posts/public/by-slug/{slug}")
-async def get_public_post_by_slug(slug: str):
+def get_public_post_by_slug(slug: str):
     """Public endpoint — no auth. Returns a single published public post."""
     post = blog_posts_col.find_one({"slug": slug, "status": "published", "visibility": "public"}, {"_id": 0})
     if not post:
@@ -119,7 +119,7 @@ async def get_public_post_by_slug(slug: str):
 
 
 @router.post("/posts")
-async def create_post(body: dict, current_user: dict = Depends(get_current_user)):
+def create_post(body: dict, current_user: dict = Depends(get_current_user)):
     if current_user["role"] not in FACULTY_ROLES:
         raise HTTPException(status_code=403, detail="Only faculty, elders, and admins can publish")
 
@@ -165,7 +165,7 @@ async def create_post(body: dict, current_user: dict = Depends(get_current_user)
 
 
 @router.put("/posts/{post_id}")
-async def update_post(post_id: str, body: dict, current_user: dict = Depends(get_current_user)):
+def update_post(post_id: str, body: dict, current_user: dict = Depends(get_current_user)):
     post = blog_posts_col.find_one({"id": post_id}, {"_id": 0})
     if not post:
         raise HTTPException(status_code=404, detail="Post not found")
@@ -196,7 +196,7 @@ async def update_post(post_id: str, body: dict, current_user: dict = Depends(get
 
 
 @router.delete("/posts/{post_id}")
-async def delete_post(post_id: str, current_user: dict = Depends(get_current_user)):
+def delete_post(post_id: str, current_user: dict = Depends(get_current_user)):
     post = blog_posts_col.find_one({"id": post_id}, {"_id": 0})
     if not post:
         raise HTTPException(status_code=404, detail="Post not found")
@@ -210,13 +210,13 @@ async def delete_post(post_id: str, current_user: dict = Depends(get_current_use
 # ─── Comments ───
 
 @router.get("/posts/{post_id}/comments")
-async def get_comments(post_id: str, current_user: dict = Depends(get_current_user)):
+def get_comments(post_id: str, current_user: dict = Depends(get_current_user)):
     comments = list(blog_comments_col.find({"post_id": post_id}, {"_id": 0}).sort("created_at", 1))
     return comments
 
 
 @router.post("/posts/{post_id}/comments")
-async def add_comment(post_id: str, body: dict, current_user: dict = Depends(get_current_user)):
+def add_comment(post_id: str, body: dict, current_user: dict = Depends(get_current_user)):
     post = blog_posts_col.find_one({"id": post_id}, {"_id": 0})
     if not post:
         raise HTTPException(status_code=404, detail="Post not found")
@@ -241,7 +241,7 @@ async def add_comment(post_id: str, body: dict, current_user: dict = Depends(get
 
 
 @router.delete("/comments/{comment_id}")
-async def delete_comment(comment_id: str, current_user: dict = Depends(get_current_user)):
+def delete_comment(comment_id: str, current_user: dict = Depends(get_current_user)):
     comment = blog_comments_col.find_one({"id": comment_id}, {"_id": 0})
     if not comment:
         raise HTTPException(status_code=404, detail="Comment not found")

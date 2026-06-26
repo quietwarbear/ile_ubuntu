@@ -139,7 +139,7 @@ def generate_certificate_pdf(student_name, course_title, completion_date, cert_i
 
 
 @router.get("/check/{course_id}")
-async def check_certificate(course_id: str, current_user: dict = Depends(get_current_user)):
+def check_certificate(course_id: str, current_user: dict = Depends(get_current_user)):
     """Check if user is eligible for a certificate."""
     enrollment = enrollments_col.find_one(
         {"user_id": current_user["id"], "course_id": course_id},
@@ -160,7 +160,7 @@ async def check_certificate(course_id: str, current_user: dict = Depends(get_cur
 
 
 @router.get("/download/{course_id}")
-async def download_certificate(course_id: str, current_user: dict = Depends(get_current_user)):
+def download_certificate(course_id: str, current_user: dict = Depends(get_current_user)):
     """Generate and download a certificate PDF."""
     enrollment = enrollments_col.find_one(
         {"user_id": current_user["id"], "course_id": course_id},
@@ -206,7 +206,7 @@ async def download_certificate(course_id: str, current_user: dict = Depends(get_
 
 
 @router.get("/my-certificates")
-async def list_my_certificates(current_user: dict = Depends(get_current_user)):
+def list_my_certificates(current_user: dict = Depends(get_current_user)):
     """List all completed courses (eligible for certificates)."""
     completed = list(enrollments_col.find(
         {"user_id": current_user["id"], "progress": 100},

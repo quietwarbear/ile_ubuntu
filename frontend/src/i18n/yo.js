@@ -1,5 +1,33 @@
 const yo = {
+  // Onboarding path fork
+  onboard_path: 'Báwo ni o ṣe máa rìn pẹ̀lú wa?',
+  onboard_path_sub: 'Yan ọ̀nà tí ó bá ọ mu — o lè dàgbà sí àwọn mìíràn nígbà gbogbo.',
+  path_learner: 'Mo wá láti kọ́ ẹ̀kọ́',
+  path_learner_desc: 'Gba àwọn ẹ̀kọ́, dara pọ̀ mọ́ ẹgbẹ́, dàgbà pẹ̀lú àwùjọ.',
+  path_educator: 'Mo wá láti kọ́ni',
+  path_educator_desc: 'Ṣẹ̀dá àwọn ẹ̀kọ́ kí o sì darí àwọn akẹ́kọ̀ọ́.',
+  path_mentor: 'Mo wá láti bá àwọn ẹlòmíì rìn',
+  path_mentor_desc: 'Pín ọ̀nà pẹ̀lú àwọn ọ̀dọ́ bí ẹ ṣe ń jọ dàgbà.',
+  path_family: 'Mo ń ti ọ̀dọ́ kan lẹ́yìn',
+  path_family_desc: 'Tẹ̀lé kí o sì gba akẹ́kọ̀ọ́ nínú ìdílé rẹ níyànjú.',
+  onboard_complete_educator: 'Káàbọ̀, olùkọ́. Ṣàwárí àwùjọ nígbà tí àgbà kan ń fọwọ́ sí ànfààní ìkọ́ni rẹ — a ó sọ fún ọ nígbà tí àwọn irinṣẹ́ rẹ bá ṣí.',
+  onboard_complete_mentor: 'Káàbọ̀, akẹ́gbẹ́ ẹ̀kọ́. Àwọn àyíká ẹ̀kọ́ ń bọ̀ láìpẹ́ — ní báyìí, fi ara balẹ̀ nínú àwùjọ.',
+  onboard_complete_family: 'Káàbọ̀ sí abúlé. Ìrírí ìdílé — títẹ̀lé ìdàgbàsókè ọ̀dọ́ rẹ — ń bọ̀ lọ́nà. A ó jẹ́ kí o mọ̀ nígbà tí ó bá ṣí.',
+
   // Nav
+  nav_learn: 'Ẹ̀kọ́',
+  nav_family: 'Ìdílé',
+  family_my: 'Ìdílé Mi',
+  learning_circles: 'Àwọn Àyíká Ẹ̀kọ́',
+  community_dashboard: 'Pánẹ́lì Àwùjọ',
+  villages: 'Àwọn Abúlé',
+  onboard_about: 'Díẹ̀ nípa rẹ',
+  onboard_about_sub: 'Ọdún ìbí rẹ ń ràn wá lọ́wọ́ láti dáàbò bo àwọn ọ̀dọ́ nínú abúlé. Kò pọn dandan.',
+  onboard_birth_skip: 'Mi ò fẹ́ sọ',
+  nav_belong: 'Àjọṣe',
+  nav_facilitate: 'Ìdarí',
+  nav_account: 'Àkáǹtì',
+  teacher_dashboard: 'Pánẹ́lì Olùkọ́',
   dashboard: 'Pánẹ́lì',
   courses: 'Àwọn Ẹ̀kọ́',
   live_teaching: 'Ìkọ́ni Láàyè',
@@ -61,6 +89,23 @@ const yo = {
   about_hero: 'Ilé Ẹ̀kọ́ Aláàyè',
   about_subtitle: 'Àyè mímọ́ níbi tí ìmọ̀, àwùjọ àti àṣà pàdé',
   about_tagline: 'A kọ́ fún àwọn tí ń kọ́ni, tí ń kọ́, tí ń pa ọgbọ́n mọ́',
+
+  // Village home (deep migration Phase 2)
+  nav_village: 'Abúlé',
+  village_home: 'Abúlé Mi',
+  village_entering: 'À ń wọ abúlé…',
+  village_full: 'Gbogbo abúlé',
+  village_elder_word: 'Ọ̀rọ̀ àgbà',
+  village_sessions: 'Àpèjọ',
+  village_no_sessions: 'Kò sí àpèjọ lọ́nà — àwọn olùtọ́jú yóò pe èyí tó kàn.',
+  village_circle: 'Àyíká mi',
+  village_no_circle: 'Àyíká rẹ ṣì ń dàgbà — àwọn akẹ́gbẹ́ ẹ̀kọ́ àti ẹbí yóò hàn níbí.',
+  village_goals: 'Àwọn èròngbà wa ní àsìkò yìí',
+  village_no_goals: 'Kò tíì sí èròngbà tí a dárúkọ ní àsìkò yìí.',
+  village_voices: 'Ohùn abúlé',
+  village_no_posts: 'Ìdákẹ́jẹ́ fún ìsinsìnyí — jẹ́ ohùn àkọ́kọ́ ní ọ̀sẹ̀ yìí.',
+  village_pick: 'Yan abúlé rẹ',
+  village_pick_sub: 'O jẹ́ ti ju ọ̀kan lọ — níbo ni o ń lọ lónìí?',
 };
 
 export default yo;

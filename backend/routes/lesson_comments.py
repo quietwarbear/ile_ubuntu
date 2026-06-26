@@ -6,6 +6,7 @@ import uuid
 from database import lesson_comments_col, lessons_col, courses_col, enrollments_col, notifications_col
 from middleware import get_current_user
 from models.user import has_permission, UserRole
+from events import emit
 
 router = APIRouter(
     prefix="/api/courses/{course_id}/lessons/{lesson_id}/comments",
@@ -36,7 +37,7 @@ def _verify_access(course_id: str, lesson_id: str, current_user: dict):
 
 
 @router.get("")
-async def list_comments(course_id: str, lesson_id: str, current_user: dict = Depends(get_current_user)):
+def list_comments(course_id: str, lesson_id: str, current_user: dict = Depends(get_current_user)):
     """Get all comments for a lesson, including replies (threaded)."""
     _verify_access(course_id, lesson_id, current_user)
 
@@ -97,6 +98,8 @@ async def create_comment(
     }
     lesson_comments_col.insert_one(comment)
     comment.pop("_id", None)
+    emit("lesson.commented", current_user, "lesson", lesson_id,
+         meta={"course_id": course_id, "is_reply": bool(parent_id)})
 
     # Notify the course instructor when a student comments
     if not is_instructor:
@@ -161,7 +164,7 @@ async def update_comment(
 
 
 @router.delete("/{comment_id}")
-async def delete_comment(
+def delete_comment(
     course_id: str, lesson_id: str, comment_id: str,
     current_user: dict = Depends(get_current_user),
 ):

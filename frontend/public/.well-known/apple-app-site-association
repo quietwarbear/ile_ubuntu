@@ -1,0 +1,12 @@
+{
+  "applinks": {
+    "details": [
+      {
+        "appIDs": ["H543QXDYUW.com.ubuntumarket.ileubuntu"],
+        "components": [
+          { "/": "/invite/*" }
+        ]
+      }
+    ]
+  }
+}

@@ -4,6 +4,16 @@ import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
 import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '../components/ui/alert-dialog';
+import {
   Shield,
   GoogleLogo,
   CheckCircle,
@@ -11,8 +21,10 @@ import {
   Plugs,
   Bell,
   BellSlash,
+  Warning,
+  Trash,
 } from '@phosphor-icons/react';
-import { apiGet, apiPut, apiPost, apiDelete } from '../lib/api';
+import { apiGet, apiPut, apiPost, apiDelete, clearCookie } from '../lib/api';
 
 export default function SettingsPage({ user }) {
   const [users, setUsers] = useState([]);
@@ -23,6 +35,9 @@ export default function SettingsPage({ user }) {
   const [pushLoading, setPushLoading] = useState(false);
   const [pushSupported] = useState('serviceWorker' in navigator && 'PushManager' in window);
   const [searchParams] = useSearchParams();
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deleteInProgress, setDeleteInProgress] = useState(false);
+  const [deleteError, setDeleteError] = useState('');
 
   const isAdmin = ['admin', 'elder'].includes(user?.role);
   const isFaculty = ['faculty', 'elder', 'admin'].includes(user?.role);
@@ -122,6 +137,21 @@ export default function SettingsPage({ user }) {
       await apiPut(`/api/auth/users/${userId}/role`, { role });
       loadUsers();
     } catch (e) { alert(e.message); }
+  };
+
+  const handleDeleteAccount = async () => {
+    setDeleteError('');
+    setDeleteInProgress(true);
+    try {
+      await apiDelete('/api/auth/me');
+      // Clear local session and force a hard reload so App.js re-checks auth
+      // and routes to the sign-in screen.
+      clearCookie('session_id');
+      window.location.href = '/';
+    } catch (e) {
+      setDeleteError(e.message || 'Could not delete account. Please try again or contact support.');
+      setDeleteInProgress(false);
+    }
   };
 
   const roleColor = (role) => {
@@ -289,6 +319,83 @@ export default function SettingsPage({ user }) {
           </CardContent>
         </Card>
       )}
+
+      {/* Danger Zone — Account Deletion (Apple App Store Guideline 5.1.1(v)) */}
+      <Card className="bg-[#0F172A] border-red-500/30" data-testid="delete-account-card">
+        <CardHeader>
+          <CardTitle className="text-lg text-red-400 flex items-center gap-2" style={{ fontFamily: 'Cormorant Garamond, serif' }}>
+            <Warning size={20} weight="duotone" className="text-red-400" />
+            Delete Account
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-xs text-[#94A3B8] mb-4">
+            Permanently delete your Ile Ubuntu account and all associated data — your profile,
+            enrollments, comments, posts, messages, and notification preferences. This cannot be undone.
+          </p>
+          <Button
+            onClick={() => { setDeleteError(''); setDeleteDialogOpen(true); }}
+            className="bg-red-500/10 text-red-400 border border-red-500/20 hover:bg-red-500/20"
+            data-testid="open-delete-account-dialog-btn"
+          >
+            <Trash size={16} weight="duotone" className="mr-2" />
+            Delete my account
+          </Button>
+        </CardContent>
+      </Card>
+
+      <AlertDialog open={deleteDialogOpen} onOpenChange={(open) => { if (!deleteInProgress) setDeleteDialogOpen(open); }}>
+        <AlertDialogContent
+          className="bg-[#0F172A] border border-red-500/30 text-[#F8FAFC]"
+          data-testid="delete-account-dialog"
+        >
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-red-400 flex items-center gap-2" style={{ fontFamily: 'Cormorant Garamond, serif' }}>
+              <Warning size={20} weight="duotone" />
+              Permanently delete your account?
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-[#94A3B8]">
+              This will <span className="text-[#F8FAFC] font-medium">immediately and permanently</span> delete:
+              <br />
+              <br />
+              • Your profile, name, email, and bio
+              <br />
+              • All your course enrollments and quiz attempts
+              <br />
+              • Every blog post, community post, and comment you've written
+              <br />
+              • Your messages, notifications, and push subscriptions
+              <br />
+              • Any connected Google account tokens
+              <br />
+              <br />
+              You will be signed out and returned to the welcome screen. <span className="text-red-400">This cannot be undone.</span>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          {deleteError && (
+            <p className="text-sm text-red-400 bg-red-500/10 border border-red-500/20 rounded-md p-2" data-testid="delete-account-error">
+              {deleteError}
+            </p>
+          )}
+          <AlertDialogFooter>
+            <AlertDialogCancel
+              disabled={deleteInProgress}
+              className="bg-[#050814] border-[#1E293B] text-[#F8FAFC] hover:bg-[#1E293B]"
+              data-testid="cancel-delete-account-btn"
+            >
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => { e.preventDefault(); handleDeleteAccount(); }}
+              disabled={deleteInProgress}
+              className="bg-red-500 text-white hover:bg-red-600"
+              data-testid="confirm-delete-account-btn"
+            >
+              {deleteInProgress ? 'Deleting…' : 'Permanently delete'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

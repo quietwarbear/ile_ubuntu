@@ -6,6 +6,7 @@ from middleware import get_current_user
 from models.user import has_permission, UserRole
 from models.cohort import CohortStatus
 from tier_gating import require_tier
+from events import emit
 
 router = APIRouter(prefix="/api/cohorts", tags=["cohorts"])
 
@@ -37,7 +38,7 @@ async def create_cohort(request: Request, current_user: dict = Depends(get_curre
 
 
 @router.get("")
-async def list_cohorts(status: str = None, current_user: dict = Depends(get_current_user)):
+def list_cohorts(status: str = None, current_user: dict = Depends(get_current_user)):
     query = {}
     if status:
         query["status"] = status
@@ -46,7 +47,7 @@ async def list_cohorts(status: str = None, current_user: dict = Depends(get_curr
 
 
 @router.get("/{cohort_id}")
-async def get_cohort(cohort_id: str, current_user: dict = Depends(get_current_user)):
+def get_cohort(cohort_id: str, current_user: dict = Depends(get_current_user)):
     cohort = cohorts_col.find_one({"id": cohort_id}, {"_id": 0})
     if not cohort:
         raise HTTPException(status_code=404, detail="Cohort not found")
@@ -74,7 +75,7 @@ async def update_cohort(cohort_id: str, request: Request, current_user: dict = D
 
 
 @router.post("/{cohort_id}/join")
-async def join_cohort(cohort_id: str, current_user: dict = Depends(get_current_user)):
+def join_cohort(cohort_id: str, current_user: dict = Depends(get_current_user)):
     # Tier gating: Scholar+ required to join cohorts
     require_tier(current_user, "scholar", "cohort_join")
 
@@ -93,11 +94,10 @@ async def join_cohort(cohort_id: str, current_user: dict = Depends(get_current_u
         {"$addToSet": {"members": current_user["id"]}},
     )
 
-    # Send cohort join email (non-blocking)
+    # Send cohort join email (non-blocking; handler is sync, so no event loop here)
     try:
-        import asyncio
-        from routes.email_notifications import send_cohort_join_email
-        asyncio.create_task(send_cohort_join_email(
+        from routes.email_notifications import send_cohort_join_email, send_in_background
+        send_in_background(send_cohort_join_email(
             current_user.get("email", ""),
             current_user.get("name", "Learner"),
             cohort["name"],
@@ -105,20 +105,22 @@ async def join_cohort(cohort_id: str, current_user: dict = Depends(get_current_u
     except Exception:
         pass
 
+    emit("cohort.joined", current_user, "cohort", cohort_id)
     return {"success": True, "message": "Joined cohort"}
 
 
 @router.post("/{cohort_id}/leave")
-async def leave_cohort(cohort_id: str, current_user: dict = Depends(get_current_user)):
+def leave_cohort(cohort_id: str, current_user: dict = Depends(get_current_user)):
     cohorts_col.update_one(
         {"id": cohort_id},
         {"$pull": {"members": current_user["id"]}},
     )
+    emit("cohort.left", current_user, "cohort", cohort_id)
     return {"success": True, "message": "Left cohort"}
 
 
 @router.delete("/{cohort_id}")
-async def delete_cohort(cohort_id: str, current_user: dict = Depends(get_current_user)):
+def delete_cohort(cohort_id: str, current_user: dict = Depends(get_current_user)):
     cohort = cohorts_col.find_one({"id": cohort_id})
     if not cohort:
         raise HTTPException(status_code=404, detail="Cohort not found")
@@ -156,7 +158,7 @@ async def link_course_to_cohort(cohort_id: str, request: Request, current_user: 
 
 
 @router.delete("/{cohort_id}/courses/{course_id}")
-async def unlink_course_from_cohort(cohort_id: str, course_id: str, current_user: dict = Depends(get_current_user)):
+def unlink_course_from_cohort(cohort_id: str, course_id: str, current_user: dict = Depends(get_current_user)):
     if not has_permission(current_user["role"], UserRole.FACULTY):
         raise HTTPException(status_code=403, detail="Only faculty+ can unlink courses")
 
@@ -170,7 +172,7 @@ async def unlink_course_from_cohort(cohort_id: str, course_id: str, current_user
 
 
 @router.get("/{cohort_id}/detail")
-async def get_cohort_detail(cohort_id: str, current_user: dict = Depends(get_current_user)):
+def get_cohort_detail(cohort_id: str, current_user: dict = Depends(get_current_user)):
     """Get cohort with enriched course and member data."""
     cohort = cohorts_col.find_one({"id": cohort_id}, {"_id": 0})
     if not cohort:
@@ -199,19 +201,37 @@ async def get_cohort_detail(cohort_id: str, current_user: dict = Depends(get_cur
         if u:
             member_enrollments = list(enrollments_col.find(
                 {"user_id": uid, "course_id": {"$in": cohort.get("course_ids", [])}},
-                {"_id": 0, "course_id": 1, "progress": 1, "status": 1},
+                {"_id": 0, "course_id": 1, "progress": 1, "status": 1, "completed_lessons": 1},
             ))
             total_progress = 0
             if member_enrollments:
                 total_progress = sum(e.get("progress", 0) for e in member_enrollments) / len(cohort.get("course_ids", [1]))
+            lessons_done = sum(len(e.get("completed_lessons", [])) for e in member_enrollments)
+            for e in member_enrollments:
+                e.pop("completed_lessons", None)
             enriched_members.append({
                 **u,
                 "enrollments": member_enrollments,
                 "overall_progress": round(total_progress, 1),
+                "lessons_completed": lessons_done,
             })
+
+    # Collective progress (eval §10 QW3): the village is the unit of
+    # achievement — measure what we've done together, not who's "winning".
+    member_count = len(enriched_members)
+    collective = {
+        "average_progress": round(
+            sum(m["overall_progress"] for m in enriched_members) / member_count, 1
+        ) if member_count else 0,
+        "lessons_completed_together": sum(m["lessons_completed"] for m in enriched_members),
+        "members_on_the_path": sum(1 for m in enriched_members if m["overall_progress"] > 0),
+        "members_completed": sum(1 for m in enriched_members if m["overall_progress"] >= 100),
+        "member_count": member_count,
+    }
 
     return {
         **cohort,
         "linked_courses": linked_courses,
         "enriched_members": enriched_members,
+        "collective": collective,
     }

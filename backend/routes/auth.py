@@ -16,11 +16,37 @@ from google.oauth2 import id_token
 import jwt as pyjwt
 from cryptography.hazmat.primitives.asymmetric.rsa import RSAPublicNumbers
 from cryptography.hazmat.backends import default_backend
-from database import users_col, sessions_col
+import hashlib
+from database import (
+    users_col,
+    sessions_col,
+    sso_codes_col,
+    password_resets_col,
+    enrollments_col,
+    messages_col,
+    notifications_col,
+    google_tokens_col,
+    payment_transactions_col,
+    blog_posts_col,
+    blog_comments_col,
+    lesson_comments_col,
+    quiz_attempts_col,
+    spaces_col,
+    posts_col,
+    live_sessions_col,
+)
 from middleware import get_current_user
 from models.user import UserRole
+from rate_limit import rate_limit
+from events import emit
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
+
+PUBLIC_SITE_URL = os.environ.get("PUBLIC_SITE_URL", "https://www.ile-ubuntu.org").rstrip("/")
+
+
+def _hash_token(token: str) -> str:
+    return hashlib.sha256(token.encode()).hexdigest()
 
 GOOGLE_CLIENT_ID = os.environ.get("GOOGLE_CLIENT_ID", "")
 GOOGLE_CLIENT_SECRET = os.environ.get("GOOGLE_CLIENT_SECRET", "")
@@ -131,6 +157,7 @@ def _create_session(user_id: str) -> dict:
         "expires_at": datetime.now(timezone.utc) + timedelta(days=7),
     }
     sessions_col.insert_one(session_data)
+    emit("user.logged_in", {"id": user_id})
     return {"session_id": session_id, "session_token": session_token}
 
 
@@ -274,6 +301,7 @@ def _external_base_url(request: Request) -> str:
 @router.post("/register")
 async def register(request: Request):
     """Register a new user with email and password."""
+    rate_limit(request, "register", max_requests=10, window_seconds=3600)
     data = await request.json()
     email = data.get("email", "").strip().lower()
     password = data.get("password", "")
@@ -291,6 +319,7 @@ async def register(request: Request):
     if existing:
         raise HTTPException(status_code=409, detail="An account with this email already exists. Try signing in instead.")
 
+    verification_token = str(uuid.uuid4())
     user_data = {
         "id": str(uuid.uuid4()),
         "email": email,
@@ -300,9 +329,28 @@ async def register(request: Request):
         "bio": "",
         "auth_provider": "password",
         "password_hash": pwd_context.hash(password),
+        "email_verified": False,
+        "email_verification_token_hash": _hash_token(verification_token),
         "created_at": datetime.now(timezone.utc),
     }
     users_col.insert_one(user_data)
+    emit("user.registered", user_data, meta={"provider": "password"})
+
+    # Best-effort verification email — registration succeeds regardless.
+    try:
+        from routes.email_notifications import send_email, build_email_html
+
+        verify_url = f"{_external_base_url(request)}/api/auth/verify-email?token={verification_token}"
+        html = build_email_html(
+            "Welcome to The Ile Ubuntu",
+            f"<p>Hello, <strong>{name}</strong>! Please confirm your email address "
+            f"to secure your account.</p>",
+            "Verify Email",
+            verify_url,
+        )
+        await send_email(email, "Verify your email — The Ile Ubuntu", html)
+    except Exception:
+        logger.exception("Verification email failed for %s", email)
 
     session = _create_session(user_data["id"])
     return {
@@ -315,6 +363,7 @@ async def register(request: Request):
 @router.post("/login")
 async def login(request: Request):
     """Sign in with email and password."""
+    rate_limit(request, "login", max_requests=10, window_seconds=300)
     data = await request.json()
     email = data.get("email", "").strip().lower()
     password = data.get("password", "")
@@ -344,12 +393,221 @@ async def login(request: Request):
     }
 
 
+@router.post("/exchange")
+async def exchange(request: Request):
+    """Ubuntu Markets single-identity exchange (federation).
+
+    A trusted sibling product (Kindred, Legacy Table) presents a verified user's email
+    plus the shared UBUNTU_SSO_SECRET; we find-or-create that user and open a normal Ile
+    Ubuntu session. No password is exchanged. The secret is server-side only and must be
+    set identically across the products' backends. Trust only products you control.
+
+    NOTE: PyMongo is synchronous here — collection calls are intentionally not awaited
+    (sync-handler rule), matching register/login above.
+    """
+    data = await request.json()
+    secret = data.get("secret") or ""
+    expected = os.environ.get("UBUNTU_SSO_SECRET", "")
+    if not expected or secret != expected:
+        raise HTTPException(status_code=403, detail="Invalid SSO secret")
+
+    email = (data.get("email") or "").strip().lower()
+    name = (data.get("name") or "").strip()
+    if not email or "@" not in email:
+        raise HTTPException(status_code=400, detail="A valid email is required")
+
+    user = users_col.find_one({"email": email})
+    if not user:
+        user = {
+            "id": str(uuid.uuid4()),
+            "email": email,
+            "name": name or email.split("@")[0],
+            "picture": "",
+            "role": UserRole.STUDENT,
+            "bio": "",
+            "auth_provider": "ubuntu-sso",
+            "password_hash": None,
+            "email_verified": True,  # identity already verified by the trusted sibling product
+            "created_at": datetime.now(timezone.utc),
+        }
+        users_col.insert_one(user)
+        emit("user.registered", user, meta={"provider": "ubuntu-sso"})
+
+    session = _create_session(user["id"])
+    return {
+        "success": True,
+        "user_id": user["id"],
+        **session,
+    }
+
+
+@router.post("/sso-code")
+async def sso_mint_code(request: Request):
+    """Mint a short-lived, single-use SSO code (server-to-server, secret-gated). A trusted
+    sibling (Kindred) calls this for an 'Open in Ile Ubuntu' jump. PyMongo is sync here."""
+    data = await request.json()
+    secret = data.get("secret") or ""
+    expected = os.environ.get("UBUNTU_SSO_SECRET", "")
+    if not expected or secret != expected:
+        raise HTTPException(status_code=403, detail="Invalid SSO secret")
+    email = (data.get("email") or "").strip().lower()
+    name = (data.get("name") or "").strip()
+    if not email or "@" not in email:
+        raise HTTPException(status_code=400, detail="A valid email is required")
+
+    user = users_col.find_one({"email": email})
+    if not user:
+        user = {
+            "id": str(uuid.uuid4()),
+            "email": email,
+            "name": name or email.split("@")[0],
+            "picture": "",
+            "role": UserRole.STUDENT,
+            "bio": "",
+            "auth_provider": "ubuntu-sso",
+            "password_hash": None,
+            "email_verified": True,
+            "created_at": datetime.now(timezone.utc),
+        }
+        users_col.insert_one(user)
+        emit("user.registered", user, meta={"provider": "ubuntu-sso"})
+
+    code = uuid.uuid4().hex
+    sso_codes_col.insert_one({
+        "code": code,
+        "user_id": user["id"],
+        "expires_at": datetime.now(timezone.utc) + timedelta(minutes=5),
+        "used": False,
+        "created_at": datetime.now(timezone.utc),
+    })
+    return {"code": code, "expires_in": 300}
+
+
+@router.post("/sso-redeem")
+async def sso_redeem_code(request: Request):
+    """Redeem a single-use SSO code for an Ile Ubuntu session. The code is the one-time
+    credential; no secret needed."""
+    data = await request.json()
+    code = data.get("code") or ""
+    rec = sso_codes_col.find_one({"code": code})
+    now = datetime.now(timezone.utc)
+    if not rec or rec.get("used"):
+        raise HTTPException(status_code=400, detail="This sign-in link is invalid or already used.")
+    expires_at = rec.get("expires_at")
+    if isinstance(expires_at, datetime):
+        exp = expires_at if expires_at.tzinfo else expires_at.replace(tzinfo=timezone.utc)
+        if exp < now:
+            raise HTTPException(status_code=400, detail="This sign-in link has expired.")
+    sso_codes_col.update_one({"code": code}, {"$set": {"used": True, "used_at": now}})
+
+    user = users_col.find_one({"id": rec["user_id"]})
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found.")
+    session = _create_session(user["id"])
+    return {"success": True, "user_id": user["id"], **session}
+
+
+@router.get("/verify-email")
+def verify_email(token: str = ""):
+    """Email verification link target. Marks the account verified and sends
+    the user back to the site."""
+    if token:
+        result = users_col.update_one(
+            {"email_verification_token_hash": _hash_token(token)},
+            {"$set": {"email_verified": True},
+             "$unset": {"email_verification_token_hash": ""}},
+        )
+        if result.modified_count:
+            return RedirectResponse(f"{PUBLIC_SITE_URL}/?email_verified=1")
+    return RedirectResponse(f"{PUBLIC_SITE_URL}/?email_verified=0")
+
+
+@router.post("/forgot-password")
+async def forgot_password(request: Request):
+    """Start a password reset. Always returns success so account existence
+    can't be probed."""
+    rate_limit(request, "forgot_password", max_requests=5, window_seconds=900)
+    data = await request.json()
+    email = (data.get("email") or "").strip().lower()
+    if not email:
+        raise HTTPException(status_code=400, detail="Email required")
+
+    generic = {"success": True, "message": "If an account exists for that email, a reset link has been sent."}
+
+    user = users_col.find_one({"email": email})
+    if not user or not user.get("password_hash"):
+        # No account, or social-login-only account — same generic answer.
+        return generic
+
+    token = str(uuid.uuid4())
+    password_resets_col.insert_one({
+        "token_hash": _hash_token(token),
+        "user_id": user["id"],
+        "used": False,
+        "created_at": datetime.now(timezone.utc),
+        "expires_at": datetime.now(timezone.utc) + timedelta(hours=1),
+    })
+
+    try:
+        from routes.email_notifications import send_email, build_email_html
+
+        reset_url = f"{PUBLIC_SITE_URL}/reset-password?token={token}"
+        html = build_email_html(
+            "Reset Your Password",
+            f"<p>Hello, <strong>{user.get('name', '')}</strong>. We received a request to "
+            f"reset your password. This link expires in 1 hour. If you didn't ask for "
+            f"this, you can safely ignore this email.</p>",
+            "Reset Password",
+            reset_url,
+        )
+        await send_email(email, "Reset your password — The Ile Ubuntu", html)
+    except Exception:
+        logger.exception("Password reset email failed for %s", email)
+
+    return generic
+
+
+@router.post("/reset-password")
+async def reset_password(request: Request):
+    """Complete a password reset with a token from the reset email."""
+    rate_limit(request, "reset_password", max_requests=10, window_seconds=900)
+    data = await request.json()
+    token = (data.get("token") or "").strip()
+    password = data.get("password") or ""
+
+    if not token:
+        raise HTTPException(status_code=400, detail="Reset token required")
+    if len(password) < 6:
+        raise HTTPException(status_code=400, detail="Password must be at least 6 characters")
+
+    reset = password_resets_col.find_one({"token_hash": _hash_token(token), "used": False})
+    if not reset:
+        raise HTTPException(status_code=400, detail="Invalid or expired reset link. Please request a new one.")
+
+    expires_at = reset["expires_at"]
+    if expires_at.tzinfo is None:
+        expires_at = expires_at.replace(tzinfo=timezone.utc)
+    if expires_at < datetime.now(timezone.utc):
+        raise HTTPException(status_code=400, detail="Invalid or expired reset link. Please request a new one.")
+
+    users_col.update_one(
+        {"id": reset["user_id"]},
+        {"$set": {"password_hash": pwd_context.hash(password)}},
+    )
+    password_resets_col.update_one({"_id": reset["_id"]}, {"$set": {"used": True}})
+    # Invalidate all existing sessions for this user.
+    sessions_col.delete_many({"user_id": reset["user_id"]})
+    emit("user.password_reset", {"id": reset["user_id"]})
+
+    return {"success": True, "message": "Password updated. Please sign in with your new password."}
+
+
 class GoogleSessionRequest(BaseModel):
     credential: str
 
 
 @router.post("/google/session")
-async def google_session_login(payload: GoogleSessionRequest):
+def google_session_login(payload: GoogleSessionRequest):
     """
     Validate a Google OAuth ID token (credential) and log the user in.
 
@@ -390,7 +648,7 @@ async def google_session_login(payload: GoogleSessionRequest):
 
 
 @router.get("/google/login-url")
-async def google_login_url(request: Request, redirect_uri: str = "https://www.ile-ubuntu.org/"):
+def google_login_url(request: Request, redirect_uri: str = "https://www.ile-ubuntu.org/"):
     """
     Return the Google OAuth URL as JSON for the web frontend.
 
@@ -422,7 +680,7 @@ class GoogleCallbackRequest(BaseModel):
 
 
 @router.post("/google/callback")
-async def google_callback_web(payload: GoogleCallbackRequest):
+def google_callback_web(payload: GoogleCallbackRequest):
     """
     Web frontend posts the Google auth code here after the redirect.
 
@@ -480,7 +738,7 @@ async def google_callback_web(payload: GoogleCallbackRequest):
 
 
 @router.get("/google/debug")
-async def google_debug(request: Request):
+def google_debug(request: Request):
     """Temporary diagnostic endpoint — returns the base URL and OAuth config (no secrets)."""
     base = _external_base_url(request)
     return {
@@ -497,7 +755,7 @@ async def google_debug(request: Request):
 
 
 @router.get("/google/start")
-async def google_login_start(request: Request, redirect_uri: str = DEFAULT_MOBILE_GOOGLE_REDIRECT):
+def google_login_start(request: Request, redirect_uri: str = DEFAULT_MOBILE_GOOGLE_REDIRECT):
     """
     Start the native-safe Google login flow.
 
@@ -528,7 +786,7 @@ async def google_login_start(request: Request, redirect_uri: str = DEFAULT_MOBIL
 
 
 @router.get("/google/callback")
-async def google_login_callback(request: Request, code: str = None, state: str = None, error: str = None):
+def google_login_callback(request: Request, code: str = None, state: str = None, error: str = None):
     logger.info("[Google OAuth CALLBACK] hit! code=%s state=%s error=%s", bool(code), state, error)
     logger.info("[Google OAuth CALLBACK] external_base_url=%s", _external_base_url(request))
 
@@ -599,7 +857,7 @@ class AppleSessionRequest(BaseModel):
 
 
 @router.post("/apple/session")
-async def apple_session_login(payload: AppleSessionRequest):
+def apple_session_login(payload: AppleSessionRequest):
     """
     Validate Apple Sign In ID token and log the user in.
 
@@ -631,7 +889,7 @@ async def apple_session_login(payload: AppleSessionRequest):
 
 
 @router.get("/apple/start")
-async def apple_login_start(request: Request, redirect_uri: str = APPLE_MOBILE_REDIRECT_URI):
+def apple_login_start(request: Request, redirect_uri: str = APPLE_MOBILE_REDIRECT_URI):
     """
     Start the native Apple login flow.
 
@@ -730,7 +988,7 @@ async def create_profile(request: Request):
 
 
 @router.get("/me")
-async def get_me(current_user: dict = Depends(get_current_user)):
+def get_me(current_user: dict = Depends(get_current_user)):
     return {
         "id": current_user["id"],
         "email": current_user["email"],
@@ -742,7 +1000,87 @@ async def get_me(current_user: dict = Depends(get_current_user)):
         "onboarding_complete": current_user.get("onboarding_complete", False),
         "language": current_user.get("language", "en"),
         "interests": current_user.get("interests", []),
+        "intent": current_user.get("intent", "learner"),
+        "is_minor": current_user.get("is_minor", False),
     }
+
+
+@router.delete("/me")
+def delete_my_account(current_user: dict = Depends(get_current_user)):
+    """
+    Permanently delete the authenticated user's account and all associated data.
+
+    Required by Apple App Store Guideline 5.1.1(v): apps that allow account
+    creation must allow account deletion from within the app.
+
+    This is a hard delete. Each collection is wrapped in its own try/except so
+    a single failure does not strand the rest of the cleanup. Returns per-
+    collection deletion counts for verifiability.
+    """
+    emit("user.deleted", current_user, "user", current_user["id"])
+    user_id = current_user["id"]
+
+    # (collection, filter dict, label)
+    deletion_targets = [
+        (sessions_col,             {"user_id": user_id},                                              "sessions"),
+        (enrollments_col,          {"user_id": user_id},                                              "enrollments"),
+        (notifications_col,        {"user_id": user_id},                                              "notifications"),
+        (google_tokens_col,        {"user_id": user_id},                                              "google_tokens"),
+        (payment_transactions_col, {"user_id": user_id},                                              "payment_transactions"),
+        (quiz_attempts_col,        {"user_id": user_id},                                              "quiz_attempts"),
+        (blog_posts_col,           {"author_id": user_id},                                            "blog_posts"),
+        (blog_comments_col,        {"author_id": user_id},                                            "blog_comments"),
+        (lesson_comments_col,      {"author_id": user_id},                                            "lesson_comments"),
+        (posts_col,                {"author_id": user_id},                                            "community_posts"),
+        (live_sessions_col,        {"host_id": user_id},                                              "live_sessions_hosted"),
+        (spaces_col,               {"owner_id": user_id},                                             "spaces_owned"),
+        (messages_col,             {"$or": [{"sender_id": user_id}, {"recipient_id": user_id}]},     "messages"),
+    ]
+
+    deletion_report = {}
+    errors = {}
+
+    for col, query, label in deletion_targets:
+        try:
+            result = col.delete_many(query)
+            deletion_report[label] = result.deleted_count
+        except Exception as exc:
+            errors[label] = str(exc)
+            logger.exception("Account deletion: failed to clear %s for user %s", label, user_id)
+
+    # Remove the user from any spaces they were a member of (but did not own)
+    try:
+        result = spaces_col.update_many(
+            {"members": user_id},
+            {"$pull": {"members": user_id}},
+        )
+        deletion_report["spaces_membership_removed"] = result.modified_count
+    except Exception as exc:
+        errors["spaces_membership_removed"] = str(exc)
+        logger.exception("Account deletion: failed to pull membership for user %s", user_id)
+
+    # Finally, delete the user record itself.
+    try:
+        result = users_col.delete_one({"id": user_id})
+        deletion_report["user_record"] = result.deleted_count
+    except Exception as exc:
+        errors["user_record"] = str(exc)
+        logger.exception("Account deletion: failed to delete user record %s", user_id)
+        raise HTTPException(
+            status_code=500,
+            detail="Account deletion partially failed; please contact support.",
+        ) from exc
+
+    if deletion_report.get("user_record", 0) != 1:
+        raise HTTPException(status_code=404, detail="User record not found.")
+
+    logger.info("Account deletion complete for user_id=%s report=%s errors=%s",
+                user_id, deletion_report, errors)
+
+    response = {"success": True, "deleted": deletion_report}
+    if errors:
+        response["partial_errors"] = errors
+    return response
 
 
 @router.put("/me/onboarding")
@@ -753,7 +1091,19 @@ async def complete_onboarding(request: Request, current_user: dict = Depends(get
         update["interests"] = data["interests"]
     if "language" in data:
         update["language"] = data["language"]
+    # Onboarding role fork (eval §10 QW5): the person's declared intent.
+    # This does NOT grant permissions — `role` stays admin-controlled. It
+    # personalizes the experience and tells admins who to elevate to faculty.
+    if data.get("intent") in ("learner", "educator", "mentor", "family"):
+        update["intent"] = data["intent"]
+    # Minor-safety foundation: optional birth year → is_minor flag (<18).
+    birth_year = data.get("birth_year")
+    if isinstance(birth_year, int) and 1900 < birth_year <= datetime.now(timezone.utc).year:
+        update["birth_year"] = birth_year
+        update["is_minor"] = (datetime.now(timezone.utc).year - birth_year) < 18
     users_col.update_one({"id": current_user["id"]}, {"$set": update})
+    emit("user.onboarded", current_user, "user", current_user["id"],
+         meta={"intent": update.get("intent", "learner"), "interests": len(update.get("interests", []))})
     return {"success": True}
 
 
@@ -768,11 +1118,16 @@ async def set_language(request: Request, current_user: dict = Depends(get_curren
 
 
 @router.get("/users")
-async def list_users(current_user: dict = Depends(get_current_user)):
+def list_users(current_user: dict = Depends(get_current_user)):
     from models.user import has_permission, UserRole
     if not has_permission(current_user["role"], UserRole.FACULTY):
         raise HTTPException(status_code=403, detail="Insufficient permissions")
-    users = list(users_col.find({}, {"_id": 0}))
+    # Safe projection only — never ship password hashes, tokens, or codes.
+    users = list(users_col.find({}, {
+        "_id": 0, "id": 1, "name": 1, "email": 1, "picture": 1, "role": 1,
+        "intent": 1, "is_minor": 1, "subscription_tier": 1, "created_at": 1,
+        "onboarding_complete": 1,
+    }))
     return users
 
 

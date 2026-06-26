@@ -1,5 +1,33 @@
 const es = {
+  // Onboarding path fork
+  onboard_path: '¿Cómo caminarás con nosotros?',
+  onboard_path_sub: 'Elige el camino que te corresponde — siempre podrás crecer hacia otros.',
+  path_learner: 'Vengo a aprender',
+  path_learner_desc: 'Toma cursos, únete a cohortes, crece con la comunidad.',
+  path_educator: 'Vengo a enseñar',
+  path_educator_desc: 'Crea cursos y guía a estudiantes en la comunidad.',
+  path_mentor: 'Vengo a caminar con otros',
+  path_mentor_desc: 'Comparte el camino con los jóvenes mientras crecen juntos.',
+  path_family: 'Apoyo a un joven',
+  path_family_desc: 'Sigue y anima a un estudiante de tu familia.',
+  onboard_complete_educator: 'Bienvenido, educador. Explora la comunidad mientras un mayor confirma tu acceso de enseñanza — te avisaremos cuando tus herramientas se abran.',
+  onboard_complete_mentor: 'Bienvenido, co-aprendiz. Los círculos de aprendizaje llegarán pronto — por ahora, siéntete en casa en la comunidad.',
+  onboard_complete_family: 'Bienvenido a la aldea. La experiencia familiar — seguir el crecimiento de tu joven — está en camino. Te avisaremos en cuanto abra.',
+
   // Nav
+  nav_learn: 'Aprender',
+  nav_family: 'Familia',
+  family_my: 'Mi Familia',
+  learning_circles: 'Círculos de Aprendizaje',
+  community_dashboard: 'Panel Comunitario',
+  villages: 'Aldeas',
+  onboard_about: 'Un poco sobre ti',
+  onboard_about_sub: 'Tu año de nacimiento nos ayuda a proteger a los jóvenes de la aldea. Opcional.',
+  onboard_birth_skip: 'Prefiero no decirlo',
+  nav_belong: 'Pertenecer',
+  nav_facilitate: 'Facilitar',
+  nav_account: 'Cuenta',
+  teacher_dashboard: 'Panel del Docente',
   dashboard: 'Panel',
   courses: 'Cursos',
   live_teaching: 'Enseñanza en Vivo',
@@ -61,6 +89,23 @@ const es = {
   about_hero: 'El Espacio de Aprendizaje Vivo',
   about_subtitle: 'Un espacio sagrado donde el conocimiento, la comunidad y la cultura convergen',
   about_tagline: 'Creado para quienes enseñan, aprenden y preservan la sabiduría',
+
+  // Village home (deep migration Phase 2)
+  nav_village: 'Aldea',
+  village_home: 'Mi Aldea',
+  village_entering: 'Entrando a la aldea…',
+  village_full: 'Aldea completa',
+  village_elder_word: 'Palabra de un mayor',
+  village_sessions: 'Encuentros',
+  village_no_sessions: 'No hay encuentros en el horizonte — tus guías convocarán el próximo.',
+  village_circle: 'Mi círculo',
+  village_no_circle: 'Tu círculo aún se está formando — co-aprendices y familia aparecerán aquí.',
+  village_goals: 'Nuestras metas esta temporada',
+  village_no_goals: 'Aún no se han nombrado metas esta temporada.',
+  village_voices: 'Voces de la aldea',
+  village_no_posts: 'Silencio por ahora — sé la primera voz esta semana.',
+  village_pick: 'Elige tu aldea',
+  village_pick_sub: 'Perteneces a más de una — ¿a dónde vas hoy?',
 };
 
 export default es;

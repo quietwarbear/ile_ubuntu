@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import {
   Sparkle, BookOpenText, UsersThree, Chats,
   ArrowRight, ArrowLeft, Check, X,
+  GraduationCap, ChalkboardTeacher, HandHeart, House,
 } from '@phosphor-icons/react';
 import { apiGet, apiPost, apiPut } from '../lib/api';
 import { useI18n } from '../i18n';
@@ -14,15 +15,35 @@ const INTEREST_TAGS = [
   'Leadership', 'Health & Wellness', 'Business', 'Education',
 ];
 
-const STEPS = ['welcome', 'interests', 'courses', 'cohort', 'complete'];
+// The learner walks the full path; other intents go straight to a tailored
+// completion (their experiences arrive with later slices of the roadmap).
+const STEPS_BY_INTENT = {
+  learner: ['welcome', 'path', 'about', 'interests', 'courses', 'cohort', 'complete'],
+  educator: ['welcome', 'path', 'complete'],
+  mentor: ['welcome', 'path', 'complete'],
+  family: ['welcome', 'path', 'complete'],
+};
+
+const CURRENT_YEAR = new Date().getFullYear();
+const BIRTH_YEARS = Array.from({ length: 90 }, (_, i) => CURRENT_YEAR - 5 - i);
+
+const PATHS = [
+  { id: 'learner', icon: GraduationCap, labelKey: 'path_learner', descKey: 'path_learner_desc' },
+  { id: 'educator', icon: ChalkboardTeacher, labelKey: 'path_educator', descKey: 'path_educator_desc' },
+  { id: 'mentor', icon: HandHeart, labelKey: 'path_mentor', descKey: 'path_mentor_desc' },
+  { id: 'family', icon: House, labelKey: 'path_family', descKey: 'path_family_desc' },
+];
 
 export default function OnboardingWizard({ user, onComplete }) {
   const { t } = useI18n();
   const navigate = useNavigate();
   const [step, setStep] = useState(0);
+  const [intent, setIntent] = useState('learner');
+  const [birthYear, setBirthYear] = useState('');
   const [interests, setInterests] = useState([]);
   const [courses, setCourses] = useState([]);
   const [cohorts, setCohorts] = useState([]);
+  const STEPS = STEPS_BY_INTENT[intent];
 
   useEffect(() => {
     // Preload courses and cohorts
@@ -36,15 +57,17 @@ export default function OnboardingWizard({ user, onComplete }) {
 
   const handleFinish = async () => {
     try {
-      await apiPut('/api/auth/me/onboarding', { interests });
+      const payload = { interests, intent };
+      if (birthYear) payload.birth_year = parseInt(birthYear, 10);
+      await apiPut('/api/auth/me/onboarding', payload);
       if (onComplete) onComplete();
-      navigate('/dashboard');
+      navigate(intent === 'family' ? '/family' : '/dashboard');
     } catch (e) { console.error(e); }
   };
 
   const handleSkip = async () => {
     try {
-      await apiPut('/api/auth/me/onboarding', { interests: [] });
+      await apiPut('/api/auth/me/onboarding', { interests: [], intent });
       if (onComplete) onComplete();
     } catch (e) { console.error(e); }
   };
@@ -107,7 +130,62 @@ export default function OnboardingWizard({ user, onComplete }) {
             </div>
           )}
 
-          {/* Step 2: Interests */}
+          {/* Step 2: Path (role fork) */}
+          {currentStep === 'path' && (
+            <div className="flex-1 animate-fade-in" data-testid="onboarding-step-path">
+              <div className="text-center mb-5">
+                <h2 className="text-lg text-[#F8FAFC]" style={{ fontFamily: 'Cormorant Garamond, serif' }}>
+                  {t('onboard_path')}
+                </h2>
+                <p className="text-xs text-[#94A3B8] mt-1">{t('onboard_path_sub')}</p>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                {PATHS.map(p => (
+                  <button
+                    key={p.id}
+                    onClick={() => setIntent(p.id)}
+                    className={`text-left p-3.5 rounded-md border transition-all ${
+                      intent === p.id
+                        ? 'bg-[#D4AF37]/10 border-[#D4AF37]/50'
+                        : 'bg-[#050814] border-[#1E293B] hover:border-[#D4AF37]/25'
+                    }`}
+                    data-testid={`path-${p.id}`}
+                  >
+                    <p.icon size={20} weight="duotone" className={intent === p.id ? 'text-[#D4AF37]' : 'text-[#94A3B8]'} />
+                    <p className={`text-sm mt-1.5 ${intent === p.id ? 'text-[#F8FAFC]' : 'text-[#94A3B8]'}`}>
+                      {t(p.labelKey)}
+                    </p>
+                    <p className="text-[10px] text-[#475569] mt-0.5 leading-snug">{t(p.descKey)}</p>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Step: About you (birth year — minor-safety foundation) */}
+          {currentStep === 'about' && (
+            <div className="flex-1 flex flex-col items-center justify-center animate-fade-in" data-testid="onboarding-step-about">
+              <div className="text-center mb-5 max-w-sm">
+                <h2 className="text-lg text-[#F8FAFC]" style={{ fontFamily: 'Cormorant Garamond, serif' }}>
+                  {t('onboard_about')}
+                </h2>
+                <p className="text-xs text-[#94A3B8] mt-1">{t('onboard_about_sub')}</p>
+              </div>
+              <select
+                value={birthYear}
+                onChange={(e) => setBirthYear(e.target.value)}
+                className="w-48 px-3 py-2.5 rounded-md bg-[#050814] border border-[#1E293B] text-sm text-[#F8FAFC] focus:outline-none focus:border-[#D4AF37]/50"
+                data-testid="onboarding-birth-year"
+              >
+                <option value="">{t('onboard_birth_skip')}</option>
+                {BIRTH_YEARS.map(y => (
+                  <option key={y} value={y}>{y}</option>
+                ))}
+              </select>
+            </div>
+          )}
+
+          {/* Step: Interests */}
           {currentStep === 'interests' && (
             <div className="flex-1 animate-fade-in" data-testid="onboarding-step-interests">
               <div className="text-center mb-6">
@@ -203,7 +281,9 @@ export default function OnboardingWizard({ user, onComplete }) {
               <h1 className="text-2xl text-[#F8FAFC] mb-2" style={{ fontFamily: 'Cormorant Garamond, serif' }}>
                 {t('onboard_complete')}
               </h1>
-              <p className="text-sm text-[#94A3B8] max-w-sm">{t('onboard_complete_sub')}</p>
+              <p className="text-sm text-[#94A3B8] max-w-sm">
+                {intent === 'learner' ? t('onboard_complete_sub') : t(`onboard_complete_${intent}`)}
+              </p>
               {interests.length > 0 && (
                 <div className="flex flex-wrap gap-1 justify-center mt-3">
                   {interests.map(i => (

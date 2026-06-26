@@ -20,21 +20,21 @@ export default function TeacherDashboardPage({ user }) {
   const [statusMessage, setStatusMessage] = useState(null);
 
   const fetchAll = useCallback(async () => {
-    try {
-      const [status, earningsRes, coursesRes] = await Promise.all([
-        apiGet('/api/marketplace/connect/status'),
-        apiGet('/api/marketplace/earnings').catch(() => null),
-        apiGet('/api/courses'),
-      ]);
-      setConnectStatus(status);
-      setEarnings(earningsRes);
-      // Only show courses created by this teacher
-      setMyCourses(coursesRes.filter(c => c.instructor_id === user?.id));
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setLoading(false);
+    // Each call degrades independently — a failing payment-status check must
+    // never blank the course list (and vice versa).
+    const [status, earningsRes, coursesRes] = await Promise.all([
+      apiGet('/api/marketplace/connect/status').catch(e => ({ connected: false, charges_enabled: false, _error: e.message })),
+      apiGet('/api/marketplace/earnings').catch(() => null),
+      apiGet('/api/courses').catch(e => { console.error('courses load failed:', e); return []; }),
+    ]);
+    setConnectStatus(status);
+    if (status?._error || status?.status_error) {
+      setStatusMessage({ type: 'error', text: `Payment account status check failed: ${status._error || status.status_error}` });
     }
+    setEarnings(earningsRes);
+    // Only show courses created by this teacher
+    setMyCourses((coursesRes || []).filter(c => c.instructor_id === user?.id));
+    setLoading(false);
   }, [user?.id]);
 
   useEffect(() => { fetchAll(); }, [fetchAll]);
@@ -74,6 +74,23 @@ export default function TeacherDashboardPage({ user }) {
       }
     } catch (e) {
       setStatusMessage({ type: 'error', text: 'Could not open Stripe dashboard' });
+    }
+  };
+
+  const handleToggleVisibility = async (course) => {
+    const isListed = course.visibility !== 'unlisted';
+    const next = isListed ? 'unlisted' : 'listed';
+    try {
+      await apiPost(`/api/courses/${course.id}/visibility`, { visibility: next });
+      setStatusMessage({
+        type: 'success',
+        text: next === 'listed'
+          ? `"${course.title}" is now listed in the community catalog`
+          : `"${course.title}" is now invite-only`,
+      });
+      fetchAll();
+    } catch (e) {
+      setStatusMessage({ type: 'error', text: e.message || 'Failed to update visibility' });
     }
   };
 
@@ -119,6 +136,40 @@ export default function TeacherDashboardPage({ user }) {
         </div>
         <p className="text-xs text-[#94A3B8]">Manage premium courses and view your earnings</p>
       </div>
+
+      {/* How it works */}
+      <Card className="bg-[#0F172A] border-[#1E293B]">
+        <CardContent className="p-5">
+          <p className="text-xs tracking-[0.15em] uppercase text-[#D4AF37] mb-3">How the marketplace works</p>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <p className="text-sm text-[#F8FAFC] mb-1">1 · Connect your account</p>
+              <p className="text-xs text-[#94A3B8]">
+                Payments run through Stripe, the same processor used across the platform.
+                Onboarding takes a few minutes — Stripe asks for your details so they can
+                deposit your earnings directly to your bank.
+              </p>
+            </div>
+            <div>
+              <p className="text-sm text-[#F8FAFC] mb-1">2 · Set a price on a course</p>
+              <p className="text-xs text-[#94A3B8]">
+                Any course you teach can become premium. Learners then purchase it once
+                for lifetime access instead of enrolling free. Set the price to $0 anytime
+                to make it free again.
+              </p>
+            </div>
+            <div>
+              <p className="text-sm text-[#F8FAFC] mb-1">3 · You keep 85%</p>
+              <p className="text-xs text-[#94A3B8]">
+                The platform keeps a 15% fee to sustain the commons; the rest lands in your
+                Stripe account and pays out to your bank on Stripe's schedule (typically
+                2 business days). Purchases happen on the website — app-store rules don't
+                allow card checkout inside the mobile apps.
+              </p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Status messages */}
       {statusMessage && (
@@ -260,6 +311,18 @@ export default function TeacherDashboardPage({ user }) {
                           }`}>
                             {course.status}
                           </Badge>
+                          <button
+                            onClick={() => handleToggleVisibility(course)}
+                            title="Toggle whether this course appears in the community catalog"
+                            className={`text-[8px] uppercase tracking-wider px-1.5 py-0.5 rounded border shrink-0 transition-colors ${
+                              course.visibility !== 'unlisted'
+                                ? 'bg-sky-500/10 text-sky-400 border-sky-500/20 hover:bg-sky-500/20'
+                                : 'bg-[#D4AF37]/10 text-[#D4AF37] border-[#D4AF37]/20 hover:bg-[#D4AF37]/20'
+                            }`}
+                            data-testid={`visibility-${course.id}`}
+                          >
+                            {course.visibility !== 'unlisted' ? 'Listed' : 'Invite-only'}
+                          </button>
                         </div>
                         {courseEarnings && (
                           <p className="text-[10px] text-[#94A3B8]">

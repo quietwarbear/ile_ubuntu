@@ -8,9 +8,17 @@ import AppLayout from './components/layout/AppLayout';
 import BrandMark from './components/brand/BrandMark';
 import OnboardingWizard from './components/OnboardingWizard';
 import LoginPage from './pages/LoginPage';
+import ResetPasswordPage from './pages/ResetPasswordPage';
+import JoinCoursePage, { PendingInviteRedirect } from './pages/JoinCoursePage';
+import FamilyPage from './pages/FamilyPage';
+import LearningCirclePage from './pages/LearningCirclePage';
+import CommunityDashboardPage from './pages/CommunityDashboardPage';
+import VillagesPage, { VillageDetail } from './pages/VillagesPage';
+import VillageHomePage, { VillageHomeGate } from './pages/VillageHomePage';
 import DashboardPage from './pages/DashboardPage';
 import CoursesPage from './pages/CoursesPage';
 import CourseDetailPage from './pages/CourseDetailPage';
+import CoursePlayerPage from './pages/CoursePlayerPage';
 import CohortsPage from './pages/CohortsPage';
 import CommunityPage from './pages/CommunityPage';
 import ArchivesPage from './pages/ArchivesPage';
@@ -34,7 +42,36 @@ import BlogEditorPage from './pages/BlogEditorPage';
 import TeacherDashboardPage from './pages/TeacherDashboardPage';
 import PrivacyPolicyPage from './pages/PrivacyPolicyPage';
 import TermsPage from './pages/TermsPage';
+import InviteLandingPage from './components/InviteLandingPage';
 import './App.css';
+
+// Ubuntu Markets SSO handoff — redeems a one-time code from a sibling product (Kindred)
+// and opens an Ile Ubuntu session. Reached at /sso?code=…
+function SSOHandoffPage() {
+  const [error, setError] = useState("");
+  useEffect(() => {
+    const code = new URLSearchParams(window.location.search).get("code");
+    if (!code) { setError("Missing sign-in code. Please try again from the other app."); return; }
+    (async () => {
+      try {
+        const res = await apiPost('/api/auth/sso-redeem', { code });
+        if (res && res.session_id) {
+          setCookie('session_id', res.session_id, 7);
+          window.location.replace('/dashboard');
+        } else {
+          setError("Sign-in failed. Please try again.");
+        }
+      } catch (e) {
+        setError("This sign-in link has expired or was already used. Please try again from the other app.");
+      }
+    })();
+  }, []);
+  return (
+    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#94A3B8', padding: 24, textAlign: 'center', background: '#050814' }}>
+      <p data-testid="ile-sso-status">{error || 'Signing you in to Ile Ubuntu…'}</p>
+    </div>
+  );
+}
 
 // Unauthenticated routes. This sits INSIDE <BrowserRouter> so it can use
 // useNavigate() — which is required because Capacitor's iOS webview does NOT
@@ -84,11 +121,15 @@ function PublicRoutes({ handlePasswordLogin }) {
 
   return (
     <Routes>
+      <Route path="/invite/:code" element={<InviteLandingPage />} />
       <Route path="/about" element={<AboutPage />} />
       <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
       <Route path="/terms" element={<TermsPage />} />
       <Route path="/blog" element={<PublicBlogPage onLogin={handleLogin} />} />
       <Route path="/login" element={<LoginPage onLogin={handleGoogleFromLogin} onPasswordLogin={handlePasswordLogin} />} />
+      <Route path="/sso" element={<SSOHandoffPage />} />
+      <Route path="/reset-password" element={<ResetPasswordPage />} />
+      <Route path="/join/:code" element={<JoinCoursePage />} />
       <Route path="*" element={<LandingPage onLogin={handleLogin} />} />
     </Routes>
   );
@@ -255,11 +296,18 @@ function App() {
             onComplete={() => setShowOnboarding(false)}
           />
         )}
+        <PendingInviteRedirect />
         <AppLayout user={user} onLogout={handleLogout}>
           <Routes>
+            {/* Phase 2 (deep migration): home is the village. One village →
+                its feed; multiple → picker; none → commons dashboard. */}
+            <Route path="/" element={<VillageHomeGate user={user} />} />
+            <Route path="/village/:villageId" element={<VillageHomePage user={user} />} />
             <Route path="/dashboard" element={<DashboardPage user={user} />} />
             <Route path="/courses" element={<CoursesPage user={user} />} />
             <Route path="/courses/:courseId" element={<CourseDetailPage user={user} />} />
+            <Route path="/courses/:courseId/learn" element={<CoursePlayerPage user={user} />} />
+            <Route path="/courses/:courseId/learn/:lessonId" element={<CoursePlayerPage user={user} />} />
             <Route path="/live" element={<LiveSessionsPage user={user} />} />
             <Route path="/live/:sessionId" element={<LiveRoomPage user={user} />} />
             <Route path="/cohorts" element={<CohortsPage user={user} />} />
@@ -279,6 +327,14 @@ function App() {
             <Route path="/blog/edit/:postId" element={<BlogEditorPage user={user} />} />
             <Route path="/blog/:slug" element={<BlogPostPage user={user} />} />
             <Route path="/teacher-dashboard" element={<TeacherDashboardPage user={user} />} />
+            <Route path="/join/:code" element={<JoinCoursePage user={user} />} />
+            <Route path="/family" element={<FamilyPage user={user} />} />
+            <Route path="/learning-circles" element={<LearningCirclePage user={user} />} />
+            {/* Old path kept as a redirect — bookmarks and the renamed nav */}
+            <Route path="/mentorship" element={<Navigate to="/learning-circles" replace />} />
+            <Route path="/community-dashboard" element={<CommunityDashboardPage user={user} />} />
+            <Route path="/villages" element={<VillagesPage user={user} />} />
+            <Route path="/villages/:villageId" element={<VillageDetail user={user} />} />
             <Route path="/about" element={<AboutPage />} />
             <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
             <Route path="/terms" element={<TermsPage />} />

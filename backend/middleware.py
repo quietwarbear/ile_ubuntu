@@ -4,7 +4,9 @@ from datetime import datetime, timezone
 from database import sessions_col, users_col
 
 
-async def get_current_user(x_session_id: Optional[str] = Header(None)):
+def get_current_user(x_session_id: Optional[str] = Header(None)):
+    # Sync (not async) on purpose: PyMongo is a blocking driver, so this runs in
+    # FastAPI's threadpool instead of blocking the event loop on every request.
     if not x_session_id:
         raise HTTPException(status_code=401, detail="Session ID required")
 

@@ -49,13 +49,23 @@ function extractEmbeds(content) {
   return { text, embeds };
 }
 
-export default function LessonContentViewer({ content }) {
-  if (!content) return null;
+export default function LessonContentViewer({ content, banner }) {
+  if (!content && !banner) return null;
 
-  const { text, embeds } = extractEmbeds(content);
+  const { text, embeds } = extractEmbeds(content || '');
 
   return (
     <div className="lesson-content-viewer" data-testid="lesson-content-viewer">
+      {/* Full-width banner / hero image (course-player feel) */}
+      {banner && (
+        <img
+          src={banner}
+          alt=""
+          className="w-full max-h-72 object-cover rounded-lg border border-[#1E293B] mb-5"
+          data-testid="lesson-banner"
+        />
+      )}
+
       {/* Markdown Content */}
       <div className="prose prose-invert prose-sm max-w-none
         prose-headings:text-[#F8FAFC] prose-headings:font-light

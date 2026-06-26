@@ -13,10 +13,8 @@ import {
   UserPlus,
   SignOut,
   Users,
-  Trophy,
   ChartBar,
-  Crown,
-  Medal,
+  HandsClapping,
 } from '@phosphor-icons/react';
 import { apiGet, apiPost, apiDelete } from '../lib/api';
 
@@ -30,9 +28,11 @@ export default function CohortDetailPage({ user }) {
 
   const isFaculty = ['faculty', 'elder', 'admin'].includes(user?.role);
 
-  const sortedLeaderboard = useMemo(() => {
+  // Reframed from a ranked leaderboard (eval §10 QW3): members listed
+  // alphabetically — every contribution counts, nobody is "losing".
+  const contributors = useMemo(() => {
     if (!detail?.enriched_members) return [];
-    return [...detail.enriched_members].sort((a, b) => b.overall_progress - a.overall_progress);
+    return [...detail.enriched_members].sort((a, b) => (a.name || '').localeCompare(b.name || ''));
   }, [detail?.enriched_members]);
 
   useEffect(() => { loadData(); }, [cohortId]); // eslint-disable-line -- load on route change
@@ -202,43 +202,75 @@ export default function CohortDetailPage({ user }) {
             <h2 className="text-xs tracking-[0.15em] uppercase text-[#D4AF37]">Progress Dashboard</h2>
           </div>
 
-          {/* Leaderboard */}
+          {/* Our Journey Together (collective goal — eval §10 QW3) */}
+          {detail.collective && (
+            <Card className="bg-[#0F172A] border-[#D4AF37]/25 mb-4">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm text-[#F8FAFC] flex items-center gap-2" style={{ fontFamily: 'Cormorant Garamond, serif' }}>
+                  <UsersThree size={16} weight="duotone" className="text-[#D4AF37]" /> Our Journey Together
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="flex-1 h-3.5 bg-[#0A1128] rounded-full overflow-hidden border border-[#1E293B]">
+                    <div
+                      className="h-full bg-gradient-to-r from-[#D4AF37]/60 to-[#D4AF37] rounded-full transition-all duration-1000"
+                      style={{ width: `${Math.max(detail.collective.average_progress, 2)}%` }}
+                      data-testid="collective-progress-bar"
+                    />
+                  </div>
+                  <span className="text-sm font-medium text-[#D4AF37]">
+                    {Math.round(detail.collective.average_progress)}%
+                  </span>
+                </div>
+                <p className="text-[11px] text-[#94A3B8] italic mb-3">
+                  "I am because we are" — this is how far we've walked, together.
+                </p>
+                <div className="grid grid-cols-3 gap-2 text-center">
+                  <div className="p-2 rounded bg-[#050814] border border-[#1E293B]">
+                    <p className="text-base font-semibold text-[#F8FAFC]">{detail.collective.lessons_completed_together}</p>
+                    <p className="text-[9px] uppercase tracking-wider text-[#94A3B8]">lessons completed together</p>
+                  </div>
+                  <div className="p-2 rounded bg-[#050814] border border-[#1E293B]">
+                    <p className="text-base font-semibold text-[#F8FAFC]">
+                      {detail.collective.members_on_the_path}<span className="text-[#475569]">/{detail.collective.member_count}</span>
+                    </p>
+                    <p className="text-[9px] uppercase tracking-wider text-[#94A3B8]">walking the path</p>
+                  </div>
+                  <div className="p-2 rounded bg-[#050814] border border-[#1E293B]">
+                    <p className="text-base font-semibold text-[#F8FAFC]">{detail.collective.members_completed}</p>
+                    <p className="text-[9px] uppercase tracking-wider text-[#94A3B8]">carried it home</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Each One's Contribution */}
           <Card className="bg-[#0F172A] border-[#1E293B] mb-4">
             <CardHeader className="pb-2">
               <CardTitle className="text-sm text-[#F8FAFC] flex items-center gap-2" style={{ fontFamily: 'Cormorant Garamond, serif' }}>
-                <Trophy size={16} weight="duotone" className="text-[#D4AF37]" /> Leaderboard
+                <HandsClapping size={16} weight="duotone" className="text-[#D4AF37]" /> Each One's Contribution
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-2">
-              {sortedLeaderboard.map((m, rank) => {
+              {contributors.map((m) => {
                   const pct = Math.round(m.overall_progress);
-                  const barColor = rank === 0 ? 'bg-[#D4AF37]' : rank === 1 ? 'bg-[#C0C0C0]' : rank === 2 ? 'bg-[#CD7F32]' : 'bg-blue-400';
-                  const RankIcon = rank === 0 ? Crown : rank < 3 ? Medal : null;
                   return (
                     <div key={m.id} className="flex items-center gap-3 p-2 bg-[#050814] border border-[#1E293B] rounded-md" data-testid={`leaderboard-${m.id}`}>
-                      {/* Rank */}
-                      <div className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0" style={{
-                        background: rank === 0 ? 'rgba(212,175,55,0.15)' : rank === 1 ? 'rgba(192,192,192,0.12)' : rank === 2 ? 'rgba(205,127,50,0.12)' : 'rgba(96,165,250,0.1)',
-                        border: `1px solid ${rank === 0 ? 'rgba(212,175,55,0.3)' : 'rgba(30,41,59,1)'}`,
-                      }}>
-                        {RankIcon ? (
-                          <RankIcon size={14} weight="fill" className={rank === 0 ? 'text-[#D4AF37]' : rank === 1 ? 'text-[#C0C0C0]' : 'text-[#CD7F32]'} />
-                        ) : (
-                          <span className="text-[10px] text-[#94A3B8]">{rank + 1}</span>
-                        )}
-                      </div>
-                      {/* Avatar + Name */}
                       <img src={m.picture || `https://ui-avatars.com/api/?name=${m.name}&background=0F172A&color=D4AF37`} alt="" className="w-7 h-7 rounded-full flex-shrink-0" />
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1">
                           <span className="text-xs text-[#F8FAFC] truncate">{m.name}</span>
                           <span className="text-[9px] text-[#D4AF37]">{m.role}</span>
+                          {m.lessons_completed > 0 && (
+                            <span className="text-[9px] text-[#94A3B8]">{m.lessons_completed} lesson{m.lessons_completed !== 1 ? 's' : ''}</span>
+                          )}
                         </div>
-                        {/* Bar chart */}
                         <div className="flex items-center gap-2">
                           <div className="flex-1 h-2.5 bg-[#0A1128] rounded-full overflow-hidden">
                             <div
-                              className={`h-full ${barColor} rounded-full transition-all duration-700`}
+                              className={`h-full rounded-full transition-all duration-700 ${pct >= 100 ? 'bg-emerald-400' : 'bg-[#D4AF37]'}`}
                               style={{ width: `${Math.max(pct, 2)}%` }}
                             />
                           </div>
