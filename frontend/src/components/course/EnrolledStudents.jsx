@@ -1,6 +1,12 @@
 import React from 'react';
 import { Card, CardContent } from '../../components/ui/card';
 
+function getFirstName(name = '', email = '') {
+  const trimmedName = name.trim();
+  if (trimmedName) return trimmedName.split(/\s+/)[0];
+  return email.split('@')[0] || 'Student';
+}
+
 export function EnrolledStudents({ enrollments }) {
   if (!enrollments.length) return null;
 
@@ -14,7 +20,8 @@ export function EnrolledStudents({ enrollments }) {
           {enrollments.map(e => (
             <div key={e.id} className="flex items-center justify-between p-2 bg-[#050814] rounded border border-[#1E293B]" data-testid={`enrollment-${e.id}`}>
               <div>
-                <p className="text-sm text-[#F8FAFC]">{e.user_name}</p>
+                <p className="text-sm text-[#F8FAFC]">{getFirstName(e.user_name, e.user_email)}</p>
+                <p className="text-[10px] text-[#94A3B8] break-all">{e.user_email || 'Email unavailable'}</p>
                 <p className="text-[10px] text-[#94A3B8]">
                   Enrolled {new Date(e.enrolled_at).toLocaleDateString()}
                 </p>

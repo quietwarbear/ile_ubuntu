@@ -2,7 +2,7 @@ from fastapi import APIRouter, HTTPException, Query, Request, Depends
 from datetime import datetime, timezone
 import uuid
 import secrets
-from database import courses_col, lessons_col, files_col, enrollments_col, course_invites_col, villages_col
+from database import courses_col, lessons_col, files_col, enrollments_col, course_invites_col, villages_col, users_col
 from middleware import get_current_user
 from models.user import has_permission, UserRole
 from models.course import CourseStatus
@@ -387,7 +387,14 @@ def list_course_enrollments(course_id: str, current_user: dict = Depends(get_cur
         raise HTTPException(status_code=403, detail="Access denied")
 
     enrollments = list(enrollments_col.find({"course_id": course_id}, {"_id": 0}))
-    return enrollments
+    result = []
+    for enrollment in enrollments:
+        student = users_col.find_one({"id": enrollment["user_id"]}, {"_id": 0, "email": 1})
+        result.append({
+            **enrollment,
+            "user_email": student.get("email", "") if student else "",
+        })
+    return result
 
 
 # --- Visibility & invites (closed-ecosystem joining) ---
