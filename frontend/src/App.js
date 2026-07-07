@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import { getCookie, setCookie, apiPost, apiGet } from './lib/api';
+import { identifyUser, resetAnalytics } from './lib/analytics';
 import { I18nProvider } from './i18n';
 import { initializeRevenueCat, syncRevenueCatUser, logOutRevenueCat } from './lib/revenuecat';
 import { applySafeAreaStyles, initializeNativePlugins } from './lib/platform';
@@ -139,6 +140,16 @@ function App() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [showOnboarding, setShowOnboarding] = useState(false);
+
+  // Analytics identity follows the user state: identify on login/restore,
+  // reset on logout so the next login isn't merged into the old person.
+  useEffect(() => {
+    if (user?.id) {
+      identifyUser(user);
+    } else {
+      resetAnalytics();
+    }
+  }, [user?.id]);
 
   useEffect(() => {
     // Initialize native platform (Capacitor plugins, safe areas)
