@@ -1,13 +1,15 @@
 from fastapi import APIRouter, HTTPException, Depends, File, UploadFile, Form
-from fastapi.responses import FileResponse, RedirectResponse
+from fastapi.responses import FileResponse, RedirectResponse, HTMLResponse
 from datetime import datetime, timezone
 from typing import Optional
 import uuid
 import os
 import shutil
+from html import escape as html_escape
 from pathlib import Path
-from database import files_col, lessons_col
+from database import files_col, lessons_col, courses_col
 from middleware import get_current_user
+from models.user import has_permission, UserRole
 import storage
 
 router = APIRouter(prefix="/api/files", tags=["files"])
@@ -45,6 +47,28 @@ ALLOWED_TYPES = {
 
 VIDEO_TYPES = {"video/mp4", "video/webm", "video/quicktime", "video/x-msvideo", "video/x-matroska"}
 MAX_VIDEO_SIZE = 500 * 1024 * 1024  # 500MB
+
+
+def _on_ephemeral_host() -> bool:
+    """Railway container disk is wiped on every redeploy, so the local-disk
+    fallback silently loses files there. Detected via Railway's built-in envs."""
+    return bool(os.environ.get("RAILWAY_ENVIRONMENT") or os.environ.get("RAILWAY_PROJECT_ID"))
+
+
+MISSING_FILE_HTML = """<!DOCTYPE html>
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>File unavailable</title>
+<style>
+  body {{ margin:0; min-height:100vh; display:flex; align-items:center; justify-content:center;
+         background:#050814; color:#94A3B8; font-family:-apple-system,'Segoe UI',Roboto,sans-serif; }}
+  .card {{ max-width:420px; padding:32px; text-align:center; }}
+  h1 {{ color:#D4AF37; font-size:16px; letter-spacing:.12em; text-transform:uppercase; margin:0 0 12px; }}
+  p {{ font-size:14px; line-height:1.6; margin:0; }}
+</style></head>
+<body><div class="card">
+  <h1>File unavailable</h1>
+  <p>{name} is no longer stored on the server. Please ask the instructor to re-upload it to this lesson.</p>
+</div></body></html>"""
 
 
 def _renders_inline(file_data: dict) -> bool:
@@ -110,6 +134,14 @@ def upload_file(
         file_data["storage"] = "s3"
         file_data["s3_key"] = key
     else:
+        if _on_ephemeral_host():
+            # Refuse rather than accept a file that the next redeploy will destroy.
+            raise HTTPException(
+                status_code=503,
+                detail="File storage is not configured on the server (S3_BUCKET and "
+                       "credentials missing). Uploads are disabled until it is, because "
+                       "files written to this host's disk are lost on every redeploy.",
+            )
         # Local fallback (dev only; not durable on Railway)
         file_path = UPLOADS_DIR / filename
         with open(file_path, "wb") as buffer:
@@ -142,7 +174,16 @@ def _serve(file_data: dict, inline: Optional[bool] = None):
 
     file_path = Path(file_data.get("file_path", ""))
     if not file_path.exists():
-        raise HTTPException(status_code=404, detail="File not found on disk")
+        # Inline requests come from <iframe>/<img>/<video> tags, where a JSON body
+        # renders as raw text inside the lesson page — return a styled page instead.
+        if inline:
+            name = html_escape(original) if original != "file" else "This file"
+            return HTMLResponse(MISSING_FILE_HTML.format(name=name), status_code=404)
+        raise HTTPException(
+            status_code=404,
+            detail="This file is no longer stored on the server (it was saved to local "
+                   "disk before durable storage was enabled). Re-upload it to restore it.",
+        )
     return FileResponse(
         path=file_path,
         filename=original,
@@ -169,6 +210,48 @@ def stream_video(file_id: str):
     if file_data.get("file_category") != "video":
         raise HTTPException(status_code=400, detail="Not a video file")
     return _serve(file_data, inline=True)
+
+
+@router.get("/integrity/report")
+def file_integrity_report(current_user: dict = Depends(get_current_user)):
+    """Faculty+: every file record still on the local-disk fallback (i.e. not in S3),
+    with whether its bytes actually exist. In production these are lost files that
+    need re-uploading; the report tells you exactly which lessons to fix."""
+    if not has_permission(current_user["role"], UserRole.FACULTY):
+        raise HTTPException(status_code=403, detail="Faculty+ required")
+
+    local_records = list(files_col.find({"s3_key": {"$exists": False}}, {"_id": 0}))
+    report = []
+    for f in local_records:
+        path = Path(f.get("file_path", ""))
+        entry = {
+            "id": f.get("id"),
+            "original_filename": f.get("original_filename"),
+            "file_size": f.get("file_size"),
+            "uploaded_at": f.get("uploaded_at"),
+            "uploaded_by": f.get("uploaded_by"),
+            "lesson_id": f.get("lesson_id"),
+            "course_id": f.get("course_id"),
+            "exists_on_disk": bool(f.get("file_path")) and path.exists(),
+        }
+        if f.get("lesson_id"):
+            lesson = lessons_col.find_one({"id": f["lesson_id"]}, {"_id": 0, "title": 1, "course_id": 1})
+            if lesson:
+                entry["lesson_title"] = lesson.get("title")
+                entry["course_id"] = entry["course_id"] or lesson.get("course_id")
+        if entry.get("course_id"):
+            course = courses_col.find_one({"id": entry["course_id"]}, {"_id": 0, "title": 1})
+            if course:
+                entry["course_title"] = course.get("title")
+        report.append(entry)
+
+    missing = [r for r in report if not r["exists_on_disk"]]
+    return {
+        "s3_enabled": storage.s3_enabled(),
+        "local_records": len(report),
+        "missing_files": len(missing),
+        "files": report,
+    }
 
 
 @router.get("")
