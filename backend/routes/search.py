@@ -6,6 +6,12 @@ import re
 
 router = APIRouter(prefix="/api/search", tags=["search"])
 
+# Hybrid search (eval §11.2.4): $text first — indexed, word-based, ranked by
+# relevance — then the old case-insensitive regex as a fallback when text
+# search returns nothing for a section. The fallback keeps the live search
+# bar's partial-word matches working ("phi" still finds "Philosophy") and
+# keeps search alive even if a text index is missing.
+
 
 def _sort_key(sort: str, default_field="created_at"):
     if sort == "popularity":
@@ -15,56 +21,95 @@ def _sort_key(sort: str, default_field="created_at"):
     return [(default_field, 1)]
 
 
-def _search_courses(pattern, sort, limit, status, is_faculty):
-    query = {"$or": [{"title": pattern}, {"description": pattern}, {"tags": pattern}]}
+def _hybrid_find(col, q, regex_or, filters, projection, sort_spec, limit, relevance):
+    """$text (ranked when sort=relevance), falling back to regex on zero hits
+    or missing index. Both paths apply the same non-search filters."""
+    text_query = {"$text": {"$search": q}, **filters}
+    try:
+        if relevance:
+            docs = list(
+                col.find(text_query, {**projection, "_score": {"$meta": "textScore"}})
+                .sort([("_score", {"$meta": "textScore"})]).limit(limit)
+            )
+            for d in docs:
+                d.pop("_score", None)
+        else:
+            docs = list(col.find(text_query, projection).sort(sort_spec).limit(limit))
+        if docs:
+            return docs
+    except Exception:
+        pass  # no text index (or engine without $text) — regex below
+    return list(col.find({**regex_or, **filters}, projection).sort(sort_spec).limit(limit))
+
+
+def _search_courses(q, pattern, sort, limit, status, is_faculty):
+    filters = {}
     if status:
-        query["status"] = status
+        filters["status"] = status
     elif not is_faculty:
-        query["status"] = "active"
-    return list(courses_col.find(
-        query, {"_id": 0, "id": 1, "title": 1, "description": 1, "status": 1, "enrolled_count": 1, "tags": 1, "created_at": 1}
-    ).sort(_sort_key(sort, "title")).limit(limit))
+        filters["status"] = "active"
+    return _hybrid_find(
+        courses_col, q,
+        {"$or": [{"title": pattern}, {"description": pattern}, {"tags": pattern}]},
+        filters,
+        {"_id": 0, "id": 1, "title": 1, "description": 1, "status": 1, "enrolled_count": 1, "tags": 1, "created_at": 1},
+        _sort_key(sort, "title"), limit, sort == "relevance",
+    )
 
 
-def _search_community(pattern, sort, limit):
-    query = {"$or": [{"title": pattern}, {"content": pattern}, {"category": pattern}]}
-    posts = list(posts_col.find(
-        query, {"_id": 0, "id": 1, "title": 1, "content": 1, "author_name": 1, "category": 1, "created_at": 1}
-    ).sort([("created_at", -1)]).limit(limit))
+def _search_community(q, pattern, sort, limit):
+    posts = _hybrid_find(
+        posts_col, q,
+        {"$or": [{"title": pattern}, {"content": pattern}, {"category": pattern}]},
+        {},
+        {"_id": 0, "id": 1, "title": 1, "content": 1, "author_name": 1, "category": 1, "created_at": 1},
+        [("created_at", -1)], limit, sort == "relevance",
+    )
     for p in posts:
         if p.get("content") and len(p["content"]) > 150:
             p["content"] = p["content"][:150] + "..."
     return posts
 
 
-def _search_archives(pattern, sort, limit, access_level, is_faculty):
-    query = {"$or": [{"title": pattern}, {"description": pattern}, {"tags": pattern}]}
+def _search_archives(q, pattern, sort, limit, access_level, is_faculty):
+    filters = {}
     if access_level:
-        query["access_level"] = access_level
+        filters["access_level"] = access_level
     elif not is_faculty:
-        query["access_level"] = "public"
-    return list(archives_col.find(
-        query, {"_id": 0, "id": 1, "title": 1, "description": 1, "type": 1, "access_level": 1, "tags": 1, "created_at": 1}
-    ).sort([("created_at", -1)]).limit(limit))
+        filters["access_level"] = "public"
+    return _hybrid_find(
+        archives_col, q,
+        {"$or": [{"title": pattern}, {"description": pattern}, {"tags": pattern}]},
+        filters,
+        {"_id": 0, "id": 1, "title": 1, "description": 1, "type": 1, "access_level": 1, "tags": 1, "created_at": 1},
+        [("created_at", -1)], limit, sort == "relevance",
+    )
 
 
-def _search_cohorts(pattern, sort, limit):
-    query = {"$or": [{"name": pattern}, {"description": pattern}]}
-    cohorts = list(cohorts_col.find(
-        query, {"_id": 0, "id": 1, "name": 1, "description": 1, "members": 1, "created_at": 1}
-    ).sort([("created_at", -1)]).limit(limit))
+def _search_cohorts(q, pattern, sort, limit):
+    cohorts = _hybrid_find(
+        cohorts_col, q,
+        {"$or": [{"name": pattern}, {"description": pattern}]},
+        {},
+        {"_id": 0, "id": 1, "name": 1, "description": 1, "members": 1, "created_at": 1},
+        [("created_at", -1)], limit, sort == "relevance",
+    )
     for ch in cohorts:
         ch["member_count"] = len(ch.pop("members", []))
     return cohorts
 
 
-def _search_spaces(pattern, sort, limit, access_level):
-    query = {"$or": [{"name": pattern}, {"description": pattern}]}
+def _search_spaces(q, pattern, sort, limit, access_level):
+    filters = {}
     if access_level:
-        query["access_level"] = access_level
-    return list(spaces_col.find(
-        query, {"_id": 0, "id": 1, "name": 1, "description": 1, "access_level": 1, "created_at": 1}
-    ).sort([("created_at", -1)]).limit(limit))
+        filters["access_level"] = access_level
+    return _hybrid_find(
+        spaces_col, q,
+        {"$or": [{"name": pattern}, {"description": pattern}]},
+        filters,
+        {"_id": 0, "id": 1, "name": 1, "description": 1, "access_level": 1, "created_at": 1},
+        [("created_at", -1)], limit, sort == "relevance",
+    )
 
 
 @router.get("")
@@ -80,17 +125,18 @@ def search_all(
     if not q or len(q.strip()) < 2:
         return {"courses": [], "community": [], "archives": [], "cohorts": [], "spaces": [], "total": 0}
 
-    pattern = re.compile(re.escape(q.strip()), re.IGNORECASE)
+    q = q.strip()
+    pattern = re.compile(re.escape(q), re.IGNORECASE)
     is_faculty = has_permission(current_user["role"], UserRole.FACULTY)
     results = {}
     total = 0
 
     searchers = {
-        "courses": lambda: _search_courses(pattern, sort, limit, status, is_faculty),
-        "community": lambda: _search_community(pattern, sort, limit),
-        "archives": lambda: _search_archives(pattern, sort, limit, access_level, is_faculty),
-        "cohorts": lambda: _search_cohorts(pattern, sort, limit),
-        "spaces": lambda: _search_spaces(pattern, sort, limit, access_level),
+        "courses": lambda: _search_courses(q, pattern, sort, limit, status, is_faculty),
+        "community": lambda: _search_community(q, pattern, sort, limit),
+        "archives": lambda: _search_archives(q, pattern, sort, limit, access_level, is_faculty),
+        "cohorts": lambda: _search_cohorts(q, pattern, sort, limit),
+        "spaces": lambda: _search_spaces(q, pattern, sort, limit, access_level),
     }
 
     for section, searcher in searchers.items():

@@ -11,8 +11,8 @@ const es = {
   path_family: 'Apoyo a un joven',
   path_family_desc: 'Sigue y anima a un estudiante de tu familia.',
   onboard_complete_educator: 'Bienvenido, educador. Explora la comunidad mientras un mayor confirma tu acceso de enseñanza — te avisaremos cuando tus herramientas se abran.',
-  onboard_complete_mentor: 'Bienvenido, co-aprendiz. Los círculos de aprendizaje llegarán pronto — por ahora, siéntete en casa en la comunidad.',
-  onboard_complete_family: 'Bienvenido a la aldea. La experiencia familiar — seguir el crecimiento de tu joven — está en camino. Te avisaremos en cuanto abra.',
+  onboard_complete_mentor: 'Bienvenido, co-aprendiz. Tus facilitadores forman los círculos de aprendizaje — cuéntales que vienes a caminar con otros, y siéntete en casa en la comunidad.',
+  onboard_complete_family: 'Bienvenido a la aldea. Vincúlate con tu joven en la página Familia para seguir su crecimiento — y espera el resumen semanal en tu correo.',
 
   // Nav
   nav_learn: 'Aprender',

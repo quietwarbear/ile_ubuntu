@@ -11,8 +11,8 @@ const en = {
   path_family: "I'm supporting a young person",
   path_family_desc: 'Follow and encourage a learner in your family.',
   onboard_complete_educator: "Welcome, educator. Explore the commons while an elder confirms your teaching access — you'll be notified when your Facilitate tools open.",
-  onboard_complete_mentor: 'Welcome, co-learner. Learning circles are coming to the village soon — for now, make yourself at home in the community.',
-  onboard_complete_family: "Welcome to the village. The family experience — following your young person's growth — is on its way. We'll let you know the moment it opens.",
+  onboard_complete_mentor: 'Welcome, co-learner. Your facilitators form learning circles — let them know you\'re here to walk with others, and make yourself at home in the community.',
+  onboard_complete_family: "Welcome to the village. Link with your young person on the Family page to follow their growth — and watch for the weekly digest in your inbox.",
 
   // Nav
   nav_learn: 'Learn',

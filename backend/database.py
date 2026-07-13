@@ -147,6 +147,13 @@ def ensure_indexes():
         (circle_notes_col, [("circle_id", 1), ("created_at", -1)], {}),
         # Check-ins: one per user per day; window queries for wellness
         (checkins_col, [("user_id", 1), ("day", -1)], {"unique": True}),
+        # Text search (eval §11.2.4): one text index per searched collection;
+        # search.py uses $text with a regex fallback for partial words
+        (courses_col, [("title", "text"), ("description", "text"), ("tags", "text")], {"name": "courses_text"}),
+        (posts_col, [("title", "text"), ("content", "text"), ("category", "text")], {"name": "posts_text"}),
+        (archives_col, [("title", "text"), ("description", "text"), ("tags", "text")], {"name": "archives_text"}),
+        (cohorts_col, [("name", "text"), ("description", "text")], {"name": "cohorts_text"}),
+        (spaces_col, [("name", "text"), ("description", "text")], {"name": "spaces_text"}),
         # Portfolio + personal goals: owner-scoped lists, newest first
         (portfolio_items_col, [("user_id", 1), ("created_at", -1)], {}),
         (portfolio_items_col, [("user_id", 1), ("visibility", 1), ("created_at", -1)], {}),
