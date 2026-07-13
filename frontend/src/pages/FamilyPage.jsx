@@ -3,9 +3,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
 import { Button } from '../components/ui/button';
 import {
   House, GraduationCap, UsersThree, LinkSimple, Trash, ArrowsClockwise,
-  BookOpenText, VideoCamera, Chats, PencilSimple, Trophy,
+  BookOpenText, VideoCamera, Chats, PencilSimple, Trophy, ChatText,
 } from '@phosphor-icons/react';
-import { apiGet, apiPost, apiDelete } from '../lib/api';
+import { apiGet, apiPost, apiPut, apiDelete } from '../lib/api';
 
 const Avatar = ({ person, size = 'w-9 h-9' }) => (
   <img
@@ -110,6 +110,66 @@ function YouthCard({ youth, onUnlink }) {
             </div>
           </div>
         )}
+      </CardContent>
+    </Card>
+  );
+}
+
+// Weekly digest by text — opt-in per guardian; only offered when the server
+// has a texting channel configured (family.digest_prefs.available_channels).
+function DigestTextCard({ prefs, onSaved, setMessage }) {
+  const [channel, setChannel] = useState(prefs.channel || 'off');
+  const [phone, setPhone] = useState(prefs.phone || '');
+  const [busy, setBusy] = useState(false);
+
+  if (!prefs.available_channels?.length) return null;
+
+  const save = async () => {
+    setBusy(true);
+    try {
+      await apiPut('/api/family/digest-prefs', { channel, phone });
+      setMessage({ type: 'success', text: channel === 'off'
+        ? 'Text digest turned off.'
+        : `Got it — the weekly digest will also reach you by ${channel === 'sms' ? 'text' : 'WhatsApp'}.` });
+      onSaved();
+    } catch (e) { setMessage({ type: 'error', text: e.message }); }
+    setBusy(false);
+  };
+
+  const selectCls = "px-3 py-2 rounded-md bg-[#050814] border border-[#1E293B] text-xs text-[#F8FAFC] focus:outline-none focus:border-[#D4AF37]/50";
+
+  return (
+    <Card className="bg-[#0F172A] border-[#1E293B]" data-testid="digest-text-card">
+      <CardHeader className="pb-2">
+        <CardTitle className="text-sm text-[#F8FAFC] flex items-center gap-2" style={{ fontFamily: 'Cormorant Garamond, serif' }}>
+          <ChatText size={16} weight="duotone" className="text-[#D4AF37]" /> Weekly digest by text
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <p className="text-xs text-[#94A3B8] mb-3">
+          The full digest arrives by email every Sunday. Add your number and we'll also send a short note
+          {prefs.available_channels.includes('whatsapp') ? ' by SMS or WhatsApp' : ' by SMS'} — reply STOP anytime to opt out.
+        </p>
+        <div className="flex flex-col sm:flex-row gap-2">
+          <select value={channel} onChange={e => setChannel(e.target.value)} className={selectCls} data-testid="digest-channel">
+            <option value="off">Email only</option>
+            {prefs.available_channels.includes('sms') && <option value="sms">Email + SMS</option>}
+            {prefs.available_channels.includes('whatsapp') && <option value="whatsapp">Email + WhatsApp</option>}
+          </select>
+          {channel !== 'off' && (
+            <input
+              value={phone}
+              onChange={e => setPhone(e.target.value)}
+              placeholder="+15105551234"
+              className="flex-1 px-3 py-2 rounded-md bg-[#050814] border border-[#1E293B] text-xs text-[#F8FAFC] placeholder-[#475569] focus:outline-none focus:border-[#D4AF37]/50"
+              data-testid="digest-phone"
+            />
+          )}
+          <Button size="sm" onClick={save} disabled={busy || (channel !== 'off' && !phone.trim())}
+            className="bg-[#D4AF37]/15 text-[#D4AF37] border border-[#D4AF37]/30 hover:bg-[#D4AF37]/25">
+            Save
+          </Button>
+        </div>
       </CardContent>
     </Card>
   );
@@ -229,6 +289,9 @@ export default function FamilyPage({ user }) {
           {family.youth.map(y => (
             <YouthCard key={y.id} youth={y} onUnlink={handleUnlink} />
           ))}
+          {family.digest_prefs && (
+            <DigestTextCard prefs={family.digest_prefs} onSaved={load} setMessage={setMessage} />
+          )}
         </div>
       )}
 
