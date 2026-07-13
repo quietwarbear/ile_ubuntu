@@ -16,6 +16,8 @@ const en = {
 
   // Nav
   nav_learn: 'Learn',
+  nav_grow: 'Grow',
+  portfolio: 'My Portfolio',
   nav_family: 'Family',
   family_my: 'My Family',
   learning_circles: 'Learning Circles',

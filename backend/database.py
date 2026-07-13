@@ -61,6 +61,10 @@ learning_circles_col = db.learning_circles
 circle_goals_col = db.circle_goals
 circle_notes_col = db.circle_notes
 
+# Personal portfolio (work/reflections, private-by-default) + individual goals
+portfolio_items_col = db.portfolio_items
+personal_goals_col = db.personal_goals
+
 
 def ensure_indexes():
     """Create the indexes the hot query paths rely on. Idempotent; called at startup.
@@ -143,6 +147,10 @@ def ensure_indexes():
         (circle_notes_col, [("circle_id", 1), ("created_at", -1)], {}),
         # Check-ins: one per user per day; window queries for wellness
         (checkins_col, [("user_id", 1), ("day", -1)], {"unique": True}),
+        # Portfolio + personal goals: owner-scoped lists, newest first
+        (portfolio_items_col, [("user_id", 1), ("created_at", -1)], {}),
+        (portfolio_items_col, [("user_id", 1), ("visibility", 1), ("created_at", -1)], {}),
+        (personal_goals_col, [("user_id", 1), ("created_at", -1)], {}),
         # Villages: id + membership lookups
         (villages_col, [("id", 1)], {"unique": True}),
         (villages_col, [("members.user_id", 1)], {}),

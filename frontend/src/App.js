@@ -21,6 +21,7 @@ const OnboardingWizard = lazy(() => import('./components/OnboardingWizard'));
 const ResetPasswordPage = lazy(() => import('./pages/ResetPasswordPage'));
 const FamilyPage = lazy(() => import('./pages/FamilyPage'));
 const LearningCirclePage = lazy(() => import('./pages/LearningCirclePage'));
+const PortfolioPage = lazy(() => import('./pages/PortfolioPage'));
 const CommunityDashboardPage = lazy(() => import('./pages/CommunityDashboardPage'));
 const VillagesPage = lazy(() => import('./pages/VillagesPage'));
 const VillageDetail = lazy(() => import('./pages/VillagesPage').then(m => ({ default: m.VillageDetail })));
@@ -367,6 +368,7 @@ function App() {
             <Route path="/join/:code" element={<JoinCoursePage user={user} />} />
             <Route path="/family" element={<FamilyPage user={user} />} />
             <Route path="/learning-circles" element={<LearningCirclePage user={user} />} />
+            <Route path="/portfolio" element={<PortfolioPage user={user} />} />
             {/* Old path kept as a redirect — bookmarks and the renamed nav */}
             <Route path="/mentorship" element={<Navigate to="/learning-circles" replace />} />
             <Route path="/community-dashboard" element={<CommunityDashboardPage user={user} />} />

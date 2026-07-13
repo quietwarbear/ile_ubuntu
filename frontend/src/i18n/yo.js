@@ -16,6 +16,8 @@ const yo = {
 
   // Nav
   nav_learn: 'Ẹ̀kọ́',
+  nav_grow: 'Dàgbà',
+  portfolio: 'Àkójọpọ̀ Iṣẹ́ Mi',
   nav_family: 'Ìdílé',
   family_my: 'Ìdílé Mi',
   learning_circles: 'Àwọn Àyíká Ẹ̀kọ́',

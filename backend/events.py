@@ -41,6 +41,11 @@ EVENT_TYPES = {
     "circle.note_added",
     # wellness (the event never carries scores — see routes/checkins.py)
     "wellness.checked_in",
+    # personal portfolio + individual goals (no titles/content in meta)
+    "portfolio.item_added",
+    "portfolio.item_removed",
+    "goal.set",
+    "goal.completed",
     # village
     "village.created",
     "village.member_added",
