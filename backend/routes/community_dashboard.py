@@ -1,8 +1,9 @@
 """Community Dashboard v1 — measure what Ubuntu values (eval §6.4).
 
-Five dimensions computed from the activity event stream over the last 30
-days, at the collective (cohort-as-village) and individual level. Wellness
-is deliberately null until SEL check-ins exist — we don't fake a measure.
+Six dimensions at the collective (cohort or village) and individual level:
+belonging, participation, contribution, collaboration, and leadership are
+computed from the activity event stream over the last 30 days; wellness
+comes from SEL check-ins (routes/checkins.py).
 
 Scoring philosophy: raw counts are always returned alongside any score so
 educators can see exactly where a number comes from. Scores are absolute

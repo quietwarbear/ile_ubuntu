@@ -1,0 +1,10 @@
+User-agent: *
+Allow: /
+Disallow: /dashboard
+Disallow: /settings
+Disallow: /messages
+Disallow: /family
+Disallow: /analytics
+Disallow: /sso
+
+Sitemap: https://www.ile-ubuntu.org/sitemap.xml

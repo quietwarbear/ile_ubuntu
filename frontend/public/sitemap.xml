@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Static public pages only; course/blog URLs need a backend-generated
+     sitemap once anonymous browsing ships (eval brief §11.4). -->
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url><loc>https://www.ile-ubuntu.org/</loc><changefreq>weekly</changefreq><priority>1.0</priority></url>
+  <url><loc>https://www.ile-ubuntu.org/about</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://www.ile-ubuntu.org/blog</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://www.ile-ubuntu.org/privacy-policy</loc><changefreq>yearly</changefreq><priority>0.3</priority></url>
+  <url><loc>https://www.ile-ubuntu.org/terms</loc><changefreq>yearly</changefreq><priority>0.3</priority></url>
+</urlset>

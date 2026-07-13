@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import { getCookie, setCookie, apiPost, apiGet } from './lib/api';
 import { identifyUser, resetAnalytics } from './lib/analytics';
@@ -7,44 +7,65 @@ import { initializeRevenueCat, syncRevenueCatUser, logOutRevenueCat } from './li
 import { applySafeAreaStyles, initializeNativePlugins } from './lib/platform';
 import AppLayout from './components/layout/AppLayout';
 import BrandMark from './components/brand/BrandMark';
-import OnboardingWizard from './components/OnboardingWizard';
+// Eager: the anonymous first-paint path (landing + login) and the invite
+// redirect that must run on every authenticated boot. Everything else is a
+// lazy route chunk — webpack code-splits each import() so first load ships
+// the shell instead of all ~30 pages (§11.1 single-chunk fix).
 import LoginPage from './pages/LoginPage';
-import ResetPasswordPage from './pages/ResetPasswordPage';
-import JoinCoursePage, { PendingInviteRedirect } from './pages/JoinCoursePage';
-import FamilyPage from './pages/FamilyPage';
-import LearningCirclePage from './pages/LearningCirclePage';
-import CommunityDashboardPage from './pages/CommunityDashboardPage';
-import VillagesPage, { VillageDetail } from './pages/VillagesPage';
-import VillageHomePage, { VillageHomeGate } from './pages/VillageHomePage';
-import DashboardPage from './pages/DashboardPage';
-import CoursesPage from './pages/CoursesPage';
-import CourseDetailPage from './pages/CourseDetailPage';
-import CoursePlayerPage from './pages/CoursePlayerPage';
-import CohortsPage from './pages/CohortsPage';
-import CommunityPage from './pages/CommunityPage';
-import ArchivesPage from './pages/ArchivesPage';
-import MessagesPage from './pages/MessagesPage';
-import SettingsPage from './pages/SettingsPage';
-import LiveSessionsPage from './pages/LiveSessionsPage';
-import LiveRoomPage from './pages/LiveRoomPage';
-import CohortDetailPage from './pages/CohortDetailPage';
-import SpacesPage from './pages/SpacesPage';
-import AnalyticsPage from './pages/AnalyticsPage';
-import SubscriptionsPage from './pages/SubscriptionsPage';
-import SessionRecordsPage from './pages/SessionRecordsPage';
-import AboutPage from './pages/AboutPage';
-import SearchResultsPage from './pages/SearchResultsPage';
-import MarketingPage from './pages/MarketingPage';
 import LandingPage from './pages/LandingPage';
-import PublicBlogPage from './pages/PublicBlogPage';
-import BlogPage from './pages/BlogPage';
-import BlogPostPage from './pages/BlogPostPage';
-import BlogEditorPage from './pages/BlogEditorPage';
-import TeacherDashboardPage from './pages/TeacherDashboardPage';
-import PrivacyPolicyPage from './pages/PrivacyPolicyPage';
-import TermsPage from './pages/TermsPage';
+import JoinCoursePage, { PendingInviteRedirect } from './pages/JoinCoursePage';
 import InviteLandingPage from './components/InviteLandingPage';
 import './App.css';
+
+const OnboardingWizard = lazy(() => import('./components/OnboardingWizard'));
+const ResetPasswordPage = lazy(() => import('./pages/ResetPasswordPage'));
+const FamilyPage = lazy(() => import('./pages/FamilyPage'));
+const LearningCirclePage = lazy(() => import('./pages/LearningCirclePage'));
+const CommunityDashboardPage = lazy(() => import('./pages/CommunityDashboardPage'));
+const VillagesPage = lazy(() => import('./pages/VillagesPage'));
+const VillageDetail = lazy(() => import('./pages/VillagesPage').then(m => ({ default: m.VillageDetail })));
+const VillageHomePage = lazy(() => import('./pages/VillageHomePage'));
+const VillageHomeGate = lazy(() => import('./pages/VillageHomePage').then(m => ({ default: m.VillageHomeGate })));
+const DashboardPage = lazy(() => import('./pages/DashboardPage'));
+const CoursesPage = lazy(() => import('./pages/CoursesPage'));
+const CourseDetailPage = lazy(() => import('./pages/CourseDetailPage'));
+const CoursePlayerPage = lazy(() => import('./pages/CoursePlayerPage'));
+const CohortsPage = lazy(() => import('./pages/CohortsPage'));
+const CommunityPage = lazy(() => import('./pages/CommunityPage'));
+const ArchivesPage = lazy(() => import('./pages/ArchivesPage'));
+const MessagesPage = lazy(() => import('./pages/MessagesPage'));
+const SettingsPage = lazy(() => import('./pages/SettingsPage'));
+const LiveSessionsPage = lazy(() => import('./pages/LiveSessionsPage'));
+const LiveRoomPage = lazy(() => import('./pages/LiveRoomPage'));
+const CohortDetailPage = lazy(() => import('./pages/CohortDetailPage'));
+const SpacesPage = lazy(() => import('./pages/SpacesPage'));
+const AnalyticsPage = lazy(() => import('./pages/AnalyticsPage'));
+const SubscriptionsPage = lazy(() => import('./pages/SubscriptionsPage'));
+const SessionRecordsPage = lazy(() => import('./pages/SessionRecordsPage'));
+const AboutPage = lazy(() => import('./pages/AboutPage'));
+const SearchResultsPage = lazy(() => import('./pages/SearchResultsPage'));
+const MarketingPage = lazy(() => import('./pages/MarketingPage'));
+const PublicBlogPage = lazy(() => import('./pages/PublicBlogPage'));
+const BlogPage = lazy(() => import('./pages/BlogPage'));
+const BlogPostPage = lazy(() => import('./pages/BlogPostPage'));
+const BlogEditorPage = lazy(() => import('./pages/BlogEditorPage'));
+const TeacherDashboardPage = lazy(() => import('./pages/TeacherDashboardPage'));
+const PrivacyPolicyPage = lazy(() => import('./pages/PrivacyPolicyPage'));
+const TermsPage = lazy(() => import('./pages/TermsPage'));
+
+// Route-chunk loading state — same brand treatment as the app boot screen.
+function PageLoader() {
+  return (
+    <div className="min-h-screen bg-[#050814] flex items-center justify-center">
+      <div className="text-center">
+        <div className="w-12 h-12 mx-auto rounded-lg bg-[#D4AF37]/10 border border-[#D4AF37]/20 flex items-center justify-center mb-4 animate-pulse">
+          <BrandMark className="w-8 h-8 object-contain" />
+        </div>
+        <p className="text-xs tracking-[0.2em] uppercase text-[#94A3B8]">Loading...</p>
+      </div>
+    </div>
+  );
+}
 
 // Ubuntu Markets SSO handoff — redeems a one-time code from a sibling product (Kindred)
 // and opens an Ile Ubuntu session. Reached at /sso?code=…
@@ -121,6 +142,7 @@ function PublicRoutes({ handlePasswordLogin }) {
   };
 
   return (
+    <Suspense fallback={<PageLoader />}>
     <Routes>
       <Route path="/invite/:code" element={<InviteLandingPage />} />
       <Route path="/about" element={<AboutPage />} />
@@ -133,6 +155,7 @@ function PublicRoutes({ handlePasswordLogin }) {
       <Route path="/join/:code" element={<JoinCoursePage />} />
       <Route path="*" element={<LandingPage onLogin={handleLogin} />} />
     </Routes>
+    </Suspense>
   );
 }
 
@@ -302,13 +325,16 @@ function App() {
     <I18nProvider defaultLang={user.language || 'en'}>
       <BrowserRouter>
         {showOnboarding && (
-          <OnboardingWizard
-            user={user}
-            onComplete={() => setShowOnboarding(false)}
-          />
+          <Suspense fallback={<PageLoader />}>
+            <OnboardingWizard
+              user={user}
+              onComplete={() => setShowOnboarding(false)}
+            />
+          </Suspense>
         )}
         <PendingInviteRedirect />
         <AppLayout user={user} onLogout={handleLogout}>
+          <Suspense fallback={<PageLoader />}>
           <Routes>
             {/* Phase 2 (deep migration): home is the village. One village →
                 its feed; multiple → picker; none → commons dashboard. */}
@@ -351,6 +377,7 @@ function App() {
             <Route path="/terms" element={<TermsPage />} />
             <Route path="*" element={<Navigate to="/dashboard" replace />} />
           </Routes>
+          </Suspense>
         </AppLayout>
       </BrowserRouter>
     </I18nProvider>
