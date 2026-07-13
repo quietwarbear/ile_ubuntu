@@ -10,6 +10,30 @@ from models.user import has_permission, UserRole
 router = APIRouter(prefix="/api/analytics", tags=["analytics"])
 
 
+def _course_stats_maps():
+    """Per-course enrollment stats and lesson counts in two indexed
+    aggregations (replaces the per-course find loops that scanned
+    enrollments N times — eval brief §11.2.5)."""
+    enr_stats = {
+        row["_id"]: row
+        for row in enrollments_col.aggregate([
+            {"$group": {
+                "_id": "$course_id",
+                "total": {"$sum": 1},
+                "avg_progress": {"$avg": {"$ifNull": ["$progress", 0]}},
+                "completions": {"$sum": {"$cond": [{"$eq": ["$status", "completed"]}, 1, 0]}},
+            }},
+        ])
+    }
+    lesson_counts = {
+        row["_id"]: row["n"]
+        for row in lessons_col.aggregate([
+            {"$group": {"_id": "$course_id", "n": {"$sum": 1}}},
+        ])
+    }
+    return enr_stats, lesson_counts
+
+
 @router.get("/dashboard")
 def get_analytics_dashboard(current_user: dict = Depends(get_current_user)):
     if not has_permission(current_user["role"], UserRole.FACULTY):
@@ -21,9 +45,10 @@ def get_analytics_dashboard(current_user: dict = Depends(get_current_user)):
 
     # --- Platform Overview ---
     total_users = users_col.count_documents({})
-    users_by_role = {}
-    for role in ["admin", "elder", "faculty", "assistant", "student"]:
-        users_by_role[role] = users_col.count_documents({"role": role})
+    users_by_role = {role: 0 for role in ["admin", "elder", "faculty", "assistant", "student"]}
+    for row in users_col.aggregate([{"$group": {"_id": "$role", "n": {"$sum": 1}}}]):
+        if row["_id"] in users_by_role:
+            users_by_role[row["_id"]] = row["n"]
 
     total_courses = courses_col.count_documents({})
     active_courses = courses_col.count_documents({"status": "active"})
@@ -40,56 +65,63 @@ def get_analytics_dashboard(current_user: dict = Depends(get_current_user)):
     completed_enrollments = enrollments_col.count_documents({"status": "completed"})
 
     # --- Course Performance ---
+    enr_stats, lesson_counts = _course_stats_maps()
     courses = list(courses_col.find({}, {"_id": 0, "id": 1, "title": 1, "enrolled_count": 1, "status": 1}))
     course_stats = []
     for c in courses[:20]:
-        enrs = list(enrollments_col.find({"course_id": c["id"]}, {"_id": 0, "progress": 1, "status": 1}))
-        avg_progress = round(sum(e.get("progress", 0) for e in enrs) / len(enrs), 1) if enrs else 0
-        completions = sum(1 for e in enrs if e.get("status") == "completed")
-        lesson_count = lessons_col.count_documents({"course_id": c["id"]})
+        s = enr_stats.get(c["id"])
         course_stats.append({
             "id": c["id"],
             "title": c["title"],
             "enrolled_count": c.get("enrolled_count", 0),
-            "avg_progress": avg_progress,
-            "completions": completions,
-            "lesson_count": lesson_count,
+            "avg_progress": round(s["avg_progress"], 1) if s else 0,
+            "completions": s["completions"] if s else 0,
+            "lesson_count": lesson_counts.get(c["id"], 0),
             "status": c.get("status", "draft"),
         })
     course_stats.sort(key=lambda x: x["enrolled_count"], reverse=True)
 
     # --- Cohort Performance ---
+    # One indexed aggregation per cohort (was a find_one per member×course).
     cohorts = list(cohorts_col.find({}, {"_id": 0, "id": 1, "name": 1, "members": 1, "linked_courses": 1}))
     cohort_stats = []
     for ch in cohorts[:10]:
-        member_count = len(ch.get("members", []))
-        linked_count = len(ch.get("linked_courses", []))
-        member_progresses = []
-        for mid in ch.get("members", []):
-            for cid in ch.get("linked_courses", []):
-                enr = enrollments_col.find_one({"user_id": mid, "course_id": cid}, {"_id": 0, "progress": 1})
-                if enr:
-                    member_progresses.append(enr.get("progress", 0))
-        avg_cohort_progress = round(sum(member_progresses) / len(member_progresses), 1) if member_progresses else 0
+        members = ch.get("members", [])
+        linked = ch.get("linked_courses", [])
+        avg_cohort_progress = 0
+        if members and linked:
+            row = next(iter(enrollments_col.aggregate([
+                {"$match": {"user_id": {"$in": members}, "course_id": {"$in": linked}}},
+                {"$group": {"_id": None, "avg": {"$avg": {"$ifNull": ["$progress", 0]}}}},
+            ])), None)
+            if row and row["avg"] is not None:
+                avg_cohort_progress = round(row["avg"], 1)
         cohort_stats.append({
             "id": ch["id"],
             "name": ch["name"],
-            "member_count": member_count,
-            "linked_courses": linked_count,
+            "member_count": len(members),
+            "linked_courses": len(linked),
             "avg_progress": avg_cohort_progress,
         })
 
     # --- Community Activity ---
-    posts = list(posts_col.find({}, {"_id": 0, "author_name": 1, "replies": 1, "likes": 1}))
-    total_replies = sum(len(p.get("replies", [])) for p in posts)
-    total_likes = sum(len(p.get("likes", [])) for p in posts)
-
-    contributor_map = {}
-    for p in posts:
-        name = p.get("author_name", "Unknown")
-        contributor_map[name] = contributor_map.get(name, 0) + 1
-    top_contributors = sorted(contributor_map.items(), key=lambda x: x[1], reverse=True)[:5]
-    top_contributors = [{"name": n, "posts": c} for n, c in top_contributors]
+    # Totals + top contributors in a single pass over posts.
+    facet = next(iter(posts_col.aggregate([
+        {"$facet": {
+            "totals": [{"$group": {
+                "_id": None,
+                "replies": {"$sum": {"$size": {"$ifNull": ["$replies", []]}}},
+                "likes": {"$sum": {"$size": {"$ifNull": ["$likes", []]}}},
+            }}],
+            "contributors": [
+                {"$group": {"_id": {"$ifNull": ["$author_name", "Unknown"]}, "posts": {"$sum": 1}}},
+                {"$sort": {"posts": -1, "_id": 1}},
+                {"$limit": 5},
+            ],
+        }},
+    ])), {"totals": [], "contributors": []})
+    totals = facet["totals"][0] if facet["totals"] else {"replies": 0, "likes": 0}
+    top_contributors = [{"name": r["_id"], "posts": r["posts"]} for r in facet["contributors"]]
 
     # --- Live Sessions ---
     total_sessions = live_sessions_col.count_documents({})
@@ -120,8 +152,8 @@ def get_analytics_dashboard(current_user: dict = Depends(get_current_user)):
         "cohorts": cohort_stats,
         "community": {
             "total_posts": total_posts,
-            "total_replies": total_replies,
-            "total_likes": total_likes,
+            "total_replies": totals.get("replies", 0),
+            "total_likes": totals.get("likes", 0),
             "top_contributors": top_contributors,
         },
     }
@@ -134,17 +166,24 @@ def get_enrollment_trends(days: int = 30, current_user: dict = Depends(get_curre
         return {"error": "Faculty+ required"}
 
     now = datetime.now(timezone.utc)
+    window_start = (now - timedelta(days=days)).replace(hour=0, minute=0, second=0, microsecond=0)
+
+    # Single grouped query (was one count_documents per day = N+1 round trips).
+    counts = {
+        row["_id"]: row["n"]
+        for row in enrollments_col.aggregate([
+            {"$match": {"enrolled_at": {"$gte": window_start}}},
+            {"$group": {
+                "_id": {"$dateToString": {"format": "%Y-%m-%d", "date": "$enrolled_at"}},
+                "n": {"$sum": 1},
+            }},
+        ])
+    }
+
     trend_data = []
     for i in range(days, -1, -1):
-        day_start = (now - timedelta(days=i)).replace(hour=0, minute=0, second=0, microsecond=0)
-        day_end = day_start + timedelta(days=1)
-        count = enrollments_col.count_documents({
-            "enrolled_at": {"$gte": day_start, "$lt": day_end}
-        })
-        trend_data.append({
-            "date": day_start.strftime("%Y-%m-%d"),
-            "enrollments": count,
-        })
+        day = (now - timedelta(days=i)).strftime("%Y-%m-%d")
+        trend_data.append({"date": day, "enrollments": counts.get(day, 0)})
     return trend_data
 
 
@@ -161,13 +200,18 @@ def export_analytics_csv(current_user: dict = Depends(get_current_user)):
     writer = csv.writer(output)
     writer.writerow(["Course Title", "Status", "Enrolled", "Avg Progress", "Completions", "Lessons"])
 
+    enr_stats, lesson_counts = _course_stats_maps()
     courses = list(courses_col.find({}, {"_id": 0, "id": 1, "title": 1, "status": 1}))
     for c in courses:
-        enrs = list(enrollments_col.find({"course_id": c["id"]}, {"_id": 0, "progress": 1, "status": 1}))
-        avg = round(sum(e.get("progress", 0) for e in enrs) / len(enrs), 1) if enrs else 0
-        completions = sum(1 for e in enrs if e.get("status") == "completed")
-        lesson_count = lessons_col.count_documents({"course_id": c["id"]})
-        writer.writerow([c["title"], c.get("status", "draft"), len(enrs), avg, completions, lesson_count])
+        s = enr_stats.get(c["id"])
+        writer.writerow([
+            c["title"],
+            c.get("status", "draft"),
+            s["total"] if s else 0,
+            round(s["avg_progress"], 1) if s else 0,
+            s["completions"] if s else 0,
+            lesson_counts.get(c["id"], 0),
+        ])
 
     output.seek(0)
     return StreamingResponse(

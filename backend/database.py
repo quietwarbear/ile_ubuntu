@@ -82,6 +82,8 @@ def ensure_indexes():
         # Enrollments: per-user, per-course, and the pair (enroll/progress checks)
         (enrollments_col, [("user_id", 1), ("course_id", 1)], {}),
         (enrollments_col, [("course_id", 1)], {}),
+        # Analytics: new-this-week/month counts + daily enrollment trends
+        (enrollments_col, [("enrolled_at", -1)], {}),
         # Primary id lookups + list sorts
         (courses_col, [("id", 1)], {"unique": True}),
         (courses_col, [("status", 1), ("created_at", -1)], {}),
