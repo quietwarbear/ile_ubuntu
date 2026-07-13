@@ -6,6 +6,7 @@ import {
   LinkSimple, LockSimple, UsersThree, DownloadSimple, CaretDown, CaretUp,
 } from '@phosphor-icons/react';
 import { apiGet, apiPost, apiPut, apiDelete, apiUpload } from '../lib/api';
+import { maybeRequestReview } from '../lib/review';
 
 // The portfolio is the young person's own — private by default, shared by
 // their choice (eval §6.3: "theirs to keep and carry forward").
@@ -186,8 +187,11 @@ function GoalCard({ goal, onChanged }) {
     catch (e) { alert(e.message); }
   };
   const complete = async () => {
-    try { await apiPut(`/api/portfolio/goals/${goal.id}`, { status: 'completed', reflection }); setCompleting(false); onChanged(); }
-    catch (e) { alert(e.message); }
+    try {
+      await apiPut(`/api/portfolio/goals/${goal.id}`, { status: 'completed', reflection });
+      setCompleting(false); onChanged();
+      maybeRequestReview();
+    } catch (e) { alert(e.message); }
   };
   const reopen = async () => {
     try { await apiPut(`/api/portfolio/goals/${goal.id}`, { status: 'active' }); onChanged(); }

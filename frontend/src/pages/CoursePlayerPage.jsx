@@ -10,6 +10,7 @@ import WysiwygEditor from '../components/course/WysiwygEditor';
 import { LessonVideoPlayer } from '../components/course/LessonVideoPlayer';
 import { LessonQuiz } from '../components/course/LessonQuiz';
 import { LessonComments } from '../components/course/LessonComments';
+import { trackLessonCompletedForReview } from '../lib/review';
 
 // Order lessons the way the curriculum reads: each module (by order) with its
 // lessons (by order), then any ungrouped lessons last. One flat list powers
@@ -102,6 +103,7 @@ export default function CoursePlayerPage({ user }) {
       if (!isDone && enrollment?.enrolled) {
         await apiPost(`/api/courses/${courseId}/lessons/${current.id}/complete`, {});
         setProgress(p => ({ ...p, completed_lessons: [...(p?.completed_lessons || []), current.id] }));
+        trackLessonCompletedForReview();
       }
       if (next) navigate(`/courses/${courseId}/learn/${next.id}`);
       else navigate(`/courses/${courseId}`);
