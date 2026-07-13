@@ -24,6 +24,7 @@ import {
   HouseLine,
   HandHeart,
   TreeEvergreen,
+  Backpack,
 } from '@phosphor-icons/react';
 import { clearCookie, apiPut, apiGet } from '../../lib/api';
 import { useI18n } from '../../i18n';
@@ -40,6 +41,12 @@ const navSections = [
       { to: '/live', labelKey: 'live_teaching', icon: VideoCamera },
       { to: '/cohorts', labelKey: 'cohorts', icon: UsersThree },
       { to: '/archives', labelKey: 'archives', icon: Archive },
+    ],
+  },
+  {
+    labelKey: 'nav_grow',
+    items: [
+      { to: '/portfolio', labelKey: 'portfolio', icon: Backpack },
     ],
   },
   {
