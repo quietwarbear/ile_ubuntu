@@ -11,8 +11,8 @@ const yo = {
   path_family: 'Mo ń ti ọ̀dọ́ kan lẹ́yìn',
   path_family_desc: 'Tẹ̀lé kí o sì gba akẹ́kọ̀ọ́ nínú ìdílé rẹ níyànjú.',
   onboard_complete_educator: 'Káàbọ̀, olùkọ́. Ṣàwárí àwùjọ nígbà tí àgbà kan ń fọwọ́ sí ànfààní ìkọ́ni rẹ — a ó sọ fún ọ nígbà tí àwọn irinṣẹ́ rẹ bá ṣí.',
-  onboard_complete_mentor: 'Káàbọ̀, akẹ́gbẹ́ ẹ̀kọ́. Àwọn àyíká ẹ̀kọ́ ń bọ̀ láìpẹ́ — ní báyìí, fi ara balẹ̀ nínú àwùjọ.',
-  onboard_complete_family: 'Káàbọ̀ sí abúlé. Ìrírí ìdílé — títẹ̀lé ìdàgbàsókè ọ̀dọ́ rẹ — ń bọ̀ lọ́nà. A ó jẹ́ kí o mọ̀ nígbà tí ó bá ṣí.',
+  onboard_complete_mentor: 'Káàbọ̀, akẹ́gbẹ́ ẹ̀kọ́. Àwọn olùdarí ni wọ́n ń dá àwọn àyíká ẹ̀kọ́ sílẹ̀ — jẹ́ kí wọ́n mọ̀ pé o wá láti rìn pẹ̀lú àwọn ẹlòmíràn, kí o sì fi ara balẹ̀ nínú àwùjọ.',
+  onboard_complete_family: 'Káàbọ̀ sí abúlé. So ara rẹ pọ̀ mọ́ ọ̀dọ́ rẹ ní ojú-ìwé Ìdílé láti tẹ̀lé ìdàgbàsókè wọn — kí o sì retí àkópọ̀ ọ̀sọ̀ọ̀sẹ̀ nínú lẹ́tà rẹ.',
 
   // Nav
   nav_learn: 'Ẹ̀kọ́',
