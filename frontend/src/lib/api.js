@@ -29,6 +29,18 @@ function clearCookie(name) {
   document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
 }
 
+// Drop the service worker's personal API cache (offline data). Called on
+// logout and account deletion so a shared device doesn't keep your data
+// readable offline. Cache name must match API_CACHE in public/sw.js.
+function clearOfflineCache() {
+  try {
+    if ('caches' in window) caches.delete('ile-api-v1');
+    if (navigator.serviceWorker?.controller) {
+      navigator.serviceWorker.controller.postMessage('clear-api-cache');
+    }
+  } catch (e) { /* best-effort */ }
+}
+
 function getSessionId() {
   return getCookie('session_id');
 }
@@ -101,6 +113,7 @@ export {
   getCookie,
   setCookie,
   clearCookie,
+  clearOfflineCache,
   getSessionId,
   apiGet,
   apiPost,

@@ -26,7 +26,7 @@ import {
   TreeEvergreen,
   Backpack,
 } from '@phosphor-icons/react';
-import { clearCookie, apiPut, apiGet } from '../../lib/api';
+import { clearCookie, clearOfflineCache, apiPut, apiGet } from '../../lib/api';
 import { useI18n } from '../../i18n';
 import SearchBar from './SearchBar';
 
@@ -102,6 +102,7 @@ export default function Sidebar({ user, onLogout }) {
 
   const handleLogout = () => {
     clearCookie('session_id');
+    clearOfflineCache();
     onLogout();
     navigate('/');
   };

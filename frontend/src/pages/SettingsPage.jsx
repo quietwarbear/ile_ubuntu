@@ -24,7 +24,7 @@ import {
   Warning,
   Trash,
 } from '@phosphor-icons/react';
-import { apiGet, apiPut, apiPost, apiDelete, clearCookie } from '../lib/api';
+import { apiGet, apiPut, apiPost, apiDelete, clearCookie, clearOfflineCache } from '../lib/api';
 
 export default function SettingsPage({ user }) {
   const [users, setUsers] = useState([]);
@@ -147,6 +147,7 @@ export default function SettingsPage({ user }) {
       // Clear local session and force a hard reload so App.js re-checks auth
       // and routes to the sign-in screen.
       clearCookie('session_id');
+      clearOfflineCache();
       window.location.href = '/';
     } catch (e) {
       setDeleteError(e.message || 'Could not delete account. Please try again or contact support.');
