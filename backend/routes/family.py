@@ -9,6 +9,7 @@ This is the technical foundation, not legal compliance: review COPPA/FERPA
 posture with counsel before marketing to under-13s.
 """
 
+import re
 import secrets
 import uuid
 from datetime import datetime, timezone, timedelta
@@ -18,6 +19,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request
 from database import users_col, family_links_col, enrollments_col, courses_col, events_col, villages_col
 from middleware import get_current_user
 from events import emit
+import sms
 
 router = APIRouter(prefix="/api/family", tags=["family"])
 
@@ -48,6 +50,11 @@ def my_family(current_user: dict = Depends(get_current_user)):
         "family_code": current_user.get("family_code"),
         "guardians": guardians,
         "youth": youth,
+        "digest_prefs": {
+            "phone": current_user.get("digest_phone", ""),
+            "channel": current_user.get("digest_channel", "off"),
+            "available_channels": sms.enabled_channels(),
+        },
     }
 
 
@@ -100,6 +107,31 @@ def unlink(other_id: str, current_user: dict = Depends(get_current_user)):
         raise HTTPException(status_code=404, detail="No such family link")
     emit("family.unlinked", current_user, "user", other_id)
     return {"success": True}
+
+
+PHONE_RE = re.compile(r"^\+[1-9]\d{7,14}$")
+
+
+@router.put("/digest-prefs")
+async def set_digest_prefs(request: Request, current_user: dict = Depends(get_current_user)):
+    """Guardian chooses how the weekly digest reaches them beyond email:
+    off (default), sms, or whatsapp. Phone must be E.164 (+15105551234)."""
+    data = await request.json()
+    channel = data.get("channel", "off")
+    if channel not in ("off", "sms", "whatsapp"):
+        raise HTTPException(status_code=400, detail="channel must be off, sms, or whatsapp")
+    phone = (data.get("phone") or "").strip().replace(" ", "").replace("-", "")
+    if channel != "off":
+        if not PHONE_RE.match(phone):
+            raise HTTPException(status_code=400, detail="Enter the phone in international format, e.g. +15105551234")
+        if not sms.channel_enabled(channel):
+            raise HTTPException(status_code=503, detail="Text messaging is not configured on the server yet")
+    users_col.update_one(
+        {"id": current_user["id"]},
+        {"$set": {"digest_phone": phone if channel != "off" else "",
+                  "digest_channel": channel}},
+    )
+    return {"success": True, "channel": channel, "phone": phone if channel != "off" else ""}
 
 
 def _build_youth_summary(youth_id: str) -> dict:
@@ -243,6 +275,23 @@ def _send_guardian_digest(guardian: dict, youth_ids: list) -> bool:
     return True
 
 
+def _send_digest_text(guardian: dict, youth_ids: list) -> bool:
+    """A short companion text (the full digest stays in email). Opt-in per
+    guardian; silently a no-op when the channel or Twilio isn't configured."""
+    channel = guardian.get("digest_channel", "off")
+    phone = guardian.get("digest_phone", "")
+    if channel == "off" or not phone:
+        return False
+    names = [(_user_brief(yid).get("name") or "your young person").split(" ")[0] for yid in youth_ids]
+    listed = ", ".join(names[:3]) + (" and more" if len(names) > 3 else "")
+    body = (
+        f"The Ile Ubuntu: this week's note on {listed} is ready. "
+        "Read it in your email or at https://www.ile-ubuntu.org/family — "
+        "reply STOP to your carrier to opt out."
+    )
+    return sms.send_text(phone, body, channel)
+
+
 def _week_key() -> str:
     now = datetime.now(timezone.utc).isocalendar()
     return f"{now[0]}-W{now[1]:02d}"
@@ -277,7 +326,11 @@ def run_weekly_digest(request: Request):
             continue
         guardian = users_col.find_one({"id": guardian_id}) or {}
         if _send_guardian_digest(guardian, youth_ids):
-            emit("family.digest_sent", {"id": guardian_id}, meta={"week": week, "youth": len(youth_ids)})
+            channels = ["email"]
+            if _send_digest_text(guardian, youth_ids):
+                channels.append(guardian.get("digest_channel"))
+            emit("family.digest_sent", {"id": guardian_id},
+                 meta={"week": week, "youth": len(youth_ids), "channels": channels})
             sent += 1
 
     return {"week": week, "sent": sent, "already_sent": skipped, "guardians": len(by_guardian)}
