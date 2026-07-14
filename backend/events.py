@@ -46,6 +46,8 @@ EVENT_TYPES = {
     "portfolio.item_removed",
     "goal.set",
     "goal.completed",
+    # village guide (no question text in meta — stream is faculty-readable)
+    "guide.asked",
     # village
     "village.created",
     "village.member_added",

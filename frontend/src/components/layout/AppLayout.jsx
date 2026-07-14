@@ -1,6 +1,7 @@
 import React from 'react';
 import { useLocation } from 'react-router-dom';
 import Sidebar from './Sidebar';
+import GuideWidget from '../GuideWidget';
 
 export default function AppLayout({ user, onLogout, children }) {
   const location = useLocation();
@@ -14,6 +15,7 @@ export default function AppLayout({ user, onLogout, children }) {
           {children}
         </div>
       </main>
+      {!isLiveRoom && <GuideWidget user={user} />}
     </div>
   );
 }
