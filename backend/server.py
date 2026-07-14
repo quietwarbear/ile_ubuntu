@@ -84,6 +84,7 @@ from routes.community_dashboard import router as community_dashboard_router
 from routes.checkins import router as checkins_router
 from routes.villages import router as villages_router
 from routes.portfolio import router as portfolio_router
+from routes.guide import router as guide_router
 
 app.include_router(auth_router)
 app.include_router(courses_router)
@@ -115,6 +116,7 @@ app.include_router(community_dashboard_router)
 app.include_router(checkins_router)
 app.include_router(villages_router)
 app.include_router(portfolio_router)
+app.include_router(guide_router)
 
 
 @app.get("/")
