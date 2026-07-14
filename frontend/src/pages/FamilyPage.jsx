@@ -147,8 +147,9 @@ function DigestTextCard({ prefs, onSaved, setMessage }) {
       </CardHeader>
       <CardContent>
         <p className="text-xs text-[#94A3B8] mb-3">
-          The full digest arrives by email every Sunday. Add your number and we'll also send a short note
-          {prefs.available_channels.includes('whatsapp') ? ' by SMS or WhatsApp' : ' by SMS'} — reply STOP anytime to opt out.
+          The full digest arrives by email every Sunday. Add your number and we'll also send one short
+          {prefs.available_channels.includes('whatsapp') ? ' SMS or WhatsApp' : ' text'} message per week when it's ready.
+          Msg & data rates may apply. Reply STOP anytime to cancel, HELP for help.
         </p>
         <div className="flex flex-col sm:flex-row gap-2">
           <select value={channel} onChange={e => setChannel(e.target.value)} className={selectCls} data-testid="digest-channel">
@@ -289,10 +290,13 @@ export default function FamilyPage({ user }) {
           {family.youth.map(y => (
             <YouthCard key={y.id} youth={y} onUnlink={handleUnlink} />
           ))}
-          {family.digest_prefs && (
-            <DigestTextCard prefs={family.digest_prefs} onSaved={load} setMessage={setMessage} />
-          )}
         </div>
+      )}
+
+      {/* Digest-by-text opt-in — shown whenever the server offers a texting
+          channel, so guardians can set their number before linking anyone. */}
+      {family?.digest_prefs?.available_channels?.length > 0 && (
+        <DigestTextCard prefs={family.digest_prefs} onSaved={load} setMessage={setMessage} />
       )}
 
       {/* Youth side: my code + my guardians (hidden for family-intent accounts) */}
