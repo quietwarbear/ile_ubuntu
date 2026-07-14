@@ -344,4 +344,8 @@ def preview_digest(current_user: dict = Depends(get_current_user)):
         raise HTTPException(status_code=400, detail="No linked young people yet")
     if not _send_guardian_digest(current_user, youth_ids):
         raise HTTPException(status_code=400, detail="Your account has no email address")
-    return {"success": True, "message": "Preview sent — check your inbox"}
+    texted = _send_digest_text(current_user, youth_ids)
+    return {
+        "success": True,
+        "message": "Preview sent — check your inbox" + (" and your phone" if texted else ""),
+    }
