@@ -13,7 +13,6 @@ Privacy contract:
   faculty-readable; questions may be personal).
 """
 
-import json
 import logging
 import os
 from pathlib import Path
@@ -45,18 +44,15 @@ KNOWN_ROUTES = {
     "/analytics", "/marketing", "/",
 }
 
-ANSWER_SCHEMA = {
-    "type": "object",
-    "properties": {
-        "answer": {"type": "string", "description": "The warm, brief answer."},
-        "route": {
-            "type": ["string", "null"],
-            "description": "An in-app route to offer as 'Take me there', or null.",
-        },
-    },
-    "required": ["answer", "route"],
-    "additionalProperties": False,
-}
+# Response format: plain prose, then a final "ROUTE: /path" (or "ROUTE: none")
+# line. Deliberately not JSON — constrained JSON decoding truncated answers at
+# unescaped inner quotes (e.g. the model writing: tap "Add to my portfolio").
+FORMAT_RULES = (
+    "Reply with your answer as plain text. Then, on the very last line, write "
+    "ROUTE: followed by the single most relevant in-app route from the "
+    "knowledge (for a 'Take me there' button), or ROUTE: none if no page "
+    "applies. No other formatting."
+)
 
 
 def guide_enabled() -> bool:
@@ -99,9 +95,8 @@ async def ask_guide(request: Request, current_user: dict = Depends(get_current_u
             system=[
                 # Stable knowledge first (cacheable), volatile persona after.
                 {"type": "text", "text": KNOWLEDGE, "cache_control": {"type": "ephemeral"}},
-                {"type": "text", "text": persona},
+                {"type": "text", "text": persona + " " + FORMAT_RULES},
             ],
-            output_config={"format": {"type": "json_schema", "schema": ANSWER_SCHEMA}},
             messages=[{"role": "user", "content": question}],
         )
     except anthropic.RateLimitError:
@@ -115,13 +110,16 @@ async def ask_guide(request: Request, current_user: dict = Depends(get_current_u
     if response.stop_reason == "refusal":
         return {"answer": "That's not something I can help with — a facilitator would be the right person to ask.", "route": None}
 
-    text = next((b.text for b in response.content if b.type == "text"), "")
-    try:
-        parsed = json.loads(text)
-        answer = (parsed.get("answer") or "").strip()
-        route = parsed.get("route")
-    except (json.JSONDecodeError, AttributeError):
-        answer, route = text.strip(), None
+    text = next((b.text for b in response.content if b.type == "text"), "").strip()
+    answer, route = text, None
+    lines = text.rsplit("\n", 1)
+    if len(lines) == 2 and lines[1].strip().upper().startswith("ROUTE:"):
+        answer = lines[0].strip()
+        candidate = lines[1].split(":", 1)[1].strip()
+        route = candidate if candidate.startswith("/") else None
+    elif text.upper().startswith("ROUTE:"):
+        # Degenerate single-line reply
+        answer, route = "", text.split(":", 1)[1].strip()
 
     if route not in KNOWN_ROUTES:
         route = None
