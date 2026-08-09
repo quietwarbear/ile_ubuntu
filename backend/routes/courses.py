@@ -1,7 +1,9 @@
 from fastapi import APIRouter, HTTPException, Query, Request, Depends
 from datetime import datetime, timezone
+from pathlib import Path
 import uuid
 import secrets
+import storage
 from database import courses_col, lessons_col, files_col, enrollments_col, course_invites_col, villages_col, users_col
 from middleware import get_current_user
 from models.user import has_permission, UserRole
@@ -12,6 +14,22 @@ from events import emit
 from routes.villages import is_village_member, user_village_ids, _get_village, _can_steward
 
 router = APIRouter(prefix="/api/courses", tags=["courses"])
+
+
+def _dispose_lesson_files(lesson_ids: list):
+    """Delete the attachments of the given lessons — stored objects AND
+    records — so a deleted lesson/course leaves nothing orphaned in R2 or
+    on disk (mirrors files.py delete_file)."""
+    if not lesson_ids:
+        return
+    for f in files_col.find({"lesson_id": {"$in": lesson_ids}}):
+        if f.get("s3_key"):
+            storage.delete_object(f["s3_key"])  # best-effort, never raises
+        elif f.get("file_path"):
+            path = Path(f["file_path"])
+            if path.exists():
+                path.unlink()
+    files_col.delete_many({"lesson_id": {"$in": lesson_ids}})
 
 
 @router.post("")
@@ -154,6 +172,8 @@ def delete_course(course_id: str, current_user: dict = Depends(get_current_user)
     if course["instructor_id"] != current_user["id"] and not has_permission(current_user["role"], UserRole.ADMIN):
         raise HTTPException(status_code=403, detail="Access denied")
 
+    lesson_ids = [l["id"] for l in lessons_col.find({"course_id": course_id}, {"id": 1})]
+    _dispose_lesson_files(lesson_ids)
     lessons_col.delete_many({"course_id": course_id})
     courses_col.delete_one({"id": course_id})
     return {"success": True}
@@ -230,8 +250,15 @@ def delete_lesson(course_id: str, lesson_id: str, current_user: dict = Depends(g
     if course["instructor_id"] != current_user["id"] and not has_permission(current_user["role"], UserRole.ADMIN):
         raise HTTPException(status_code=403, detail="Access denied")
 
+    _dispose_lesson_files([lesson_id])
     lessons_col.delete_one({"id": lesson_id, "course_id": course_id})
     courses_col.update_one({"id": course_id}, {"$pull": {"lessons": lesson_id}})
+    # Drop the deleted lesson from completion records so progress
+    # percentages stay grounded in lessons that still exist.
+    enrollments_col.update_many(
+        {"course_id": course_id},
+        {"$pull": {"completed_lessons": lesson_id}},
+    )
     return {"success": True}
 
 

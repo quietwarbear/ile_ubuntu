@@ -7,7 +7,7 @@ import {
   DownloadSimple, Trash, Plus, GoogleLogo, Presentation, Article, ArrowSquareOut,
   File as FileIcon, FilePdf, FileDoc, FileXls, FilePpt, FileImage, Eye, X, PencilSimple,
 } from '@phosphor-icons/react';
-import { BACKEND_URL, apiPut } from '../../lib/api';
+import { BACKEND_URL, apiPut, apiDelete } from '../../lib/api';
 import { Input } from '../../components/ui/input';
 import LessonContentViewer from '../LessonContentViewer';
 import WysiwygEditor from './WysiwygEditor';
@@ -43,6 +43,7 @@ export function LessonCard({
   const [viewingPdf, setViewingPdf] = useState(null);
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [editForm, setEditForm] = useState({ title: '', description: '', content: '' });
 
   const startEdit = () => {
@@ -69,6 +70,18 @@ export function LessonCard({
       window.alert(err?.message || 'Could not save the lesson.');
     } finally {
       setSaving(false);
+    }
+  };
+
+  const deleteLesson = async () => {
+    if (!window.confirm(`Delete "${lesson.title}"? This removes the lesson for everyone in the course, along with its attachments and completion records. This can't be undone.`)) return;
+    setDeleting(true);
+    try {
+      await apiDelete(`/api/courses/${courseId}/lessons/${lesson.id}`);
+      onReloadCourse?.();
+    } catch (err) {
+      window.alert(err?.message || 'Could not delete the lesson.');
+      setDeleting(false);
     }
   };
 
@@ -135,7 +148,7 @@ export function LessonCard({
         {isExpanded && (
           <div className="mt-4 pt-4 border-t border-[#1E293B] space-y-4">
             {isInstructor && !editing && (
-              <div className="flex justify-end">
+              <div className="flex justify-end gap-1">
                 <Button
                   size="sm" variant="ghost"
                   onClick={startEdit}
@@ -143,6 +156,15 @@ export function LessonCard({
                   data-testid={`edit-lesson-${lesson.id}`}
                 >
                   <PencilSimple size={12} className="mr-1" /> Edit lesson
+                </Button>
+                <Button
+                  size="sm" variant="ghost"
+                  onClick={deleteLesson}
+                  disabled={deleting}
+                  className="text-red-400 hover:text-red-300 text-[10px] h-7"
+                  data-testid={`delete-lesson-${lesson.id}`}
+                >
+                  <Trash size={12} className="mr-1" /> {deleting ? 'Deleting…' : 'Delete lesson'}
                 </Button>
               </div>
             )}
