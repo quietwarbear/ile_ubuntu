@@ -47,6 +47,7 @@ export default function SubscriptionsPage({ user }) {
   const [processingTier, setProcessingTier] = useState(null);
   const [billingPeriod, setBillingPeriod] = useState('monthly'); // 'monthly' or 'annual'
   const [restoringPurchases, setRestoringPurchases] = useState(false);
+  const [cancelingWeb, setCancelingWeb] = useState(false);
 
   const onNativePlatform = isNative();
 
@@ -121,6 +122,21 @@ export default function SubscriptionsPage({ user }) {
       setPaymentResult({ status: 'error', message: 'Something went wrong. Please try again.' });
     } finally {
       setProcessingTier(null);
+    }
+  };
+
+  const handleCancelWeb = async () => {
+    if (!window.confirm('Turn off auto-renewal? You keep access until the end of the period you already paid for.')) return;
+    setCancelingWeb(true);
+    try {
+      await apiPost('/api/subscriptions/cancel-web', {});
+      await fetchData();
+      setPaymentResult({ status: 'success', message: 'Auto-renewal is off. Your access continues until the end of the paid period.' });
+    } catch (e) {
+      console.error(e);
+      setPaymentResult({ status: 'error', message: 'Could not update auto-renewal. Please try again.' });
+    } finally {
+      setCancelingWeb(false);
     }
   };
 
@@ -319,6 +335,27 @@ export default function SubscriptionsPage({ user }) {
                     </li>
                   ))}
                 </ul>
+                {isActive && mySub?.web_subscription && !onNativePlatform && (
+                  mySub.web_subscription.canceling ? (
+                    <p className="text-[10px] text-amber-400" data-testid="web-renewal-off">
+                      Auto-renewal is off — access continues until the end of the paid period.
+                    </p>
+                  ) : mySub.web_subscription.auto_renew ? (
+                    <button
+                      onClick={handleCancelWeb}
+                      disabled={cancelingWeb}
+                      className="w-full py-2 rounded-md text-xs font-medium border border-[#334155] text-[#94A3B8] hover:text-[#F8FAFC] hover:border-[#94A3B8] transition-all"
+                      data-testid="cancel-web-renewal"
+                    >
+                      {cancelingWeb ? 'Working…' : 'Cancel auto-renewal'}
+                    </button>
+                  ) : null
+                )}
+                {!isActive && mySub?.web_recurring && !onNativePlatform && price > 0 && (
+                  <p className="text-[10px] text-[#94A3B8] mb-2 text-center">
+                    Auto-renews {billingPeriod === 'annual' ? 'yearly' : 'monthly'} · cancel anytime
+                  </p>
+                )}
                 {!isActive && (
                   <button
                     onClick={() => handleSubscribe(tierId)}
