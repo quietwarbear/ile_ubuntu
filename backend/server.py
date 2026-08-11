@@ -124,6 +124,40 @@ async def root():
     return {"message": "The Ile Ubuntu API v2.0"}
 
 
+async def forward_stripe_sub_to_revenuecat(app_user_id: str, stripe_subscription_id: str):
+    """Report a web Stripe subscription to RevenueCat so web + app-store
+    revenue share one analytics dashboard. Analytics only — entitlements are
+    granted by our own webhooks, never by RevenueCat. app_user_id must be
+    users.id (the same id the app passes to RevenueCat logIn) so RevenueCat
+    merges the web subscription into the existing customer.
+
+    No-op unless REVENUECAT_STRIPE_PUBLIC_KEY is set; best-effort — a
+    RevenueCat outage must never fail the Stripe webhook.
+    """
+    import os
+    import logging
+    import httpx
+
+    rc_key = (os.environ.get("REVENUECAT_STRIPE_PUBLIC_KEY") or "").strip(" ,\n\t\r")
+    if not rc_key or not app_user_id or not stripe_subscription_id:
+        return
+    try:
+        async with httpx.AsyncClient(timeout=10) as client:
+            resp = await client.post(
+                "https://api.revenuecat.com/v1/receipts",
+                headers={
+                    "Authorization": f"Bearer {rc_key}",
+                    "X-Platform": "stripe",
+                    "Content-Type": "application/json",
+                },
+                json={"app_user_id": app_user_id, "fetch_token": stripe_subscription_id},
+            )
+            if resp.status_code >= 400:
+                logging.warning("RevenueCat Stripe forward failed: HTTP %s", resp.status_code)
+    except Exception as e:
+        logging.warning("RevenueCat Stripe forward error: %s", e)
+
+
 @app.post("/api/webhook/stripe")
 async def stripe_webhook(request: Request):
     """Handle Stripe webhook events"""
@@ -180,17 +214,66 @@ async def stripe_webhook(request: Request):
                         }},
                     )
                     tier_id = txn.get("tier_id", "scholar")
-                    users_col.update_one(
-                        {"id": txn["user_id"]},
-                        {"$set": {
-                            "subscription_tier": tier_id,
-                            "subscription_status": "active",
-                            "subscribed_at": datetime.now(timezone.utc).isoformat(),
-                        }},
-                    )
+                    set_fields = {
+                        "subscription_tier": tier_id,
+                        "subscription_status": "active",
+                        "subscribed_at": datetime.now(timezone.utc).isoformat(),
+                    }
+                    # Recurring web subscription (WEB_RECURRING_BILLING_ENABLED):
+                    # remember the Stripe ids for cancel + lifecycle webhooks.
+                    sub_id = session_data.get("subscription")
+                    if sub_id:
+                        set_fields["stripe_subscription_id"] = sub_id
+                        set_fields["stripe_customer_id"] = session_data.get("customer")
+                        set_fields["web_billing_period"] = txn.get("billing_period")
+                    users_col.update_one({"id": txn["user_id"]}, {"$set": set_fields})
                     from events import emit
                     emit("subscription.activated", {"id": txn["user_id"]},
                          meta={"tier": tier_id, "provider": "stripe"})
+                    if sub_id:
+                        await forward_stripe_sub_to_revenuecat(txn["user_id"], sub_id)
+
+        elif event.get("type") == "customer.subscription.deleted":
+            # Recurring web subscription lapsed (cancelled and period ended,
+            # or payment retries exhausted) — downgrade to the free tier.
+            sub_obj = event["data"]["object"]
+            sub_id = sub_obj.get("id")
+            user = users_col.find_one({"stripe_subscription_id": sub_id}) if sub_id else None
+            if user:
+                users_col.update_one(
+                    {"id": user["id"]},
+                    {
+                        "$set": {
+                            "subscription_tier": "explorer",
+                            "subscription_status": "expired",
+                        },
+                        "$unset": {"stripe_subscription_id": ""},
+                    },
+                )
+                from events import emit
+                emit("subscription.expired", {"id": user["id"]}, meta={"provider": "stripe"})
+
+        elif event.get("type") == "customer.subscription.updated":
+            # Keep subscription_status in step with Stripe: auto-renew turned
+            # off/on, or payment trouble. Tier changes only happen on
+            # checkout (upgrade) or deletion (downgrade).
+            sub_obj = event["data"]["object"]
+            sub_id = sub_obj.get("id")
+            user = users_col.find_one({"stripe_subscription_id": sub_id}) if sub_id else None
+            if user:
+                if sub_obj.get("cancel_at_period_end"):
+                    new_status = "canceling"
+                elif sub_obj.get("status") in ("active", "trialing"):
+                    new_status = "active"
+                elif sub_obj.get("status") in ("past_due", "unpaid"):
+                    new_status = "past_due"
+                else:
+                    new_status = None
+                if new_status and user.get("subscription_status") != new_status:
+                    users_col.update_one(
+                        {"id": user["id"]},
+                        {"$set": {"subscription_status": new_status}},
+                    )
 
         return {"status": "ok"}
     except Exception as e:

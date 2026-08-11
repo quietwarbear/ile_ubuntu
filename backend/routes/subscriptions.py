@@ -15,6 +15,14 @@ router = APIRouter(prefix="/api/subscriptions", tags=["subscriptions"])
 # trailing comma or space, which Stripe rejects as an invalid key.
 STRIPE_API_KEY = (os.environ.get("STRIPE_API_KEY") or "").strip(" ,\n\t\r")
 
+
+def web_recurring_enabled() -> bool:
+    """Feature flag: web checkout creates auto-renewing Stripe subscriptions
+    instead of one-time payments. Read per call so ops can flip it without a
+    deploy. Existing one-time purchases are unaffected (grandfathered)."""
+    flag = (os.environ.get("WEB_RECURRING_BILLING_ENABLED") or "").strip().lower()
+    return flag in ("1", "true", "yes", "on")
+
 # Owner/admin emails that always receive top-tier ("elder_circle") access
 ADMIN_EMAILS = {
     "hodari@ubuntu-village.org",
@@ -119,6 +127,15 @@ def get_my_subscription(current_user: dict = Depends(get_current_user)):
         "elder_circle": {"max_enrollments": 999999, "cohorts": True, "spaces": True, "live_sessions": True, "restricted_archives": True},
     }
 
+    web_subscription = None
+    if user.get("stripe_subscription_id"):
+        status_val = user.get("subscription_status", "active")
+        web_subscription = {
+            "auto_renew": status_val == "active",
+            "canceling": status_val == "canceling",
+            "billing_period": user.get("web_billing_period"),
+        }
+
     return {
         "tier": tier,
         "subscription_status": user.get("subscription_status", "active"),
@@ -126,7 +143,37 @@ def get_my_subscription(current_user: dict = Depends(get_current_user)):
         "is_bypassed": is_bypassed,
         "enrollment_count": enrollment_count,
         "limits": limits.get(tier, limits["explorer"]),
+        "web_subscription": web_subscription,
+        "web_recurring": web_recurring_enabled(),
     }
+
+
+@router.post("/cancel-web")
+def cancel_web_subscription(current_user: dict = Depends(get_current_user)):
+    """Turn off auto-renewal for a web Stripe subscription. Access continues
+    until the end of the already-paid period (cancel_at_period_end); the
+    customer.subscription.deleted webhook downgrades the tier when it lapses.
+    """
+    if not STRIPE_API_KEY:
+        raise HTTPException(status_code=500, detail="Payment system not configured")
+    user = users_col.find_one({"id": current_user["id"]}, {"_id": 0})
+    sub_id = (user or {}).get("stripe_subscription_id")
+    if not sub_id:
+        raise HTTPException(status_code=400, detail="No auto-renewing web subscription to cancel")
+
+    stripe.api_key = STRIPE_API_KEY
+    try:
+        stripe.Subscription.modify(sub_id, cancel_at_period_end=True)
+    except Exception:
+        raise HTTPException(status_code=502, detail="Could not update the subscription with Stripe")
+
+    users_col.update_one(
+        {"id": current_user["id"]},
+        {"$set": {"subscription_status": "canceling"}},
+    )
+    from events import emit
+    emit("subscription.autorenew_off", {"id": current_user["id"]}, meta={"provider": "stripe"})
+    return {"status": "canceling"}
 
 
 @router.post("/activate-mobile")
@@ -217,21 +264,33 @@ async def create_checkout(request: Request, current_user: dict = Depends(get_cur
         "billing_period": billing_period,
     }
 
-    session = stripe.checkout.Session.create(
-        payment_method_types=["card"],
-        line_items=[{
-            "price_data": {
-                "currency": "usd",
-                "product_data": {"name": f"{tier['name']} — {billing_period.title()}"},
-                "unit_amount": int(amount * 100),  # Stripe uses cents
-            },
-            "quantity": 1,
-        }],
-        mode="payment",
-        success_url=success_url,
-        cancel_url=cancel_url,
-        metadata=metadata,
-    )
+    recurring = web_recurring_enabled()
+    line_item = {
+        "price_data": {
+            "currency": "usd",
+            "product_data": {"name": f"{tier['name']} — {billing_period.title()}"},
+            "unit_amount": int(amount * 100),  # Stripe uses cents
+        },
+        "quantity": 1,
+    }
+    session_kwargs = {
+        "payment_method_types": ["card"],
+        "line_items": [line_item],
+        "mode": "payment",
+        "success_url": success_url,
+        "cancel_url": cancel_url,
+        "metadata": metadata,
+    }
+    if recurring:
+        line_item["price_data"]["recurring"] = {
+            "interval": "year" if billing_period == "annual" else "month"
+        }
+        session_kwargs["mode"] = "subscription"
+        # Stamp the same metadata on the subscription object itself so
+        # customer.subscription.* webhooks can resolve the user without
+        # email matching.
+        session_kwargs["subscription_data"] = {"metadata": metadata}
+    session = stripe.checkout.Session.create(**session_kwargs)
 
     # Record pending transaction
     transaction = {
@@ -243,6 +302,7 @@ async def create_checkout(request: Request, current_user: dict = Depends(get_cur
         "billing_period": billing_period,
         "amount": amount,
         "currency": "usd",
+        "recurring": recurring,
         "payment_status": "initiated",
         "metadata": metadata,
         "created_at": datetime.now(timezone.utc).isoformat(),
@@ -287,14 +347,19 @@ def check_checkout_status(session_id: str, request: Request, current_user: dict 
         txn = payment_transactions_col.find_one({"session_id": session_id})
         if txn and txn.get("payment_status") != "paid":
             tier_id = txn.get("tier_id", "scholar")
-            users_col.update_one(
-                {"id": txn["user_id"]},
-                {"$set": {
-                    "subscription_tier": tier_id,
-                    "subscription_status": "active",
-                    "subscribed_at": datetime.now(timezone.utc).isoformat(),
-                }},
-            )
+            set_fields = {
+                "subscription_tier": tier_id,
+                "subscription_status": "active",
+                "subscribed_at": datetime.now(timezone.utc).isoformat(),
+            }
+            # Recurring web subscription: remember the Stripe ids so we can
+            # cancel and react to lifecycle webhooks. (The webhook stores
+            # these too; whichever path runs first wins — same values.)
+            if getattr(checkout_session, "mode", "") == "subscription" and checkout_session.subscription:
+                set_fields["stripe_subscription_id"] = checkout_session.subscription
+                set_fields["stripe_customer_id"] = checkout_session.customer
+                set_fields["web_billing_period"] = txn.get("billing_period")
+            users_col.update_one({"id": txn["user_id"]}, {"$set": set_fields})
 
     payment_transactions_col.update_one({"session_id": session_id}, {"$set": update_data})
 
