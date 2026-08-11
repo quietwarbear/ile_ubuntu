@@ -23,6 +23,43 @@ def web_recurring_enabled() -> bool:
     flag = (os.environ.get("WEB_RECURRING_BILLING_ENABLED") or "").strip().lower()
     return flag in ("1", "true", "yes", "on")
 
+
+# Fixed dashboard-defined Stripe price IDs. When set, recurring checkout
+# references these instead of inline price_data — inline product_data mints a
+# brand-new Stripe product on EVERY purchase, which sprawls the Stripe catalog
+# and breaks RevenueCat's per-product entitlement mappings.
+FIXED_PRICE_ENV = {
+    ("scholar", "monthly"): "STRIPE_PRICE_SCHOLAR_MONTHLY",
+    ("scholar", "annual"): "STRIPE_PRICE_SCHOLAR_ANNUAL",
+    ("elder_circle", "monthly"): "STRIPE_PRICE_ELDER_MONTHLY",
+    ("elder_circle", "annual"): "STRIPE_PRICE_ELDER_ANNUAL",
+}
+
+# Cache of verified price ids -> True, so we hit Stripe once per process.
+_verified_prices: dict = {}
+
+
+def _fixed_price_id(tier_id: str, billing_period: str) -> str:
+    var = FIXED_PRICE_ENV.get((tier_id, billing_period))
+    return (os.environ.get(var) or "").strip(" ,\n\t\r") if var else ""
+
+
+def _verify_fixed_price(price_id: str, expected_cents: int, billing_period: str) -> None:
+    """Guard against a mispasted price ID silently charging the wrong amount:
+    the dashboard price must match the server-side tier amount and interval.
+    Verified once per process per price."""
+    if _verified_prices.get(price_id):
+        return
+    price = stripe.Price.retrieve(price_id)
+    interval = (price.get("recurring") or {}).get("interval")
+    expected_interval = "year" if billing_period == "annual" else "month"
+    if price.get("unit_amount") != expected_cents or interval != expected_interval:
+        raise HTTPException(
+            status_code=500,
+            detail="Payment configuration mismatch — contact support",
+        )
+    _verified_prices[price_id] = True
+
 # Owner/admin emails that always receive top-tier ("elder_circle") access
 ADMIN_EMAILS = {
     "hodari@ubuntu-village.org",
@@ -282,9 +319,18 @@ async def create_checkout(request: Request, current_user: dict = Depends(get_cur
         "metadata": metadata,
     }
     if recurring:
-        line_item["price_data"]["recurring"] = {
-            "interval": "year" if billing_period == "annual" else "month"
-        }
+        fixed_price = _fixed_price_id(tier_id, billing_period)
+        if fixed_price:
+            # Dashboard-defined price: stable product catalog, stable
+            # RevenueCat mappings.
+            _verify_fixed_price(fixed_price, int(amount * 100), billing_period)
+            session_kwargs["line_items"] = [{"price": fixed_price, "quantity": 1}]
+        else:
+            # Fallback: inline recurring price (mints a new Stripe product
+            # per purchase — set the STRIPE_PRICE_* vars to avoid this).
+            line_item["price_data"]["recurring"] = {
+                "interval": "year" if billing_period == "annual" else "month"
+            }
         session_kwargs["mode"] = "subscription"
         # Stamp the same metadata on the subscription object itself so
         # customer.subscription.* webhooks can resolve the user without
