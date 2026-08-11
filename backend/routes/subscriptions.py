@@ -302,11 +302,15 @@ async def create_checkout(request: Request, current_user: dict = Depends(get_cur
     }
 
     recurring = web_recurring_enabled()
+    # round(), not int(): 19.99 * 100 is 1998.999... in float, and int()
+    # truncates it to 1998 — a 1-cent undercharge inline, and a false
+    # mismatch against the true dashboard price in _verify_fixed_price.
+    amount_cents = round(amount * 100)
     line_item = {
         "price_data": {
             "currency": "usd",
             "product_data": {"name": f"{tier['name']} — {billing_period.title()}"},
-            "unit_amount": int(amount * 100),  # Stripe uses cents
+            "unit_amount": amount_cents,  # Stripe uses cents
         },
         "quantity": 1,
     }
@@ -323,7 +327,7 @@ async def create_checkout(request: Request, current_user: dict = Depends(get_cur
         if fixed_price:
             # Dashboard-defined price: stable product catalog, stable
             # RevenueCat mappings.
-            _verify_fixed_price(fixed_price, int(amount * 100), billing_period)
+            _verify_fixed_price(fixed_price, amount_cents, billing_period)
             session_kwargs["line_items"] = [{"price": fixed_price, "quantity": 1}]
         else:
             # Fallback: inline recurring price (mints a new Stripe product
