@@ -81,6 +81,11 @@ agenthub/agents/youtube/db
 *.keystore
 *.keystore.WRONG.bak
 *.jks
+frontend/android/version.properties
+
+# Local product handoff documents
+/Ile_Ubuntu_Guide_for_Shy.docx
+/Ile_Ubuntu_One_Pager.docx
 
 # Temp/working folders
 ile_ubuntu_broken/
