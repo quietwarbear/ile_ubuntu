@@ -76,6 +76,7 @@ from routes.blog import router as blog_router
 from routes.revenuecat_webhook import router as revenuecat_router
 from routes.quizzes import router as quizzes_router
 from routes.lesson_comments import router as lesson_comments_router
+from routes.discussions import router as discussions_router
 from routes.events import router as events_router
 from routes.marketplace import router as marketplace_router
 from routes.family import router as family_router
@@ -88,6 +89,7 @@ from routes.guide import router as guide_router
 
 app.include_router(auth_router)
 app.include_router(courses_router)
+app.include_router(discussions_router)
 app.include_router(cohorts_router)
 app.include_router(community_router)
 app.include_router(archives_router)

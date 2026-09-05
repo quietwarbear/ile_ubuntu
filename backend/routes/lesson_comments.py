@@ -7,6 +7,9 @@ from database import lesson_comments_col, lessons_col, courses_col, enrollments_
 from middleware import get_current_user
 from models.user import has_permission, UserRole
 from events import emit
+# Acyclic: courses.py imports from database/middleware/models/villages, never
+# from here.
+from routes.courses import _is_course_staff, _lesson_is_open
 
 router = APIRouter(
     prefix="/api/courses/{course_id}/lessons/{lesson_id}/comments",
@@ -24,14 +27,20 @@ def _verify_access(course_id: str, lesson_id: str, current_user: dict):
     if not lesson:
         raise HTTPException(status_code=404, detail="Lesson not found")
 
-    # Instructors and faculty+ always have access
-    if course["instructor_id"] == current_user["id"] or has_permission(current_user["role"], UserRole.FACULTY):
+    # Course staff (owner, co-teachers) and faculty+ always have access
+    if _is_course_staff(course, current_user) or has_permission(current_user["role"], UserRole.FACULTY):
         return course, lesson
 
     # Students must be enrolled
     enrollment = enrollments_col.find_one({"user_id": current_user["id"], "course_id": course_id})
     if not enrollment:
         raise HTTPException(status_code=403, detail="Not enrolled in this course")
+
+    # A hidden or not-yet-released lesson has no discussion for students. The
+    # lesson is absent from their listing, so this only closes the direct-id
+    # path — but an unreleased lesson should not accumulate comments.
+    if not _lesson_is_open(lesson):
+        raise HTTPException(status_code=404, detail="Lesson not found")
 
     return course, lesson
 

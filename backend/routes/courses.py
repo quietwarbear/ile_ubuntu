@@ -32,6 +32,80 @@ def _dispose_lesson_files(lesson_ids: list):
     files_col.delete_many({"lesson_id": {"$in": lesson_ids}})
 
 
+# --- Course staff: the owning instructor plus co-teachers ---
+
+# Deliberately small. A co-teacher gets full rights over this course's
+# teaching surface, so the cap keeps that grant deliberate.
+MAX_CO_INSTRUCTORS = 2
+
+
+def _course_staff_ids(course: dict) -> list:
+    """The owning instructor plus any co-teachers."""
+    ids = [course.get("instructor_id")] + list(course.get("co_instructor_ids") or [])
+    return [i for i in ids if i]
+
+
+def _is_course_staff(course: dict, user: dict) -> bool:
+    """Owner, co-teacher, or platform admin. Co-teacher rights are scoped to
+    this one course and confer nothing anywhere else."""
+    return user["id"] in _course_staff_ids(course) or user["role"] == UserRole.ADMIN
+
+
+def _require_course_teacher(course_id: str, current_user: dict) -> dict:
+    """Editing rights over the teaching surface — lessons and modules.
+    Ownership actions (delete, visibility, invite codes, staffing) stay with
+    _require_course_owner."""
+    course = courses_col.find_one({"id": course_id})
+    if not course:
+        raise HTTPException(status_code=404, detail="Course not found")
+    if not _is_course_staff(course, current_user) and not has_permission(
+        current_user["role"], UserRole.ASSISTANT
+    ):
+        raise HTTPException(status_code=403, detail="Access denied")
+    return course
+
+
+# --- Lesson release scheduling ---
+
+def _as_utc(value):
+    """Mongo hands back naive datetimes and the API accepts ISO strings.
+    Normalise both so comparisons never raise. None when unparseable."""
+    if isinstance(value, str):
+        try:
+            value = datetime.fromisoformat(value.strip().replace("Z", "+00:00"))
+        except ValueError:
+            return None
+    if not isinstance(value, datetime):
+        return None
+    return value if value.tzinfo else value.replace(tzinfo=timezone.utc)
+
+
+def _lesson_is_open(lesson: dict, now: datetime = None) -> bool:
+    """Open to students when the lesson is not manually hidden and its
+    scheduled release time has passed. An unparseable release time keeps the
+    lesson closed — withholding beats leaking unreleased material."""
+    if lesson.get("hidden"):
+        return False
+    raw = lesson.get("available_at")
+    if not raw:
+        return True
+    scheduled = _as_utc(raw)
+    if scheduled is None:
+        return False
+    return scheduled <= (now or datetime.now(timezone.utc))
+
+
+# What a student may see of a scheduled lesson that has not opened: enough to
+# know it is coming, none of its content.
+_LOCKED_LESSON_FIELDS = ("id", "course_id", "title", "order", "module_id", "available_at")
+
+
+def _locked_lesson_stub(lesson: dict) -> dict:
+    stub = {k: lesson.get(k) for k in _LOCKED_LESSON_FIELDS}
+    stub["locked"] = True
+    return stub
+
+
 @router.post("")
 async def create_course(request: Request, current_user: dict = Depends(get_current_user)):
     if not has_permission(current_user["role"], UserRole.FACULTY):
@@ -54,6 +128,8 @@ async def create_course(request: Request, current_user: dict = Depends(get_curre
         "image_url": data.get("image_url", ""),
         "instructor_id": current_user["id"],
         "instructor_name": current_user["name"],
+        # Co-teachers: full rights over this course's lessons and modules.
+        "co_instructor_ids": [],
         "status": CourseStatus.DRAFT,
         "village_id": village_id,
         # Course-player modules (sections). Embedded list; lessons reference a
@@ -110,6 +186,7 @@ def list_courses(
         query["$or"] = [
             {"$and": [{"status": CourseStatus.ACTIVE}, visible_clause]},
             {"instructor_id": current_user["id"]},
+            {"co_instructor_ids": current_user["id"]},
         ]
     else:
         query["status"] = CourseStatus.ACTIVE
@@ -129,13 +206,13 @@ def get_course(course_id: str, current_user: dict = Depends(get_current_user)):
     # Draft privacy: only the instructor or an admin can see a draft.
     # (Unlisted ACTIVE courses are intentionally reachable by direct link/invite.)
     if course.get("status") == CourseStatus.DRAFT:
-        if course["instructor_id"] != current_user["id"] and current_user["role"] != UserRole.ADMIN:
+        if not _is_course_staff(course, current_user):
             raise HTTPException(status_code=404, detail="Course not found")
     # Village privacy: members-only, even by direct link (404, like drafts,
     # so existence isn't leaked). Instructor and faculty+ pass.
     if course.get("visibility") == "village":
         allowed = (
-            course["instructor_id"] == current_user["id"]
+            _is_course_staff(course, current_user)
             or has_permission(current_user["role"], UserRole.FACULTY)
             or (course.get("village_id") and is_village_member(course["village_id"], current_user["id"]))
         )
@@ -182,11 +259,7 @@ def delete_course(course_id: str, current_user: dict = Depends(get_current_user)
 # --- Lesson sub-routes ---
 @router.post("/{course_id}/lessons")
 async def create_lesson(course_id: str, request: Request, current_user: dict = Depends(get_current_user)):
-    course = courses_col.find_one({"id": course_id})
-    if not course:
-        raise HTTPException(status_code=404, detail="Course not found")
-    if course["instructor_id"] != current_user["id"] and not has_permission(current_user["role"], UserRole.ASSISTANT):
-        raise HTTPException(status_code=403, detail="Access denied")
+    course = _require_course_teacher(course_id, current_user)
 
     data = await request.json()
     lesson = {
@@ -202,6 +275,10 @@ async def create_lesson(course_id: str, request: Request, current_user: dict = D
         "module_id": data.get("module_id"),
         "banner_url": (data.get("banner_url") or "").strip(),
         "order": data.get("order", 0),
+        # Release control. hidden = withheld outright; available_at = revealed
+        # automatically once that moment passes.
+        "hidden": bool(data.get("hidden", False)),
+        "available_at": _as_utc(data.get("available_at")),
         "files": [],
         "has_quiz": False,
         "created_by": current_user["id"],
@@ -220,11 +297,7 @@ async def create_lesson(course_id: str, request: Request, current_user: dict = D
 
 @router.put("/{course_id}/lessons/{lesson_id}")
 async def update_lesson(course_id: str, lesson_id: str, request: Request, current_user: dict = Depends(get_current_user)):
-    course = courses_col.find_one({"id": course_id})
-    if not course:
-        raise HTTPException(status_code=404, detail="Course not found")
-    if course["instructor_id"] != current_user["id"] and not has_permission(current_user["role"], UserRole.ASSISTANT):
-        raise HTTPException(status_code=403, detail="Access denied")
+    course = _require_course_teacher(course_id, current_user)
 
     lesson = lessons_col.find_one({"id": lesson_id, "course_id": course_id})
     if not lesson:
@@ -235,6 +308,21 @@ async def update_lesson(course_id: str, lesson_id: str, request: Request, curren
     for field in ["title", "description", "content", "video_url", "video_file_id", "order", "module_id", "banner_url"]:
         if field in data:
             update_fields[field] = data[field]
+    if "hidden" in data:
+        update_fields["hidden"] = bool(data["hidden"])
+    if "available_at" in data:
+        # null/"" clears the schedule. A malformed timestamp is rejected rather
+        # than dropped — silently dropping it would publish the lesson at once.
+        raw = data["available_at"]
+        if raw in (None, ""):
+            update_fields["available_at"] = None
+        else:
+            parsed = _as_utc(raw)
+            if parsed is None:
+                raise HTTPException(
+                    status_code=400, detail="available_at must be an ISO 8601 timestamp"
+                )
+            update_fields["available_at"] = parsed
     update_fields["updated_at"] = datetime.now(timezone.utc)
 
     lessons_col.update_one({"id": lesson_id}, {"$set": update_fields})
@@ -264,8 +352,30 @@ def delete_lesson(course_id: str, lesson_id: str, current_user: dict = Depends(g
 
 @router.get("/{course_id}/lessons")
 def list_lessons(course_id: str, current_user: dict = Depends(get_current_user)):
+    course = courses_col.find_one({"id": course_id})
+    if not course:
+        raise HTTPException(status_code=404, detail="Course not found")
     lessons = list(lessons_col.find({"course_id": course_id}, {"_id": 0}).sort("order", 1))
-    return lessons
+
+    # Staff see every lesson plus its computed state, so the teacher view can
+    # show what is live and what is still scheduled.
+    if _is_course_staff(course, current_user) or has_permission(
+        current_user["role"], UserRole.ASSISTANT
+    ):
+        for lesson in lessons:
+            lesson["locked"] = not _lesson_is_open(lesson)
+        return lessons
+
+    # Students: a hidden lesson disappears entirely; a scheduled one appears as
+    # a dated placeholder so the shape of the course stays legible.
+    visible = []
+    for lesson in lessons:
+        if _lesson_is_open(lesson):
+            lesson["locked"] = False
+            visible.append(lesson)
+        elif not lesson.get("hidden") and lesson.get("available_at"):
+            visible.append(_locked_lesson_stub(lesson))
+    return visible
 
 
 # --- Enrollment endpoints ---
@@ -284,14 +394,14 @@ def enroll_in_course(course_id: str, current_user: dict = Depends(get_current_us
     # Village-only courses: members of the village enroll directly (no invite
     # code needed); everyone else needs to belong to the village first.
     if course.get("visibility") == "village":
-        is_staff = course["instructor_id"] == current_user["id"] or has_permission(current_user["role"], UserRole.FACULTY)
+        is_staff = _is_course_staff(course, current_user) or has_permission(current_user["role"], UserRole.FACULTY)
         if not is_staff and not (course.get("village_id") and is_village_member(course["village_id"], current_user["id"])):
             raise HTTPException(status_code=403, detail="This course lives inside a village — join the village first")
 
     # Premium courses require purchase (fulfilled via Stripe webhook) — free
     # enrollment is blocked unless you're the instructor or faculty+.
     if course.get("is_premium") and (course.get("premium_price") or 0) > 0:
-        is_staff = course["instructor_id"] == current_user["id"] or has_permission(current_user["role"], UserRole.FACULTY)
+        is_staff = _is_course_staff(course, current_user) or has_permission(current_user["role"], UserRole.FACULTY)
         if not is_staff:
             raise HTTPException(
                 status_code=402,
@@ -433,6 +543,102 @@ def _require_course_owner(course_id: str, current_user: dict) -> dict:
     if course["instructor_id"] != current_user["id"] and current_user["role"] != UserRole.ADMIN:
         raise HTTPException(status_code=403, detail="Only the course instructor can do this")
     return course
+
+
+# --- Co-teachers ---
+
+@router.get("/{course_id}/staff")
+def list_course_staff(course_id: str, current_user: dict = Depends(get_current_user)):
+    """Who teaches this course: the owner and any co-teachers."""
+    course = courses_col.find_one({"id": course_id})
+    if not course:
+        raise HTTPException(status_code=404, detail="Course not found")
+    if not _is_course_staff(course, current_user) and not has_permission(
+        current_user["role"], UserRole.FACULTY
+    ):
+        raise HTTPException(status_code=403, detail="Access denied")
+    ids = _course_staff_ids(course)
+    people = {
+        u["id"]: u
+        for u in users_col.find(
+            {"id": {"$in": ids}}, {"_id": 0, "id": 1, "name": 1, "email": 1}
+        )
+    }
+    return {
+        "instructor": people.get(course.get("instructor_id")),
+        "co_instructors": [
+            people[i] for i in (course.get("co_instructor_ids") or []) if i in people
+        ],
+        "max_co_instructors": MAX_CO_INSTRUCTORS,
+    }
+
+
+@router.post("/{course_id}/co-instructors")
+async def add_co_instructor(course_id: str, request: Request, current_user: dict = Depends(get_current_user)):
+    """Grant another teacher full rights over this course's lessons and
+    modules. Owner only — a co-teacher cannot appoint further co-teachers."""
+    course = _require_course_owner(course_id, current_user)
+    data = await request.json()
+    email = (data.get("email") or "").strip().lower()
+    if not email:
+        raise HTTPException(status_code=400, detail="email is required")
+
+    person = users_col.find_one(
+        {"email": email}, {"_id": 0, "id": 1, "name": 1, "email": 1}
+    )
+    if not person:
+        raise HTTPException(
+            status_code=404,
+            detail="No account with that email — they need to sign up first",
+        )
+    if person["id"] == course.get("instructor_id"):
+        raise HTTPException(status_code=400, detail="They already own this course")
+
+    current = list(course.get("co_instructor_ids") or [])
+    if person["id"] in current:
+        return {"success": True, "co_instructor": person, "already": True}
+    if len(current) >= MAX_CO_INSTRUCTORS:
+        raise HTTPException(
+            status_code=400,
+            detail=f"A course can have at most {MAX_CO_INSTRUCTORS} co-teachers",
+        )
+
+    courses_col.update_one(
+        {"id": course_id},
+        {
+            "$addToSet": {"co_instructor_ids": person["id"]},
+            "$set": {"updated_at": datetime.now(timezone.utc)},
+        },
+    )
+    emit(
+        "course.co_instructor_added",
+        current_user,
+        "course",
+        course_id,
+        meta={"co_instructor_id": person["id"]},
+    )
+    return {"success": True, "co_instructor": person}
+
+
+@router.delete("/{course_id}/co-instructors/{user_id}")
+def remove_co_instructor(course_id: str, user_id: str, current_user: dict = Depends(get_current_user)):
+    """Revoke a co-teacher. Owner only. Their edits stay; only access ends."""
+    _require_course_owner(course_id, current_user)
+    courses_col.update_one(
+        {"id": course_id},
+        {
+            "$pull": {"co_instructor_ids": user_id},
+            "$set": {"updated_at": datetime.now(timezone.utc)},
+        },
+    )
+    emit(
+        "course.co_instructor_removed",
+        current_user,
+        "course",
+        course_id,
+        meta={"co_instructor_id": user_id},
+    )
+    return {"success": True}
 
 
 # --- Modules (course-player sections) ---

@@ -120,6 +120,19 @@ export function LessonCard({
               <h3 className={`text-sm font-medium ${isLessonCompleted ? 'text-emerald-400' : 'text-[#F8FAFC]'}`}>
                 {lesson.title}
               </h3>
+              {lesson.hidden ? (
+                <span className="rounded-full bg-[#334155] px-2 py-0.5 text-[10px] font-medium text-[#CBD5E1]"
+                  data-testid={`lesson-hidden-${lesson.id}`}>
+                  Hidden
+                </span>
+              ) : lesson.locked && lesson.available_at ? (
+                <span className="rounded-full bg-[#D4AF37]/15 px-2 py-0.5 text-[10px] font-medium text-[#D4AF37]"
+                  data-testid={`lesson-scheduled-${lesson.id}`}>
+                  Opens {new Date(lesson.available_at).toLocaleString(undefined, {
+                    month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit',
+                  })}
+                </span>
+              ) : null}
               {lessonFiles.length > 0 && (
                 <span className="flex items-center gap-0.5 text-[10px] text-[#94A3B8]">
                   <Paperclip size={10} /> {lessonFiles.length}

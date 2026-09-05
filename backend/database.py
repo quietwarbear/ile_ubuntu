@@ -65,6 +65,11 @@ circle_notes_col = db.circle_notes
 portfolio_items_col = db.portfolio_items
 personal_goals_col = db.personal_goals
 
+# Class discussion: student-named topics, each holding a thread of posts.
+# Course-wide, unlike lesson_comments which hang off a single lesson.
+course_topics_col = db.course_topics
+course_topic_posts_col = db.course_topic_posts
+
 
 def ensure_indexes():
     """Create the indexes the hot query paths rely on. Idempotent; called at startup.
@@ -105,6 +110,10 @@ def ensure_indexes():
         (files_col, [("id", 1)], {}),
         (live_sessions_col, [("id", 1)], {}),
         (lesson_comments_col, [("lesson_id", 1)], {}),
+        # Topic list is ordered by recent activity within a course; posts are
+        # always read as one thread in creation order.
+        (course_topics_col, [("course_id", 1), ("last_activity_at", -1)], {}),
+        (course_topic_posts_col, [("topic_id", 1), ("created_at", 1)], {}),
         (quizzes_col, [("id", 1)], {}),
         (quizzes_col, [("course_id", 1)], {}),
         (quiz_attempts_col, [("quiz_id", 1), ("user_id", 1)], {}),
