@@ -13,6 +13,7 @@ import LessonContentViewer from '../LessonContentViewer';
 import WysiwygEditor from './WysiwygEditor';
 import { LessonVideoPlayer } from './LessonVideoPlayer';
 import { LessonQuiz } from './LessonQuiz';
+import { LessonSubmissions } from './LessonSubmissions';
 import { LessonComments } from './LessonComments';
 
 const FILE_ICONS = {
@@ -398,6 +399,16 @@ export function LessonCard({
             {/* Discussion / Comments */}
             {(isEnrolled || isInstructor) && (
               <LessonComments
+                courseId={courseId}
+                lessonId={lesson.id}
+                user={user}
+                isInstructor={isInstructor}
+              />
+            )}
+
+            {/* Work handed in against this lesson */}
+            {(isEnrolled || isInstructor) && (
+              <LessonSubmissions
                 courseId={courseId}
                 lessonId={lesson.id}
                 user={user}

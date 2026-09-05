@@ -263,8 +263,13 @@ def list_files(
     query = {}
     if lesson_id:
         query["lesson_id"] = lesson_id
+        # Student submissions are not course material. This listing applies no
+        # enrolment check and /download authenticates nobody, so anything
+        # handed in must stay out of it.
+        query["submission_id"] = {"$exists": False}
     elif course_id:
         query["course_id"] = course_id
+        query["submission_id"] = {"$exists": False}
     else:
         query["uploaded_by"] = current_user["id"]
 
