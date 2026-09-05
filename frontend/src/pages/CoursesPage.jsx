@@ -32,6 +32,12 @@ export default function CoursesPage({ user }) {
 
   useEffect(() => { loadAll(); }, []);
 
+  // Students land on My Classes, not the catalog: an enrolled-but-unlisted
+  // class never appears in Browse, so a student opening this page could
+  // conclude their class doesn't exist. Applied once, on first load, so a
+  // deliberate tab choice is never overridden.
+  const viewInitialized = React.useRef(false);
+
   const loadAll = async () => {
     try {
       const [coursesData, enrollData] = await Promise.all([
@@ -40,6 +46,10 @@ export default function CoursesPage({ user }) {
       ]);
       setCourses(coursesData);
       setMyEnrollments(enrollData);
+      if (!viewInitialized.current) {
+        viewInitialized.current = true;
+        if (!isFaculty && enrollData.length > 0) setActiveView('learning');
+      }
     } catch (e) { console.error(e); }
   };
 
@@ -153,7 +163,7 @@ export default function CoursesPage({ user }) {
             }`}
             data-testid="tab-my-learning"
           >
-            <GraduationCap size={14} /> My Learning ({myEnrollments.length})
+            <GraduationCap size={14} /> My Classes ({myEnrollments.length})
           </button>
         </div>
         {activeView === 'browse' && (
@@ -337,9 +347,20 @@ export default function CoursesPage({ user }) {
 
                     {/* Course info */}
                     <div className="flex-1 min-w-0">
-                      <h3 className="text-sm font-medium text-[#F8FAFC]" style={{ fontFamily: 'Cormorant Garamond, serif' }}>
-                        {enrollment.course_title}
-                      </h3>
+                      <div className="flex items-center gap-2">
+                        <h3 className="text-sm font-medium text-[#F8FAFC]" style={{ fontFamily: 'Cormorant Garamond, serif' }}>
+                          {enrollment.course_title}
+                        </h3>
+                        {enrollment.course_visibility === 'unlisted' && (
+                          <span
+                            className="rounded-full bg-[#334155] px-2 py-0.5 text-[10px] font-medium text-[#CBD5E1]"
+                            title="This class doesn't appear in the public course list — it's reachable from here or by direct link."
+                            data-testid={`link-only-${enrollment.course_id}`}
+                          >
+                            Link-only
+                          </span>
+                        )}
+                      </div>
                       <p className="text-xs text-[#94A3B8] truncate">{enrollment.course_description}</p>
                       <div className="flex items-center gap-3 mt-1 text-[10px] text-[#94A3B8]">
                         <span>by {enrollment.instructor_name}</span>

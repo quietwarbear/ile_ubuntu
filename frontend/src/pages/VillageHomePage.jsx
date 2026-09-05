@@ -193,12 +193,25 @@ export default function VillageHomePage({ user }) {
 export function VillageHomeGate({ user }) {
   const [data, setData] = useState(null);
   const [failed, setFailed] = useState(false);
+  const [enrollCount, setEnrollCount] = useState(null);
+  const isFaculty = ['faculty', 'elder', 'admin'].includes(user?.role);
   useEffect(() => {
     apiGet('/api/villages').then(setData).catch(() => setFailed(true));
-  }, []);
+    // Students land on My Classes: an enrolled-but-unlisted class is invisible
+    // everywhere else in the portal, so home must be the place that lists it.
+    if (isFaculty) {
+      setEnrollCount(0);
+    } else {
+      apiGet('/api/enrollments/my-courses')
+        .then((e) => setEnrollCount(Array.isArray(e) ? e.length : 0))
+        .catch(() => setEnrollCount(0));
+    }
+  }, []); // eslint-disable-line -- mount-only gate check
 
   if (failed) return <Navigate to="/dashboard" replace />;
-  if (!data) return <p className="text-sm text-[#94A3B8]">Loading…</p>;
+  if (!data || enrollCount === null) return <p className="text-sm text-[#94A3B8]">Loading…</p>;
+
+  if (!isFaculty && enrollCount > 0) return <Navigate to="/courses" replace />;
 
   const mine = data.mine || [];
   if (mine.length === 0) return <Navigate to="/dashboard" replace />;

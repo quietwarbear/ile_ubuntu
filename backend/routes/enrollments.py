@@ -24,5 +24,8 @@ def my_enrolled_courses(current_user: dict = Depends(get_current_user)):
                 "total_lessons": len(course.get("lessons", [])),
                 "course_status": course.get("status", ""),
                 "course_tags": course.get("tags", []),
+                # My Classes needs this: an unlisted class never appears in
+                # the catalog, so the UI badges it as reachable-by-link-only.
+                "course_visibility": course.get("visibility", "listed"),
             })
     return result
