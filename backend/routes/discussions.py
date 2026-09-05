@@ -19,6 +19,7 @@ from models.user import has_permission, UserRole
 from events import emit
 # Acyclic: courses.py imports database/middleware/models/villages, never this.
 from routes.courses import _is_course_staff
+import teacher_alerts
 
 router = APIRouter(
     prefix="/api/courses/{course_id}/discussion",
@@ -92,7 +93,7 @@ def list_topics(course_id: str, current_user: dict = Depends(get_current_user)):
 async def create_topic(course_id: str, request: Request, current_user: dict = Depends(get_current_user)):
     """Open a topic. The opening message is stored as the thread's first post
     so a topic and its replies read uniformly."""
-    _, is_staff = _verify_access(course_id, current_user)
+    course, is_staff = _verify_access(course_id, current_user)
     data = await request.json()
     title = _require_text(data.get("title"), "Topic title", TITLE_MAX)
     content = _require_text(data.get("content"), "Opening message", POST_MAX)
@@ -131,6 +132,10 @@ async def create_topic(course_id: str, request: Request, current_user: dict = De
     emit(
         "course.topic_opened", current_user, "course", course_id,
         meta={"topic_id": topic["id"], "title": title},
+    )
+    teacher_alerts.notify_discussion(
+        course, topic, topic["author_name"], content,
+        is_new_topic=True, exclude_id=current_user["id"],
     )
     return {"topic": topic, "post": opening}
 
@@ -192,7 +197,7 @@ async def set_topic_locked(course_id: str, topic_id: str, request: Request, curr
 async def create_post(course_id: str, topic_id: str, request: Request, current_user: dict = Depends(get_current_user)):
     """Reply in a thread. A locked topic still accepts a teacher's post, so a
     thread can be closed with a final word rather than silence."""
-    _, is_staff = _verify_access(course_id, current_user)
+    course, is_staff = _verify_access(course_id, current_user)
     topic = _get_topic(course_id, topic_id)
     if topic.get("locked") and not is_staff:
         raise HTTPException(status_code=403, detail="This topic is closed to new replies")
@@ -220,6 +225,10 @@ async def create_post(course_id: str, topic_id: str, request: Request, current_u
     emit(
         "course.topic_replied", current_user, "course", course_id,
         meta={"topic_id": topic_id, "post_id": post["id"]},
+    )
+    teacher_alerts.notify_discussion(
+        course, topic, post["author_name"], content,
+        is_new_topic=False, exclude_id=current_user["id"],
     )
     return post
 
