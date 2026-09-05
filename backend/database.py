@@ -70,6 +70,10 @@ personal_goals_col = db.personal_goals
 course_topics_col = db.course_topics
 course_topic_posts_col = db.course_topic_posts
 
+# Student work handed in against a lesson. Kept apart from lesson attachments:
+# a lesson's files are course material, a submission is one student's work.
+submissions_col = db.submissions
+
 
 def ensure_indexes():
     """Create the indexes the hot query paths rely on. Idempotent; called at startup.
@@ -114,6 +118,9 @@ def ensure_indexes():
         # always read as one thread in creation order.
         (course_topics_col, [("course_id", 1), ("last_activity_at", -1)], {}),
         (course_topic_posts_col, [("topic_id", 1), ("created_at", 1)], {}),
+        # A teacher reads a lesson's whole class; a student reads only their own.
+        (submissions_col, [("course_id", 1), ("lesson_id", 1)], {}),
+        (submissions_col, [("lesson_id", 1), ("student_id", 1)], {}),
         (quizzes_col, [("id", 1)], {}),
         (quizzes_col, [("course_id", 1)], {}),
         (quiz_attempts_col, [("quiz_id", 1), ("user_id", 1)], {}),
