@@ -12,6 +12,7 @@ import UpgradePrompt from '../components/UpgradePrompt';
 import { CourseHeader } from '../components/course/CourseHeader';
 import { LessonCard } from '../components/course/LessonCard';
 import { EnrolledStudents } from '../components/course/EnrolledStudents';
+import { CourseStaffPanel } from '../components/course/CourseStaffPanel';
 import { GoogleImportDialog } from '../components/course/GoogleImportDialog';
 
 export default function CourseDetailPage({ user }) {
@@ -31,7 +32,7 @@ export default function CourseDetailPage({ user }) {
 
   const [expandedLesson, setExpandedLesson] = useState(null);
   const [showAddLesson, setShowAddLesson] = useState(false);
-  const [lessonForm, setLessonForm] = useState({ title: '', description: '', content: '', module_id: '', banner_url: '' });
+  const [lessonForm, setLessonForm] = useState({ title: '', description: '', content: '', module_id: '', banner_url: '', hidden: false, available_at: '' });
   const [newModule, setNewModule] = useState('');
   const [uploading, setUploading] = useState(false);
   const [uploadingFor, setUploadingFor] = useState(null);
@@ -44,7 +45,12 @@ export default function CourseDetailPage({ user }) {
   const [importing, setImporting] = useState(false);
   const [upgradePrompt, setUpgradePrompt] = useState(null);
 
-  const isInstructor = ['faculty', 'elder', 'admin'].includes(user?.role) && course?.instructor_id === user?.id;
+  // Course staff = the owning instructor plus assigned co-teachers. Gating on
+  // instructor_id alone locked co-teachers out of every teaching control.
+  const isInstructor = ['faculty', 'elder', 'admin'].includes(user?.role)
+    && (course?.instructor_id === user?.id || (course?.co_instructor_ids || []).includes(user?.id));
+  // Only the owner staffs the course — a co-teacher cannot appoint others.
+  const isOwner = !!course && course.instructor_id === user?.id;
   const completedLessons = progress?.completed_lessons || [];
 
   const checkGoogleStatus = useCallback(async () => {
@@ -147,8 +153,13 @@ export default function CourseDetailPage({ user }) {
         content: lessonForm.content, order: lessons.length + 1,
         module_id: lessonForm.module_id || null,
         banner_url: lessonForm.banner_url,
+        hidden: lessonForm.hidden,
+        // datetime-local has no timezone; send the browser's actual instant.
+        available_at: lessonForm.available_at
+          ? new Date(lessonForm.available_at).toISOString()
+          : null,
       });
-      setLessonForm({ title: '', description: '', content: '', module_id: '', banner_url: '' });
+      setLessonForm({ title: '', description: '', content: '', module_id: '', banner_url: '', hidden: false, available_at: '' });
       setShowAddLesson(false);
       loadCourseData();
     } catch (e) { alert(e.message); }
@@ -369,6 +380,29 @@ export default function CourseDetailPage({ user }) {
                   onChange={e => setLessonForm({ ...lessonForm, banner_url: e.target.value })}
                   className="flex-1 bg-[#050814] border-[#1E293B] text-[#F8FAFC] text-xs" data-testid="new-lesson-banner" />
               </div>
+              <div className="flex flex-col sm:flex-row sm:items-center gap-3 pt-1">
+                <label className="flex items-center gap-2 text-xs text-[#94A3B8] cursor-pointer">
+                  <input type="checkbox" checked={lessonForm.hidden}
+                    onChange={e => setLessonForm({ ...lessonForm, hidden: e.target.checked })}
+                    className="accent-[#D4AF37]" data-testid="new-lesson-hidden" />
+                  Hide from students
+                </label>
+                <label className="flex flex-1 items-center gap-2 text-xs text-[#94A3B8]">
+                  <span className="whitespace-nowrap">Release on</span>
+                  <Input type="datetime-local" value={lessonForm.available_at}
+                    disabled={lessonForm.hidden}
+                    onChange={e => setLessonForm({ ...lessonForm, available_at: e.target.value })}
+                    className="flex-1 bg-[#050814] border-[#1E293B] text-[#F8FAFC] text-xs disabled:opacity-40"
+                    data-testid="new-lesson-available-at" />
+                </label>
+              </div>
+              <p className="text-[11px] text-[#64748B]">
+                {lessonForm.hidden
+                  ? 'Hidden lessons stay invisible to students until you unhide them.'
+                  : lessonForm.available_at
+                    ? 'Students see the title and release time now, and the full lesson opens automatically.'
+                    : 'Leave both blank to publish immediately.'}
+              </p>
               <div className="flex gap-2">
                 <Button onClick={handleAddLesson} size="sm" className="bg-[#D4AF37] text-[#050814] hover:bg-[#F3E5AB] text-xs" data-testid="submit-lesson-btn">Create Lesson</Button>
                 <Button onClick={() => setShowAddLesson(false)} size="sm" variant="ghost" className="text-[#94A3B8] text-xs">Cancel</Button>
@@ -421,6 +455,8 @@ export default function CourseDetailPage({ user }) {
           </div>
         )}
       </div>
+
+      {isOwner && <CourseStaffPanel courseId={courseId} isOwner={isOwner} />}
 
       {isInstructor && <EnrolledStudents enrollments={enrollments} />}
 
