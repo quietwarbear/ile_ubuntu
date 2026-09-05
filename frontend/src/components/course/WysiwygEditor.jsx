@@ -1,7 +1,7 @@
 import React, { useRef, useEffect, useCallback, useState } from 'react';
 import {
   TextHOne, TextB, TextItalic, ListBullets, Quotes, LinkSimple,
-  Image as ImageIcon, VideoCamera, FilePdf,
+  Image as ImageIcon, VideoCamera, FilePdf, Palette,
 } from '@phosphor-icons/react';
 import { mdToHtml, domToMd } from './wysiwygMarkdown';
 import { apiUpload, BACKEND_URL } from '../../lib/api';
@@ -13,11 +13,25 @@ import { apiUpload, BACKEND_URL } from '../../lib/api';
 // video/PDF/Slides URLs show as labelled embed blocks (the lesson viewer turns
 // them into real players on save). No rich-text engine, no new packages.
 
+// A short, readable set on the dark editor surface. Anything else goes through
+// the native picker beside them.
+const TEXT_COLORS = [
+  { hex: '#D4AF37', name: 'Gold' },
+  { hex: '#EF4444', name: 'Red' },
+  { hex: '#F59E0B', name: 'Amber' },
+  { hex: '#10B981', name: 'Green' },
+  { hex: '#3B82F6', name: 'Blue' },
+  { hex: '#A78BFA', name: 'Purple' },
+  { hex: '#F8FAFC', name: 'White' },
+];
+
 export default function WysiwygEditor({ value, onChange, placeholder, minHeight = 200, testId }) {
   const ref = useRef(null);
   const lastEmitted = useRef(null);
   const pdfInputRef = useRef(null);
+  const savedRange = useRef(null);
   const [uploadingPdf, setUploadingPdf] = useState(false);
+  const [showColors, setShowColors] = useState(false);
 
   // Initialise / re-initialise only when the incoming value isn't what we last
   // emitted (e.g. switching lessons) — never on our own keystrokes (caret jump).
@@ -40,6 +54,64 @@ export default function WysiwygEditor({ value, onChange, placeholder, minHeight 
     ref.current?.focus();
     document.execCommand(command, false, arg);
     emit();
+  };
+
+  // Opening a colour picker blurs the editor and can collapse the selection,
+  // so the range is remembered on mousedown and put back before the command
+  // runs. Without this the colour lands on nothing.
+  const rememberSelection = () => {
+    const sel = window.getSelection();
+    if (sel && sel.rangeCount && ref.current?.contains(sel.anchorNode)) {
+      savedRange.current = sel.getRangeAt(0).cloneRange();
+    }
+  };
+
+  const restoreSelection = () => {
+    const range = savedRange.current;
+    if (!range || !ref.current) return;
+    ref.current.focus();
+    const sel = window.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(range);
+  };
+
+  const applyColor = (hex) => {
+    restoreSelection();
+    // styleWithCSS asks the browser for <span style="color:…"> rather than the
+    // legacy <font> tag. domToMd handles both, since browsers still disagree.
+    document.execCommand('styleWithCSS', false, true);
+    document.execCommand('foreColor', false, hex);
+    emit();
+    setShowColors(false);
+  };
+
+  const clearColor = () => {
+    const root = ref.current;
+    if (!root) return;
+    restoreSelection();
+    const sel = window.getSelection();
+    const range = sel && sel.rangeCount ? sel.getRangeAt(0) : null;
+    const coloured = Array.from(root.querySelectorAll('span[style*="color"], font[color]'));
+
+    let targets = coloured;
+    if (range && range.collapsed) {
+      // Caret sitting inside a coloured run: clear just that run, rather than
+      // every colour in the lesson.
+      const start = range.startContainer;
+      const el = start.nodeType === 3 ? start.parentNode : start;
+      const owner = el && el.closest ? el.closest('span[style*="color"], font[color]') : null;
+      targets = owner && root.contains(owner) ? [owner] : [];
+    } else if (range) {
+      targets = coloured.filter((n) => range.intersectsNode(n));
+    }
+
+    targets.forEach((n) => {
+      const parent = n.parentNode;
+      while (n.firstChild) parent.insertBefore(n.firstChild, n);
+      parent.removeChild(n);
+    });
+    emit();
+    setShowColors(false);
   };
 
   const insertHtml = (html) => {
@@ -116,6 +188,39 @@ export default function WysiwygEditor({ value, onChange, placeholder, minHeight 
         <Btn icon={VideoCamera} label="Video (YouTube/Vimeo)" onClick={() => insertUrl('video')} />
         <Btn icon={FilePdf} label={uploadingPdf ? 'Uploading PDF…' : 'Upload PDF from your device'}
           onClick={() => !uploadingPdf && pdfInputRef.current?.click()} />
+        <span className="w-px h-4 bg-[#1E293B] mx-1" />
+        <div className="relative">
+          <button type="button" title="Text colour"
+            onMouseDown={(e) => { e.preventDefault(); rememberSelection(); setShowColors((v) => !v); }}
+            className="p-1.5 rounded text-[#94A3B8] hover:text-[#D4AF37] hover:bg-[#0F172A] transition-colors"
+            data-testid={testId ? `${testId}-color` : undefined}>
+            <Palette size={15} weight="bold" />
+          </button>
+          {showColors && (
+            <div className="absolute left-0 top-full z-20 mt-1 flex items-center gap-1 rounded-md border border-[#1E293B] bg-[#0F172A] p-2 shadow-lg">
+              {TEXT_COLORS.map(({ hex, name }) => (
+                <button key={hex} type="button" title={name}
+                  onMouseDown={(e) => { e.preventDefault(); applyColor(hex); }}
+                  className="h-5 w-5 rounded-full border border-[#334155]"
+                  style={{ backgroundColor: hex }}
+                  data-testid={`color-${hex.replace('#', '')}`} />
+              ))}
+              <label title="Any colour"
+                className="flex h-5 w-5 cursor-pointer items-center justify-center rounded-full border border-dashed border-[#475569] text-[9px] text-[#94A3B8]">
+                +
+                <input type="color" className="sr-only"
+                  onMouseDown={rememberSelection}
+                  onChange={(e) => applyColor(e.target.value)} />
+              </label>
+              <button type="button" title="Remove colour"
+                onMouseDown={(e) => { e.preventDefault(); clearColor(); }}
+                className="ml-1 text-[10px] text-[#94A3B8] hover:text-[#D4AF37]"
+                data-testid="color-clear">
+                Clear
+              </button>
+            </div>
+          )}
+        </div>
         <span className="ml-auto text-[9px] text-[#475569] pr-1.5 hidden sm:block">
           {uploadingPdf ? 'Uploading PDF…' : 'Live preview · saved as markdown'}
         </span>
