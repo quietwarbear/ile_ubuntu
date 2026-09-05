@@ -1,6 +1,59 @@
 import React from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import { COLOR_RE, normalizeColor } from './course/wysiwygMarkdown';
+
+// Markdown has no colour, so the editor stores it as {color:#hex}…{/color}.
+// This viewer renders through react-markdown, which would print that marker
+// literally. Rather than add rehype-raw and open the door to arbitrary HTML in
+// lesson content, the markers are turned into spans here, after parsing —
+// only ever from a value normalizeColor accepts.
+function colorize(children) {
+  return React.Children.map(children, (child) => {
+    if (typeof child !== 'string') return child;
+    // A fresh regex per call: COLOR_RE carries the /g flag, and sharing its
+    // lastIndex across calls makes matches disappear at random.
+    const re = new RegExp(COLOR_RE.source, 'g');
+    if (!re.test(child)) return child;
+
+    re.lastIndex = 0;
+    const parts = [];
+    let cursor = 0;
+    let match;
+    while ((match = re.exec(child)) !== null) {
+      if (match.index > cursor) parts.push(child.slice(cursor, match.index));
+      const hex = normalizeColor(match[1]);
+      parts.push(
+        hex
+          ? <span key={`${match.index}-${hex}`} style={{ color: hex }}>{match[2]}</span>
+          : match[0]
+      );
+      cursor = match.index + match[0].length;
+    }
+    if (cursor < child.length) parts.push(child.slice(cursor));
+    return parts;
+  });
+}
+
+// Applied to every element that can hold running text.
+const withColor = (Tag) => {
+  const Rendered = ({ children, node, ...rest }) => <Tag {...rest}>{colorize(children)}</Tag>;
+  return Rendered;
+};
+
+const MARKDOWN_COMPONENTS = {
+  p: withColor('p'),
+  li: withColor('li'),
+  h1: withColor('h1'),
+  h2: withColor('h2'),
+  h3: withColor('h3'),
+  h4: withColor('h4'),
+  strong: withColor('strong'),
+  em: withColor('em'),
+  blockquote: withColor('blockquote'),
+  td: withColor('td'),
+  th: withColor('th'),
+};
 
 function extractEmbeds(content) {
   if (!content) return { text: content, embeds: [] };
@@ -85,7 +138,7 @@ export default function LessonContentViewer({ content, banner }) {
         prose-th:bg-[#050814] prose-th:text-[#D4AF37] prose-th:text-xs prose-th:px-3 prose-th:py-2 prose-th:border prose-th:border-[#1E293B]
         prose-td:text-[#94A3B8] prose-td:text-xs prose-td:px-3 prose-td:py-2 prose-td:border prose-td:border-[#1E293B]
       ">
-        <ReactMarkdown remarkPlugins={[remarkGfm]}>{text}</ReactMarkdown>
+        <ReactMarkdown remarkPlugins={[remarkGfm]} components={MARKDOWN_COMPONENTS}>{text}</ReactMarkdown>
       </div>
 
       {/* Embedded Media */}
