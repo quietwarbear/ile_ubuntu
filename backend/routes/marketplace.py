@@ -287,8 +287,8 @@ def fulfill_course_purchase(session_data: dict) -> bool:
         {"$set": {"payment_status": "paid", "paid_at": datetime.now(timezone.utc).isoformat()}},
     )
 
+    buyer = users_col.find_one({"id": txn["user_id"]}) or {}
     if not enrollments_col.find_one({"user_id": txn["user_id"], "course_id": txn["course_id"]}):
-        buyer = users_col.find_one({"id": txn["user_id"]}) or {}
         enrollments_col.insert_one({
             "id": str(uuid.uuid4()),
             "user_id": txn["user_id"],
@@ -306,6 +306,23 @@ def fulfill_course_purchase(session_data: dict) -> bool:
     emit("course.purchased", {"id": txn["user_id"]}, "course", txn["course_id"],
          meta={"amount": txn["amount"], "teacher_id": txn["teacher_id"]})
     emit("course.enrolled", {"id": txn["user_id"]}, "course", txn["course_id"], meta={"via": "purchase"})
+
+    # Welcome/access email — the paid student's key to the class. Unlisted
+    # classes are reachable only by direct link, so this must always send.
+    # Best-effort: fulfillment (payment + enrollment) succeeds regardless.
+    if buyer.get("email"):
+        try:
+            from routes.email_notifications import send_course_access_email, send_in_background
+
+            course = courses_col.find_one({"id": txn["course_id"]}) or {}
+            send_in_background(send_course_access_email(
+                buyer["email"],
+                buyer.get("name", ""),
+                course.get("title", "your class"),
+                txn["course_id"],
+            ))
+        except Exception:
+            pass
     return True
 
 

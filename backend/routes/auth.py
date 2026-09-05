@@ -567,6 +567,45 @@ async def forgot_password(request: Request):
     return generic
 
 
+@router.post("/admin/set-password")
+async def admin_set_password(request: Request, current_user: dict = Depends(get_current_user)):
+    """Instructor unblock tool: set a temporary password for a STUDENT who is
+    locked out (e.g. reset email undeliverable), so the teaching team can get
+    them back into class in under a minute. Instructor roles only; instructor
+    and admin accounts can never be targeted, so a compromised teaching
+    account can't take over the platform through this door."""
+    if current_user.get("role") not in ("faculty", "elder", "admin"):
+        raise HTTPException(status_code=403, detail="Instructor access required")
+    rate_limit(request, "admin_set_password", max_requests=20, window_seconds=900)
+
+    data = await request.json()
+    email = (data.get("email") or "").strip().lower()
+    password = data.get("password") or ""
+    if not email:
+        raise HTTPException(status_code=400, detail="Student email required")
+    if len(password) < 6:
+        raise HTTPException(status_code=400, detail="Password must be at least 6 characters")
+
+    target = users_col.find_one({"email": email})
+    if not target:
+        raise HTTPException(status_code=404, detail="No account found for that email")
+    if target.get("role") in ("faculty", "elder", "admin"):
+        raise HTTPException(
+            status_code=403,
+            detail="Instructor and admin accounts can't be reset here — use the email reset flow.",
+        )
+
+    users_col.update_one(
+        {"id": target["id"]},
+        {"$set": {"password_hash": pwd_context.hash(password), "auth_provider": "password"}},
+    )
+    # Sign out any existing sessions, same as the self-serve reset flow.
+    sessions_col.delete_many({"user_id": target["id"]})
+    password_resets_col.update_many({"user_id": target["id"], "used": False}, {"$set": {"used": True}})
+    emit("user.password_admin_set", {"id": target["id"]}, meta={"by": current_user["id"]})
+    return {"success": True, "message": f"Temporary password set. {target.get('name', 'The student')} can sign in with it now — have them change it in Settings."}
+
+
 @router.post("/reset-password")
 async def reset_password(request: Request):
     """Complete a password reset with a token from the reset email."""

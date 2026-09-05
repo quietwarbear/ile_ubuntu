@@ -14,6 +14,7 @@ router = APIRouter(prefix="/api/notifications/email", tags=["email"])
 
 RESEND_API_KEY = os.environ.get("RESEND_API_KEY")
 SENDER_EMAIL = os.environ.get("SENDER_EMAIL", "onboarding@resend.dev")
+PUBLIC_SITE_URL = os.environ.get("PUBLIC_SITE_URL", "https://www.ile-ubuntu.org").rstrip("/")
 
 if RESEND_API_KEY:
     resend.api_key = RESEND_API_KEY
@@ -92,9 +93,30 @@ async def send_enrollment_email(user_email, user_name, course_title, course_id):
         f"<p style='color:#D4AF37;font-size:16px;font-weight:600;'>{course_title}</p>"
         f"<p>Start your learning journey now.</p>",
         "Go to Course",
-        f"{{origin}}/courses/{course_id}",
+        f"{PUBLIC_SITE_URL}/courses/{course_id}",
     )
     await send_email(user_email, f"Enrolled: {course_title}", html)
+
+
+async def send_course_access_email(user_email, user_name, course_title, course_id):
+    """Welcome/access email after a PAID course purchase. Leads with the
+    direct class link — an unlisted class is reachable only through it, so
+    this email is the student's key to the room."""
+    class_url = f"{PUBLIC_SITE_URL}/courses/{course_id}"
+    html = build_email_html(
+        "Your Class Is Ready",
+        f"<p>Welcome, <strong>{user_name}</strong>! Your payment is confirmed and "
+        f"you're enrolled in:</p>"
+        f"<p style='color:#D4AF37;font-size:16px;font-weight:600;'>{course_title}</p>"
+        f"<p><strong>Your direct class link:</strong><br>"
+        f"<a href='{class_url}' style='color:#D4AF37;'>{class_url}</a></p>"
+        f"<p>Save this email. If your class is unlisted, it will not appear in the "
+        f"public course list — use this link (or My Classes after signing in) to "
+        f"get back to it.</p>",
+        "Open Your Class",
+        class_url,
+    )
+    await send_email(user_email, f"You're in: {course_title}", html)
 
 
 async def send_lesson_complete_email(user_email, user_name, lesson_title, course_title):
