@@ -13,6 +13,7 @@ import { CourseHeader } from '../components/course/CourseHeader';
 import { LessonCard } from '../components/course/LessonCard';
 import { EnrolledStudents } from '../components/course/EnrolledStudents';
 import { CourseStaffPanel } from '../components/course/CourseStaffPanel';
+import { CourseDiscussion } from '../components/course/CourseDiscussion';
 import { GoogleImportDialog } from '../components/course/GoogleImportDialog';
 
 export default function CourseDetailPage({ user }) {
@@ -455,6 +456,10 @@ export default function CourseDetailPage({ user }) {
           </div>
         )}
       </div>
+
+      {(enrollment?.enrolled || isInstructor) && (
+        <CourseDiscussion courseId={courseId} user={user} isStaff={isInstructor} />
+      )}
 
       {isOwner && <CourseStaffPanel courseId={courseId} isOwner={isOwner} />}
 
