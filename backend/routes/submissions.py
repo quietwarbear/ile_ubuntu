@@ -33,6 +33,7 @@ from models.user import has_permission, UserRole
 from events import emit
 # Acyclic: courses.py never imports from here.
 from routes.courses import _is_course_staff, _lesson_is_open
+import teacher_alerts
 
 router = APIRouter(
     prefix="/api/courses/{course_id}/lessons/{lesson_id}/submissions",
@@ -176,7 +177,7 @@ async def submit_work(course_id: str, lesson_id: str, request: Request, current_
     """Hand in work, or replace what was handed in before. One submission per
     student per lesson — resubmitting updates it rather than piling up copies,
     so the teacher always reads the current version."""
-    _verify_access(course_id, lesson_id, current_user)
+    course, lesson, _ = _verify_access(course_id, lesson_id, current_user)
     data = await request.json()
 
     note = (data.get("note") or "").strip()
@@ -224,6 +225,10 @@ async def submit_work(course_id: str, lesson_id: str, request: Request, current_
             meta={"course_id": course_id, "submission_id": submission_id},
         )
 
+    teacher_alerts.notify_submission(
+        course, lesson, current_user.get("name", "A student"),
+        is_update=bool(existing), exclude_id=current_user["id"],
+    )
     return {"submission": _present(submissions_col.find_one({"id": submission_id}))}
 
 

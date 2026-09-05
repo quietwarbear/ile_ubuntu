@@ -42,6 +42,34 @@ export default function SettingsPage({ user }) {
   const isAdmin = ['admin', 'elder'].includes(user?.role);
   const isFaculty = ['faculty', 'elder', 'admin'].includes(user?.role);
 
+  // Teacher alert preferences — where class activity is emailed, and which
+  // kinds. Absent means on, matching the backend default.
+  const [alerts, setAlerts] = useState(null);
+  const [alertEmail, setAlertEmail] = useState('');
+  const [alertSaving, setAlertSaving] = useState(false);
+  const [alertNote, setAlertNote] = useState('');
+
+  useEffect(() => {
+    if (!isFaculty) return;
+    apiGet('/api/notifications/email/preferences')
+      .then((p) => { setAlerts(p); setAlertEmail(p.notification_email || ''); })
+      .catch(() => { /* leave the card hidden rather than shout */ });
+  }, [isFaculty]);
+
+  const saveAlerts = async (patch) => {
+    setAlertSaving(true); setAlertNote('');
+    try {
+      const next = await apiPut('/api/notifications/email/preferences', patch);
+      setAlerts(next);
+      setAlertEmail(next.notification_email || '');
+      setAlertNote('Saved.');
+    } catch (e) {
+      setAlertNote(e.message);
+    } finally {
+      setAlertSaving(false);
+    }
+  };
+
   useEffect(() => {
     checkGoogleStatus();
     checkPushStatus();
@@ -231,6 +259,74 @@ export default function SettingsPage({ user }) {
           )}
         </CardContent>
       </Card>
+
+      {/* Class alerts (Faculty+) */}
+      {isFaculty && alerts && (
+        <Card className="bg-[#0F172A] border-[#1E293B]" data-testid="teacher-alerts-card">
+          <CardHeader>
+            <CardTitle className="text-lg text-[#F8FAFC] flex items-center gap-2" style={{ fontFamily: 'Cormorant Garamond, serif' }}>
+              <Bell size={20} weight="duotone" className="text-[#D4AF37]" />
+              Class Alerts
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <p className="text-xs text-[#94A3B8]">
+              Emails when something happens in a course you teach. You are never
+              emailed about your own posts.
+            </p>
+
+            <div className="space-y-2">
+              <label className="block text-[11px] uppercase tracking-wide text-[#94A3B8]">
+                Send alerts to
+              </label>
+              <div className="flex flex-col gap-2 sm:flex-row">
+                <input
+                  type="email"
+                  value={alertEmail}
+                  onChange={(e) => setAlertEmail(e.target.value)}
+                  placeholder={alerts.account_email || 'you@example.com'}
+                  className="flex-1 rounded-md border border-[#1E293B] bg-[#050814] px-3 py-2 text-sm text-[#F8FAFC] focus:border-[#D4AF37]/50 focus:outline-none"
+                  data-testid="alert-email-input"
+                />
+                <Button
+                  size="sm"
+                  disabled={alertSaving}
+                  onClick={() => saveAlerts({ notification_email: alertEmail })}
+                  className="bg-[#D4AF37] text-[#050814] hover:bg-[#F3E5AB] text-xs"
+                  data-testid="save-alert-email-btn"
+                >
+                  {alertSaving ? 'Saving…' : 'Save'}
+                </Button>
+              </div>
+              <p className="text-[10px] text-[#475569]">
+                Leave blank to use your account address, {alerts.account_email || 'your login email'}.
+              </p>
+            </div>
+
+            {[
+              { key: 'notify_submissions', label: 'When a student hands in work' },
+              { key: 'notify_discussions', label: 'When someone posts in a class discussion' },
+            ].map(({ key, label }) => (
+              <div key={key} className="flex items-center justify-between rounded-md border border-[#1E293B] bg-[#050814] p-3">
+                <span className={`text-sm ${alerts[key] ? 'text-[#F8FAFC]' : 'text-[#94A3B8]'}`}>{label}</span>
+                <Button
+                  size="sm"
+                  disabled={alertSaving}
+                  onClick={() => saveAlerts({ [key]: !alerts[key] })}
+                  className={alerts[key]
+                    ? 'bg-red-500/10 text-red-400 border border-red-500/20 hover:bg-red-500/20 text-xs'
+                    : 'bg-[#D4AF37] text-[#050814] hover:bg-[#F3E5AB] text-xs'}
+                  data-testid={`toggle-${key}`}
+                >
+                  {alerts[key] ? 'Turn off' : 'Turn on'}
+                </Button>
+              </div>
+            ))}
+
+            {alertNote && <p className="text-[11px] text-[#94A3B8]" data-testid="alert-note">{alertNote}</p>}
+          </CardContent>
+        </Card>
+      )}
 
       {/* Google Account Connection (Faculty+) */}
       {isFaculty && (

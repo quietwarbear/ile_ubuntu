@@ -2,7 +2,7 @@ import os
 import asyncio
 import logging
 import resend
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, Request
 from dotenv import load_dotenv
 from database import users_col
 from middleware import get_current_user
@@ -145,3 +145,50 @@ async def test_email(current_user: dict = Depends(get_current_user)):
     if result:
         return {"success": True, "email_id": result.get("id")}
     raise HTTPException(status_code=500, detail="Failed to send test email")
+
+
+# --- Per-teacher alert preferences ---
+
+# Absent means on. A teacher who has never opened this still hears when a
+# student hands work in, which is the behaviour they expect by default.
+_PREF_DEFAULTS = {"notify_discussions": True, "notify_submissions": True}
+
+
+def _preferences(user_doc: dict) -> dict:
+    return {
+        "notification_email": (user_doc.get("notification_email") or "").strip(),
+        "account_email": user_doc.get("email", ""),
+        **{k: user_doc.get(k, default) is not False for k, default in _PREF_DEFAULTS.items()},
+    }
+
+
+@router.get("/preferences")
+def get_email_preferences(current_user: dict = Depends(get_current_user)):
+    """Where this teacher wants alerts sent, and which ones they want."""
+    doc = users_col.find_one({"id": current_user["id"]}, {"_id": 0}) or {}
+    return _preferences(doc)
+
+
+@router.put("/preferences")
+async def set_email_preferences(request: Request, current_user: dict = Depends(get_current_user)):
+    data = await request.json()
+    update = {}
+
+    if "notification_email" in data:
+        # Empty clears it and falls back to the account address. Deliberately a
+        # shape check, not validation theatre — Resend reports real failures.
+        address = (data.get("notification_email") or "").strip()
+        if address and ("@" not in address or address.startswith("@") or address.endswith("@")):
+            raise HTTPException(status_code=400, detail="That does not look like an email address")
+        update["notification_email"] = address
+
+    for field in _PREF_DEFAULTS:
+        if field in data:
+            update[field] = bool(data[field])
+
+    if not update:
+        raise HTTPException(status_code=400, detail="Nothing to update")
+
+    users_col.update_one({"id": current_user["id"]}, {"$set": update})
+    doc = users_col.find_one({"id": current_user["id"]}, {"_id": 0}) or {}
+    return {"success": True, **_preferences(doc)}
