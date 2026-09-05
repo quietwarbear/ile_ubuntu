@@ -23,6 +23,8 @@ import {
   BellSlash,
   Warning,
   Trash,
+  Key,
+  PaperPlaneTilt,
 } from '@phosphor-icons/react';
 import { apiGet, apiPut, apiPost, apiDelete, clearCookie, clearOfflineCache } from '../lib/api';
 
@@ -48,6 +50,49 @@ export default function SettingsPage({ user }) {
   const [alertEmail, setAlertEmail] = useState('');
   const [alertSaving, setAlertSaving] = useState(false);
   const [alertNote, setAlertNote] = useState('');
+
+  // Instructor tools — unblock a locked-out student, verify email sending.
+  const [unblockEmail, setUnblockEmail] = useState('');
+  const [unblockPassword, setUnblockPassword] = useState('');
+  const [unblockBusy, setUnblockBusy] = useState(false);
+  const [unblockNote, setUnblockNote] = useState('');
+  const [testEmailBusy, setTestEmailBusy] = useState(false);
+  const [testEmailNote, setTestEmailNote] = useState('');
+
+  const handleUnblockStudent = async () => {
+    setUnblockNote('');
+    if (!unblockEmail.trim() || unblockPassword.length < 6) {
+      setUnblockNote('Enter the student email and a temporary password of at least 6 characters.');
+      return;
+    }
+    setUnblockBusy(true);
+    try {
+      const res = await apiPost('/api/auth/admin/set-password', {
+        email: unblockEmail.trim(),
+        password: unblockPassword,
+      });
+      setUnblockNote(res.message || 'Temporary password set.');
+      setUnblockEmail('');
+      setUnblockPassword('');
+    } catch (e) {
+      setUnblockNote(e?.message || 'Could not set the password.');
+    } finally {
+      setUnblockBusy(false);
+    }
+  };
+
+  const handleTestEmail = async () => {
+    setTestEmailNote('');
+    setTestEmailBusy(true);
+    try {
+      await apiPost('/api/notifications/email/test', {});
+      setTestEmailNote(`Test email sent to ${user?.email}. Check your inbox (and spam).`);
+    } catch (e) {
+      setTestEmailNote(e?.message || 'Email system is not sending — check the provider configuration.');
+    } finally {
+      setTestEmailBusy(false);
+    }
+  };
 
   useEffect(() => {
     if (!isFaculty) return;
@@ -324,6 +369,77 @@ export default function SettingsPage({ user }) {
             ))}
 
             {alertNote && <p className="text-[11px] text-[#94A3B8]" data-testid="alert-note">{alertNote}</p>}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Instructor Tools (Faculty+) — student unblock + email check */}
+      {isFaculty && (
+        <Card className="bg-[#0F172A] border-[#1E293B]" data-testid="instructor-tools-card">
+          <CardHeader>
+            <CardTitle className="text-lg text-[#F8FAFC] flex items-center gap-2" style={{ fontFamily: 'Cormorant Garamond, serif' }}>
+              <Key size={20} weight="duotone" className="text-[#D4AF37]" />
+              Instructor Tools
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-5">
+            <div className="space-y-2">
+              <label className="block text-[11px] uppercase tracking-wide text-[#94A3B8]">
+                Unblock a locked-out student
+              </label>
+              <p className="text-xs text-[#94A3B8]">
+                Sets a temporary password so a student can sign in right now. Share it
+                with them directly and have them change it in Settings. Works only on
+                student accounts.
+              </p>
+              <div className="flex flex-col gap-2 sm:flex-row">
+                <input
+                  type="email"
+                  value={unblockEmail}
+                  onChange={(e) => setUnblockEmail(e.target.value)}
+                  placeholder="student@example.com"
+                  className="flex-1 rounded-md border border-[#1E293B] bg-[#050814] px-3 py-2 text-sm text-[#F8FAFC] focus:border-[#D4AF37]/50 focus:outline-none"
+                  data-testid="unblock-email-input"
+                />
+                <input
+                  type="text"
+                  value={unblockPassword}
+                  onChange={(e) => setUnblockPassword(e.target.value)}
+                  placeholder="Temporary password"
+                  className="flex-1 rounded-md border border-[#1E293B] bg-[#050814] px-3 py-2 text-sm text-[#F8FAFC] focus:border-[#D4AF37]/50 focus:outline-none"
+                  data-testid="unblock-password-input"
+                />
+                <Button
+                  size="sm"
+                  disabled={unblockBusy}
+                  onClick={handleUnblockStudent}
+                  className="bg-[#D4AF37] text-[#050814] hover:bg-[#F3E5AB] text-xs"
+                  data-testid="unblock-student-btn"
+                >
+                  {unblockBusy ? 'Setting…' : 'Set password'}
+                </Button>
+              </div>
+              {unblockNote && <p className="text-[11px] text-[#94A3B8]" data-testid="unblock-note">{unblockNote}</p>}
+            </div>
+
+            <div className="space-y-2 border-t border-[#1E293B] pt-4">
+              <label className="block text-[11px] uppercase tracking-wide text-[#94A3B8]">
+                Email system check
+              </label>
+              <div className="flex items-center gap-3">
+                <Button
+                  size="sm"
+                  disabled={testEmailBusy}
+                  onClick={handleTestEmail}
+                  className="bg-[#050814] border border-[#1E293B] text-[#F8FAFC] hover:bg-[#1E293B] text-xs"
+                  data-testid="test-email-btn"
+                >
+                  <PaperPlaneTilt size={14} className="mr-1" />
+                  {testEmailBusy ? 'Sending…' : 'Send me a test email'}
+                </Button>
+                {testEmailNote && <p className="text-[11px] text-[#94A3B8]" data-testid="test-email-note">{testEmailNote}</p>}
+              </div>
+            </div>
           </CardContent>
         </Card>
       )}
