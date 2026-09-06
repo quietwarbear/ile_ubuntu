@@ -11,6 +11,9 @@ from models.user import has_permission, UserRole
 router = APIRouter(prefix="/api/google", tags=["google"])
 
 GOOGLE_CLIENT_ID = os.environ.get("GOOGLE_CLIENT_ID", "")
+# Where the browser belongs after OAuth: the FRONTEND. The callback runs on
+# the backend host, so a relative redirect would land users on the API's 404.
+PUBLIC_SITE_URL = os.environ.get("PUBLIC_SITE_URL", "https://www.ile-ubuntu.org").rstrip("/")
 GOOGLE_CLIENT_SECRET = os.environ.get("GOOGLE_CLIENT_SECRET", "")
 
 SCOPES = [
@@ -55,10 +58,10 @@ def google_callback(request: Request, code: str = None, state: str = None, error
     """Handle Google OAuth callback - exchanges code for tokens."""
     if error:
         # Redirect to frontend with error
-        return RedirectResponse(url=f"/?google_error={error}")
+        return RedirectResponse(url=f"{PUBLIC_SITE_URL}/?google_error={error}")
 
     if not code:
-        return RedirectResponse(url="/?google_error=no_code")
+        return RedirectResponse(url=f"{PUBLIC_SITE_URL}/?google_error=no_code")
 
     user_id = state
 
@@ -78,7 +81,7 @@ def google_callback(request: Request, code: str = None, state: str = None, error
 
     if token_response.status_code != 200:
         error_detail = token_response.json().get("error_description", "token_exchange_failed")
-        return RedirectResponse(url=f"/?google_error={error_detail}")
+        return RedirectResponse(url=f"{PUBLIC_SITE_URL}/?google_error={error_detail}")
 
     tokens = token_response.json()
 
@@ -100,7 +103,7 @@ def google_callback(request: Request, code: str = None, state: str = None, error
     )
 
     # Redirect back to frontend settings page with success
-    return RedirectResponse(url="/settings?google_connected=true")
+    return RedirectResponse(url=f"{PUBLIC_SITE_URL}/settings?google_connected=true")
 
 
 @router.get("/status")
