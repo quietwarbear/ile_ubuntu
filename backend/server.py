@@ -7,6 +7,51 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+
+# --- Error monitoring (Sentry) ------------------------------------------------
+# The commons serves minors and students. We never send PII by default, and the
+# before_send scrubber drops request bodies, query strings, cookies and auth
+# headers on auth/OAuth/SSO paths (where tokens and emails live), and filters
+# auth headers everywhere. No-op unless SENTRY_DSN is set.
+def _privacy_safe_sentry_event(event, _hint):
+    request_data = event.get("request") or {}
+    headers = request_data.get("headers") or {}
+    # Auth headers/cookies never belong in telemetry, on any path.
+    request_data["headers"] = {
+        key: ("[Filtered]" if key.lower() in {"authorization", "cookie"} else value)
+        for key, value in headers.items()
+    }
+    request_data["cookies"] = "[Filtered]"
+    url = str(request_data.get("url") or "")
+    sensitive = any(
+        p in url
+        for p in ("/api/auth/", "/api/google/", "/sso", "/oauth", "/reset-password")
+    )
+    if sensitive:
+        request_data["url"] = url.split("?", 1)[0]
+        request_data["query_string"] = ""
+        request_data["data"] = "[Filtered]"
+        event.pop("extra", None)
+        event.pop("breadcrumbs", None)
+        for span in event.get("spans") or []:
+            span.pop("data", None)
+    event["request"] = request_data
+    return event
+
+
+_sentry_dsn = os.environ.get("SENTRY_DSN", "")
+if _sentry_dsn:
+    import sentry_sdk
+
+    sentry_sdk.init(
+        dsn=_sentry_dsn,
+        traces_sample_rate=float(os.environ.get("SENTRY_TRACES_SAMPLE_RATE", "0.2")),
+        environment=os.environ.get("SENTRY_ENVIRONMENT", "production"),
+        send_default_pii=False,
+        include_local_variables=False,
+        before_send=_privacy_safe_sentry_event,
+    )
+
 # API docs are disabled by default in production. Set ENABLE_API_DOCS=true to expose
 # /docs and /openapi.json (e.g. in local development).
 _DOCS_ENABLED = os.environ.get("ENABLE_API_DOCS", "").strip().lower() in ("1", "true", "yes")
