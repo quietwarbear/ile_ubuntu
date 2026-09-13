@@ -3,7 +3,9 @@ import ReactDOM from "react-dom/client";
 import "./index.css";
 import App from "./App";
 import { initAnalytics } from "./lib/analytics";
+import { initSentry } from "./lib/sentry";
 
+initSentry();
 initAnalytics();
 
 const rootEl = document.getElementById("root");
