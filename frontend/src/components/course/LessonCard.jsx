@@ -45,13 +45,24 @@ export function LessonCard({
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
-  const [editForm, setEditForm] = useState({ title: '', description: '', content: '' });
+  const [editForm, setEditForm] = useState({ title: '', description: '', content: '', available_at: '', hidden: false });
+
+  // ISO instant → the local "YYYY-MM-DDTHH:mm" a datetime-local input wants.
+  const toLocalInput = (iso) => {
+    if (!iso) return '';
+    const d = new Date(iso);
+    if (isNaN(d)) return '';
+    const pad = (n) => String(n).padStart(2, '0');
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  };
 
   const startEdit = () => {
     setEditForm({
       title: lesson.title || '',
       description: lesson.description || '',
       content: lesson.content || '',
+      available_at: toLocalInput(lesson.available_at),
+      hidden: Boolean(lesson.hidden),
     });
     setEditing(true);
   };
@@ -64,6 +75,12 @@ export function LessonCard({
         title: editForm.title.trim(),
         description: editForm.description,
         content: editForm.content,
+        hidden: editForm.hidden,
+        // datetime-local has no timezone; send the browser's actual instant.
+        // Empty clears the schedule (opens immediately unless hidden).
+        available_at: editForm.available_at
+          ? new Date(editForm.available_at).toISOString()
+          : null,
       });
       setEditing(false);
       onReloadCourse?.();
@@ -202,6 +219,31 @@ export function LessonCard({
                     className="mt-1 bg-[#0F172A] border-[#1E293B] text-[#F8FAFC] text-sm"
                     data-testid={`edit-lesson-desc-${lesson.id}`}
                   />
+                </div>
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
+                  <div className="flex-1">
+                    <span className="text-[10px] tracking-[0.15em] uppercase text-[#D4AF37]">Opens at (optional)</span>
+                    <Input
+                      type="datetime-local"
+                      value={editForm.available_at}
+                      onChange={e => setEditForm({ ...editForm, available_at: e.target.value })}
+                      className="mt-1 bg-[#0F172A] border-[#1E293B] text-[#F8FAFC] text-sm"
+                      data-testid={`edit-lesson-available-${lesson.id}`}
+                    />
+                    <p className="mt-1 text-[10px] text-[#475569]">
+                      Students see the lesson as locked until this time. Leave blank to open it immediately.
+                    </p>
+                  </div>
+                  <label className="flex items-center gap-2 pb-5 text-xs text-[#94A3B8] cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={editForm.hidden}
+                      onChange={e => setEditForm({ ...editForm, hidden: e.target.checked })}
+                      className="accent-[#D4AF37]"
+                      data-testid={`edit-lesson-hidden-${lesson.id}`}
+                    />
+                    Hidden from students
+                  </label>
                 </div>
                 <div>
                   <span className="text-[10px] tracking-[0.15em] uppercase text-[#D4AF37]">Lesson text</span>
