@@ -20,6 +20,13 @@ export default function GuideWidget({ user }) {
     apiGet('/api/guide/status').then(d => setEnabled(!!d.enabled)).catch(() => {});
   }, []);
 
+  // The sidebar's Help entry opens the guide from anywhere in the app.
+  useEffect(() => {
+    const openGuide = () => setOpen(true);
+    window.addEventListener('open-village-guide', openGuide);
+    return () => window.removeEventListener('open-village-guide', openGuide);
+  }, []);
+
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [thread, open]);
@@ -52,11 +59,13 @@ export default function GuideWidget({ user }) {
       {!open && (
         <button
           onClick={() => setOpen(true)}
-          className="fixed bottom-5 right-5 z-40 w-12 h-12 rounded-full bg-[#D4AF37] text-[#050814] shadow-lg shadow-black/40 flex items-center justify-center hover:bg-[#F3E5AB] transition-colors"
+          className="fixed bottom-5 right-5 z-40 h-12 pl-4 pr-5 rounded-full bg-[#D4AF37] text-[#050814] shadow-lg shadow-black/40 flex items-center justify-center gap-2 hover:bg-[#F3E5AB] transition-colors"
           title="Ask the Village Guide"
           data-testid="guide-launcher"
         >
           <Compass size={24} weight="duotone" />
+          {/* An unlabeled compass reads as decoration; say what it is. */}
+          <span className="text-sm font-semibold">Guide</span>
         </button>
       )}
 

@@ -25,6 +25,7 @@ import {
   HandHeart,
   TreeEvergreen,
   Backpack,
+  Compass,
 } from '@phosphor-icons/react';
 import { clearCookie, clearOfflineCache, apiPut, apiGet } from '../../lib/api';
 import { useI18n } from '../../i18n';
@@ -91,6 +92,7 @@ const FACULTY_ROLES = ['admin', 'elder', 'faculty'];
 export default function Sidebar({ user, onLogout }) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [myVillages, setMyVillages] = useState([]);
+  const [guideEnabled, setGuideEnabled] = useState(false);
   const navigate = useNavigate();
   const { t, lang, setLang, LANG_NAMES } = useI18n();
 
@@ -99,6 +101,17 @@ export default function Sidebar({ user, onLogout }) {
   useEffect(() => {
     apiGet('/api/villages').then(d => setMyVillages(d.mine || [])).catch(() => {});
   }, []);
+
+  // Show the Help entry only when the Village Guide is actually available
+  // (same env-gate as the floating widget: no ANTHROPIC_API_KEY, no guide).
+  useEffect(() => {
+    apiGet('/api/guide/status').then(d => setGuideEnabled(!!d.enabled)).catch(() => {});
+  }, []);
+
+  const openGuide = () => {
+    setMobileOpen(false);
+    window.dispatchEvent(new Event('open-village-guide'));
+  };
 
   const handleLogout = () => {
     clearCookie('session_id');
@@ -191,6 +204,21 @@ export default function Sidebar({ user, onLogout }) {
             </div>
           </div>
         ))}
+        {guideEnabled && (
+          <div className="mb-2">
+            <p className="px-4 pt-3 pb-1 text-[9px] tracking-[0.25em] uppercase text-[#475569]">
+              {t('nav_help')}
+            </p>
+            <button
+              onClick={openGuide}
+              className="w-full flex items-center gap-3 px-4 py-3 text-sm font-medium transition-all duration-200 border-l-2 border-transparent text-[#94A3B8] hover:text-[#F8FAFC] hover:bg-[#0F172A]"
+              data-testid="nav-village-guide"
+            >
+              <Compass size={20} weight="duotone" />
+              {t('village_guide')}
+            </button>
+          </div>
+        )}
       </nav>
 
       {/* Language Selector */}
