@@ -330,6 +330,39 @@ async def update_lesson(course_id: str, lesson_id: str, request: Request, curren
     return updated
 
 
+@router.put("/{course_id}/lessons-reorder")
+async def reorder_lessons(course_id: str, request: Request, current_user: dict = Depends(get_current_user)):
+    """Persist a new lesson order in one write per lesson.
+
+    Takes the FULL ordered list of the course's lesson ids and rewrites each
+    lesson's `order` to its list index. Requiring the complete set (no more,
+    no less) makes the operation idempotent and immune to a stale client:
+    a list that doesn't match the course's current lessons is rejected
+    instead of silently scrambling the curriculum.
+    """
+    _require_course_teacher(course_id, current_user)
+
+    data = await request.json()
+    lesson_ids = data.get("lesson_ids")
+    if not isinstance(lesson_ids, list) or not all(isinstance(i, str) for i in lesson_ids):
+        raise HTTPException(status_code=400, detail="lesson_ids must be a list of lesson ids")
+
+    current_ids = {l["id"] for l in lessons_col.find({"course_id": course_id}, {"id": 1})}
+    if set(lesson_ids) != current_ids or len(lesson_ids) != len(current_ids):
+        raise HTTPException(
+            status_code=409,
+            detail="lesson_ids must contain every lesson of this course exactly once — reload and try again",
+        )
+
+    now = datetime.now(timezone.utc)
+    for index, lid in enumerate(lesson_ids):
+        lessons_col.update_one(
+            {"id": lid, "course_id": course_id},
+            {"$set": {"order": index, "updated_at": now}},
+        )
+    return {"success": True, "count": len(lesson_ids)}
+
+
 @router.delete("/{course_id}/lessons/{lesson_id}")
 def delete_lesson(course_id: str, lesson_id: str, current_user: dict = Depends(get_current_user)):
     course = courses_col.find_one({"id": course_id})

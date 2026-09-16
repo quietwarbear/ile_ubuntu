@@ -5,9 +5,9 @@ import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import WysiwygEditor from '../components/course/WysiwygEditor';
 import {
-  ArrowLeft, BookOpenText, Plus,
+  ArrowLeft, BookOpenText, Plus, DotsSixVertical,
 } from '@phosphor-icons/react';
-import { apiGet, apiPost, apiUpload, apiDelete, parseTierError } from '../lib/api';
+import { apiGet, apiPost, apiUpload, apiDelete, parseTierError, apiPut } from '../lib/api';
 import UpgradePrompt from '../components/UpgradePrompt';
 import { CourseHeader } from '../components/course/CourseHeader';
 import { LessonCard } from '../components/course/LessonCard';
@@ -185,6 +185,29 @@ export default function CourseDetailPage({ user }) {
     ...modules.map(m => ({ module: m, items: lessonsByModule(m.id) })),
     ...(lessonsByModule(null).length ? [{ module: null, items: lessonsByModule(null) }] : []),
   ];
+  // Drag-to-reorder (instructors): drop rewrites the whole flat order and
+  // persists it in one call; module membership is not changed by dragging.
+  const [draggedLessonId, setDraggedLessonId] = useState(null);
+  const handleLessonDrop = async (targetId) => {
+    const dragged = draggedLessonId;
+    setDraggedLessonId(null);
+    if (!dragged || dragged === targetId) return;
+    const flat = curriculumGroups.flatMap(g => g.items).map(l => l.id);
+    const from = flat.indexOf(dragged);
+    const to = flat.indexOf(targetId);
+    if (from < 0 || to < 0) return;
+    flat.splice(from, 1);
+    flat.splice(to, 0, dragged);
+    // Optimistic: the list snaps into place immediately; reload on failure.
+    setLessons(ls => ls.map(l => ({ ...l, order: flat.indexOf(l.id) })));
+    try {
+      await apiPut(`/api/courses/${courseId}/lessons-reorder`, { lesson_ids: flat });
+    } catch (err) {
+      alert(err.message);
+      loadCourseData();
+    }
+  };
+
   const firstLessonId = curriculumGroups.flatMap(g => g.items)[0]?.id;
   const nextLessonId = lessons.find(l => !completedLessons.includes(l.id))?.id || firstLessonId;
 
@@ -428,8 +451,26 @@ export default function CourseDetailPage({ user }) {
                 )}
                 <div className="space-y-2">
                   {group.items.map((lesson) => (
-                    <LessonCard
+                    <div
                       key={lesson.id}
+                      className={`flex items-stretch gap-1 ${draggedLessonId === lesson.id ? 'opacity-40' : ''}`}
+                      onDragOver={isInstructor ? (e) => e.preventDefault() : undefined}
+                      onDrop={isInstructor ? (e) => { e.preventDefault(); handleLessonDrop(lesson.id); } : undefined}
+                    >
+                      {isInstructor && (
+                        <div
+                          draggable
+                          onDragStart={(e) => { setDraggedLessonId(lesson.id); e.dataTransfer.effectAllowed = 'move'; }}
+                          onDragEnd={() => setDraggedLessonId(null)}
+                          className="flex items-center px-1 cursor-grab active:cursor-grabbing text-[#475569] hover:text-[#D4AF37]"
+                          title="Drag to reorder"
+                          data-testid={`lesson-drag-${lesson.id}`}
+                        >
+                          <DotsSixVertical size={16} weight="bold" />
+                        </div>
+                      )}
+                      <div className="flex-1 min-w-0">
+                    <LessonCard
                       lesson={lesson}
                       idx={lessons.findIndex(l => l.id === lesson.id)}
                       isEnrolled={enrollment?.enrolled}
@@ -449,6 +490,8 @@ export default function CourseDetailPage({ user }) {
                       user={user}
                       onReloadCourse={loadCourseData}
                     />
+                      </div>
+                    </div>
                   ))}
                 </div>
               </div>
