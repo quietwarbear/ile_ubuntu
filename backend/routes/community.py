@@ -11,6 +11,11 @@ router = APIRouter(prefix="/api/community", tags=["community"])
 
 KINDRED_API_URL = os.environ.get("KINDRED_API_URL", "https://kindred-production-badd.up.railway.app/api").rstrip("/")
 KINDRED_WEB_URL = os.environ.get("KINDRED_WEB_URL", "https://www.heykindred.org").rstrip("/")
+# Kindred checks these against its own allowlist (SSO_AUDIENCE and
+# SSO_ALLOWED_SOURCE_ORIGINS) and answers 422 if either is missing. Its list holds
+# the www origin only, so this stays separate from PUBLIC_SITE_URL.
+KINDRED_SSO_AUDIENCE = "kindred"
+KINDRED_SSO_ORIGIN = os.environ.get("KINDRED_SSO_ORIGIN", "https://www.ile-ubuntu.org").rstrip("/")
 
 
 @router.post("/open-kindred")
@@ -30,7 +35,13 @@ async def open_kindred(current_user: dict = Depends(get_current_user)):
         async with httpx.AsyncClient(timeout=20) as client:
             resp = await client.post(
                 f"{KINDRED_API_URL}/auth/sso-code",
-                json={"email": email, "secret": secret, "name": current_user.get("name", "")},
+                json={
+                    "email": email,
+                    "secret": secret,
+                    "name": current_user.get("name", ""),
+                    "audience": KINDRED_SSO_AUDIENCE,
+                    "origin": KINDRED_SSO_ORIGIN,
+                },
             )
     except Exception as exc:
         raise HTTPException(status_code=502, detail=f"Couldn't reach Kindred ({exc}).")
