@@ -7,8 +7,8 @@ const TIER_INFO = {
     name: 'Scholar',
     price: '$19.99/mo',
     icon: Crown,
-    color: 'text-[#D4AF37]',
-    bg: 'bg-[#D4AF37]/10 border-[#D4AF37]/30',
+    color: 'text-[rgb(var(--gold))]',
+    bg: 'bg-[rgb(var(--gold)/0.1)] border-[rgb(var(--gold)/0.3)]',
   },
   elder_circle: {
     name: 'Elder Circle',
@@ -35,21 +35,21 @@ export default function UpgradePrompt({ feature, requiredTier = 'scholar', onClo
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 animate-fade-in-up" data-testid="upgrade-prompt">
-      <div className={`w-full max-w-sm mx-4 p-6 rounded-lg border ${tier.bg} bg-[#0F172A]`}>
+      <div className={`w-full max-w-sm mx-4 p-6 rounded-lg border ${tier.bg} bg-[rgb(var(--ink-card))]`}>
         <div className="text-center">
           <div className={`w-12 h-12 mx-auto rounded-full flex items-center justify-center mb-3 ${tier.bg}`}>
             <Icon size={24} weight="duotone" className={tier.color} />
           </div>
-          <h3 className="text-base text-[#F8FAFC] mb-1" style={{ fontFamily: 'Cormorant Garamond, serif' }}>
+          <h3 className="text-base text-[rgb(var(--text-main))] mb-1" style={{ fontFamily: 'Cormorant Garamond, serif' }}>
             Upgrade to {tier.name}
           </h3>
-          <p className="text-xs text-[#94A3B8] mb-4">{message}</p>
+          <p className="text-xs text-[rgb(var(--text-muted))] mb-4">{message}</p>
 
-          <div className="p-3 bg-[#050814] border border-[#1E293B] rounded-md mb-4">
+          <div className="p-3 bg-[rgb(var(--ink-deep))] border border-[rgb(var(--ink-border))] rounded-md mb-4">
             <div className="flex items-center justify-center gap-1">
               <Sparkle size={14} weight="duotone" className={tier.color} />
-              <span className="text-sm font-semibold text-[#F8FAFC]">{tier.name}</span>
-              <span className="text-xs text-[#94A3B8]">— {tier.price}</span>
+              <span className="text-sm font-semibold text-[rgb(var(--text-main))]">{tier.name}</span>
+              <span className="text-xs text-[rgb(var(--text-muted))]">— {tier.price}</span>
             </div>
           </div>
 
@@ -59,7 +59,7 @@ export default function UpgradePrompt({ feature, requiredTier = 'scholar', onClo
               className={`flex-1 py-2.5 rounded-md text-xs font-medium ${
                 requiredTier === 'elder_circle'
                   ? 'bg-violet-500/20 text-violet-300 border border-violet-500/30 hover:bg-violet-500/30'
-                  : 'bg-[#D4AF37]/20 text-[#D4AF37] border border-[#D4AF37]/30 hover:bg-[#D4AF37]/30'
+                  : 'bg-[rgb(var(--gold)/0.2)] text-[rgb(var(--gold))] border border-[rgb(var(--gold)/0.3)] hover:bg-[rgb(var(--gold)/0.3)]'
               } transition-all`}
               data-testid="upgrade-btn"
             >
@@ -68,7 +68,7 @@ export default function UpgradePrompt({ feature, requiredTier = 'scholar', onClo
             {onClose && (
               <button
                 onClick={onClose}
-                className="flex-1 py-2.5 rounded-md text-xs font-medium text-[#94A3B8] border border-[#1E293B] hover:bg-[#1E293B]/50 transition-all"
+                className="flex-1 py-2.5 rounded-md text-xs font-medium text-[rgb(var(--text-muted))] border border-[rgb(var(--ink-border))] hover:bg-[rgb(var(--ink-border)/0.5)] transition-all"
                 data-testid="upgrade-dismiss"
               >
                 Maybe Later

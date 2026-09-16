@@ -26,6 +26,8 @@ import {
   TreeEvergreen,
   Backpack,
   Compass,
+  Sun,
+  Moon,
 } from '@phosphor-icons/react';
 import { clearCookie, clearOfflineCache, apiPut, apiGet } from '../../lib/api';
 import { useI18n } from '../../i18n';
@@ -93,6 +95,9 @@ export default function Sidebar({ user, onLogout }) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [myVillages, setMyVillages] = useState([]);
   const [guideEnabled, setGuideEnabled] = useState(false);
+  const [theme, setTheme] = useState(() => {
+    try { return localStorage.getItem('ile-theme') === 'light' ? 'light' : 'dark'; } catch (e) { return 'dark'; }
+  });
   const navigate = useNavigate();
   const { t, lang, setLang, LANG_NAMES } = useI18n();
 
@@ -107,6 +112,14 @@ export default function Sidebar({ user, onLogout }) {
   useEffect(() => {
     apiGet('/api/guide/status').then(d => setGuideEnabled(!!d.enabled)).catch(() => {});
   }, []);
+
+  const applyTheme = (next) => {
+    setTheme(next);
+    try { localStorage.setItem('ile-theme', next); } catch (e) { /* private mode */ }
+    // index.html applies this same attribute before first paint on reload.
+    if (next === 'light') document.documentElement.setAttribute('data-theme', 'light');
+    else document.documentElement.removeAttribute('data-theme');
+  };
 
   const openGuide = () => {
     setMobileOpen(false);
@@ -154,29 +167,29 @@ export default function Sidebar({ user, onLogout }) {
   const linkClass = ({ isActive }) =>
     `flex items-center gap-3 px-4 py-3 text-sm font-medium transition-all duration-200 border-l-2 ${
       isActive
-        ? 'border-[#D4AF37] text-[#D4AF37] bg-[#D4AF37]/5'
-        : 'border-transparent text-[#94A3B8] hover:text-[#F8FAFC] hover:bg-[#0F172A]'
+        ? 'border-[rgb(var(--gold))] text-[rgb(var(--gold))] bg-[rgb(var(--gold)/0.05)]'
+        : 'border-transparent text-[rgb(var(--text-muted))] hover:text-[rgb(var(--text-main))] hover:bg-[rgb(var(--ink-card))]'
     }`;
 
   const sidebarContent = (
     <div className="flex flex-col h-full" data-testid="sidebar">
       {/* Logo */}
-      <div className="px-5 py-6 border-b border-[#1E293B]">
+      <div className="px-5 py-6 border-b border-[rgb(var(--ink-border))]">
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-md bg-[#D4AF37]/10 flex items-center justify-center">
+          <div className="w-9 h-9 rounded-md bg-[rgb(var(--gold)/0.1)] flex items-center justify-center">
             <BrandMark className="w-6 h-6 object-contain" />
           </div>
           <div>
-            <h1 className="text-base font-semibold text-[#F8FAFC]" style={{ fontFamily: 'Cormorant Garamond, serif' }}>
+            <h1 className="text-base font-semibold text-[rgb(var(--text-main))]" style={{ fontFamily: 'Cormorant Garamond, serif' }}>
               The Ile Ubuntu
             </h1>
-            <p className="text-[10px] tracking-[0.2em] uppercase text-[#D4AF37]">Living Commons</p>
+            <p className="text-[10px] tracking-[0.2em] uppercase text-[rgb(var(--gold))]">Living Commons</p>
           </div>
         </div>
       </div>
 
       {/* Search */}
-      <div className="px-3 py-2 border-b border-[#1E293B]">
+      <div className="px-3 py-2 border-b border-[rgb(var(--ink-border))]">
         <SearchBar />
       </div>
 
@@ -184,7 +197,7 @@ export default function Sidebar({ user, onLogout }) {
       <nav className="flex-1 py-2 overflow-y-auto">
         {visibleSections.map((section) => (
           <div key={section.labelKey} className="mb-2">
-            <p className="px-4 pt-3 pb-1 text-[9px] tracking-[0.25em] uppercase text-[#475569]">
+            <p className="px-4 pt-3 pb-1 text-[9px] tracking-[0.25em] uppercase text-[rgb(var(--text-faint))]">
               {t(section.labelKey)}
             </p>
             <div className="space-y-0.5">
@@ -206,12 +219,12 @@ export default function Sidebar({ user, onLogout }) {
         ))}
         {guideEnabled && (
           <div className="mb-2">
-            <p className="px-4 pt-3 pb-1 text-[9px] tracking-[0.25em] uppercase text-[#475569]">
+            <p className="px-4 pt-3 pb-1 text-[9px] tracking-[0.25em] uppercase text-[rgb(var(--text-faint))]">
               {t('nav_help')}
             </p>
             <button
               onClick={openGuide}
-              className="w-full flex items-center gap-3 px-4 py-3 text-sm font-medium transition-all duration-200 border-l-2 border-transparent text-[#94A3B8] hover:text-[#F8FAFC] hover:bg-[#0F172A]"
+              className="w-full flex items-center gap-3 px-4 py-3 text-sm font-medium transition-all duration-200 border-l-2 border-transparent text-[rgb(var(--text-muted))] hover:text-[rgb(var(--text-main))] hover:bg-[rgb(var(--ink-card))]"
               data-testid="nav-village-guide"
             >
               <Compass size={20} weight="duotone" />
@@ -221,10 +234,31 @@ export default function Sidebar({ user, onLogout }) {
         )}
       </nav>
 
+      {/* Theme */}
+      <div className="px-4 py-2 border-t border-[rgb(var(--ink-border))]">
+        <div className="flex gap-1" data-testid="theme-selector">
+          {[['dark', Moon, 'theme_dark'], ['light', Sun, 'theme_light']].map(([mode, Icon, key]) => (
+            <button
+              key={mode}
+              onClick={() => applyTheme(mode)}
+              className={`flex-1 flex items-center justify-center gap-1.5 py-1 rounded text-[9px] transition-all ${
+                theme === mode
+                  ? 'bg-[rgb(var(--gold)/0.1)] text-[rgb(var(--gold))] border border-[rgb(var(--gold)/0.3)]'
+                  : 'text-[rgb(var(--text-faint))] border border-[rgb(var(--ink-border))] hover:text-[rgb(var(--text-muted))]'
+              }`}
+              data-testid={`theme-${mode}`}
+            >
+              <Icon size={12} weight="duotone" />
+              {t(key)}
+            </button>
+          ))}
+        </div>
+      </div>
+
       {/* Language Selector */}
-      <div className="px-4 py-2 border-t border-[#1E293B]">
+      <div className="px-4 py-2 border-t border-[rgb(var(--ink-border))]">
         <div className="flex items-center gap-2">
-          <GlobeSimple size={14} weight="duotone" className="text-[#94A3B8] flex-shrink-0" />
+          <GlobeSimple size={14} weight="duotone" className="text-[rgb(var(--text-muted))] flex-shrink-0" />
           <div className="flex gap-1 flex-1" data-testid="language-selector">
             {Object.entries(LANG_NAMES).map(([code, name]) => (
               <button
@@ -232,8 +266,8 @@ export default function Sidebar({ user, onLogout }) {
                 onClick={() => handleLangChange(code)}
                 className={`flex-1 py-1 rounded text-[9px] transition-all ${
                   lang === code
-                    ? 'bg-[#D4AF37]/10 text-[#D4AF37] border border-[#D4AF37]/30'
-                    : 'text-[#475569] border border-[#1E293B] hover:text-[#94A3B8]'
+                    ? 'bg-[rgb(var(--gold)/0.1)] text-[rgb(var(--gold))] border border-[rgb(var(--gold)/0.3)]'
+                    : 'text-[rgb(var(--text-faint))] border border-[rgb(var(--ink-border))] hover:text-[rgb(var(--text-muted))]'
                 }`}
                 data-testid={`lang-${code}`}
               >
@@ -245,22 +279,22 @@ export default function Sidebar({ user, onLogout }) {
       </div>
 
       {/* User */}
-      <div className="border-t border-[#1E293B] p-4">
+      <div className="border-t border-[rgb(var(--ink-border))] p-4">
         <div className="flex items-center gap-3 mb-3">
           <img
             src={user?.picture}
             alt={user?.name}
-            className="w-8 h-8 rounded-full border border-[#D4AF37]/30"
+            className="w-8 h-8 rounded-full border border-[rgb(var(--gold)/0.3)]"
           />
           <div className="flex-1 min-w-0">
-            <p className="text-sm text-[#F8FAFC] truncate">{user?.name}</p>
-            <p className="text-[10px] tracking-[0.15em] uppercase text-[#D4AF37]">{user?.role}</p>
+            <p className="text-sm text-[rgb(var(--text-main))] truncate">{user?.name}</p>
+            <p className="text-[10px] tracking-[0.15em] uppercase text-[rgb(var(--gold))]">{user?.role}</p>
           </div>
         </div>
         <div className="flex gap-2">
           <NavLink
             to="/settings"
-            className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 text-xs text-[#94A3B8] hover:text-[#F8FAFC] bg-[#0F172A] rounded border border-[#1E293B] hover:border-[#D4AF37]/30 transition-all"
+            className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 text-xs text-[rgb(var(--text-muted))] hover:text-[rgb(var(--text-main))] bg-[rgb(var(--ink-card))] rounded border border-[rgb(var(--ink-border))] hover:border-[rgb(var(--gold)/0.3)] transition-all"
             data-testid="nav-settings"
           >
             <GearSix size={14} weight="duotone" />
@@ -268,7 +302,7 @@ export default function Sidebar({ user, onLogout }) {
           </NavLink>
           <button
             onClick={handleLogout}
-            className="flex items-center justify-center gap-1.5 px-3 py-2 text-xs text-[#94A3B8] hover:text-red-400 bg-[#0F172A] rounded border border-[#1E293B] hover:border-red-400/30 transition-all"
+            className="flex items-center justify-center gap-1.5 px-3 py-2 text-xs text-[rgb(var(--text-muted))] hover:text-red-400 bg-[rgb(var(--ink-card))] rounded border border-[rgb(var(--ink-border))] hover:border-red-400/30 transition-all"
             data-testid="logout-button"
           >
             <SignOut size={14} weight="duotone" />
@@ -282,7 +316,7 @@ export default function Sidebar({ user, onLogout }) {
     <>
       {/* Mobile toggle */}
       <button
-        className="lg:hidden fixed left-4 z-50 p-2 bg-[#0F172A] border border-[#1E293B] rounded-md text-[#94A3B8]"
+        className="lg:hidden fixed left-4 z-50 p-2 bg-[rgb(var(--ink-card))] border border-[rgb(var(--ink-border))] rounded-md text-[rgb(var(--text-muted))]"
         style={{ top: 'calc(var(--safe-area-top, 0px) + 12px)' }}
         onClick={() => setMobileOpen(!mobileOpen)}
         data-testid="mobile-menu-toggle"
@@ -300,7 +334,7 @@ export default function Sidebar({ user, onLogout }) {
 
       {/* Sidebar */}
       <aside
-        className={`fixed top-0 left-0 h-screen w-60 bg-[#050814] border-r border-[#1E293B] z-40 transition-transform duration-300 ${
+        className={`fixed top-0 left-0 h-screen w-60 bg-[rgb(var(--ink-deep))] border-r border-[rgb(var(--ink-border))] z-40 transition-transform duration-300 ${
           mobileOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
         }`}
       >

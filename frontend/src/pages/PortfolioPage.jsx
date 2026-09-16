@@ -11,14 +11,14 @@ import { maybeRequestReview } from '../lib/review';
 // The portfolio is the young person's own — private by default, shared by
 // their choice (eval §6.3: "theirs to keep and carry forward").
 
-const inputCls = "w-full px-3 py-1.5 rounded bg-[#050814] border border-[#1E293B] text-xs text-[#F8FAFC] placeholder-[#475569] focus:outline-none focus:border-[#D4AF37]/50";
-const goldBtnCls = "bg-[#D4AF37]/15 text-[#D4AF37] border border-[#D4AF37]/30 hover:bg-[#D4AF37]/25";
+const inputCls = "w-full px-3 py-1.5 rounded bg-[rgb(var(--ink-deep))] border border-[rgb(var(--ink-border))] text-xs text-[rgb(var(--text-main))] placeholder-[rgb(var(--text-faint))] focus:outline-none focus:border-[rgb(var(--gold)/0.5)]";
+const goldBtnCls = "bg-[rgb(var(--gold)/0.15)] text-[rgb(var(--gold))] border border-[rgb(var(--gold)/0.3)] hover:bg-[rgb(var(--gold)/0.25)]";
 
 function VisibilityBadge({ visibility }) {
   const shared = visibility === 'shared';
   return (
     <span className={`inline-flex items-center gap-1 text-[9px] px-1.5 py-0.5 rounded border ${
-      shared ? 'text-[#D4AF37] border-[#D4AF37]/30 bg-[#D4AF37]/10' : 'text-[#94A3B8] border-[#334155] bg-[#050814]'
+      shared ? 'text-[rgb(var(--gold))] border-[rgb(var(--gold)/0.3)] bg-[rgb(var(--gold)/0.1)]' : 'text-[rgb(var(--text-muted))] border-[rgb(var(--ink-border-strong))] bg-[rgb(var(--ink-deep))]'
     }`}>
       {shared ? <UsersThree size={10} /> : <LockSimple size={10} />}
       {shared ? 'Shared' : 'Private'}
@@ -63,13 +63,13 @@ function AddItemCard({ onAdded }) {
   };
 
   return (
-    <Card className="bg-[#0F172A] border-[#1E293B]" data-testid="add-portfolio-item">
+    <Card className="bg-[rgb(var(--ink-card))] border-[rgb(var(--ink-border))]" data-testid="add-portfolio-item">
       <CardHeader className="pb-2 cursor-pointer" onClick={() => setOpen(o => !o)}>
         <div className="flex items-center justify-between">
-          <CardTitle className="text-sm text-[#F8FAFC] flex items-center gap-2" style={{ fontFamily: 'Cormorant Garamond, serif' }}>
-            <Plus size={14} className="text-[#D4AF37]" /> Add to my portfolio
+          <CardTitle className="text-sm text-[rgb(var(--text-main))] flex items-center gap-2" style={{ fontFamily: 'Cormorant Garamond, serif' }}>
+            <Plus size={14} className="text-[rgb(var(--gold))]" /> Add to my portfolio
           </CardTitle>
-          {open ? <CaretUp size={14} className="text-[#94A3B8]" /> : <CaretDown size={14} className="text-[#94A3B8]" />}
+          {open ? <CaretUp size={14} className="text-[rgb(var(--text-muted))]" /> : <CaretDown size={14} className="text-[rgb(var(--text-muted))]" />}
         </div>
       </CardHeader>
       {open && (
@@ -80,7 +80,7 @@ function AddItemCard({ onAdded }) {
                 key={k}
                 onClick={() => setKind(k)}
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded text-xs border transition-colors ${
-                  kind === k ? 'text-[#D4AF37] border-[#D4AF37]/40 bg-[#D4AF37]/10' : 'text-[#94A3B8] border-[#1E293B] bg-[#050814]'
+                  kind === k ? 'text-[rgb(var(--gold))] border-[rgb(var(--gold)/0.4)] bg-[rgb(var(--gold)/0.1)]' : 'text-[rgb(var(--text-muted))] border-[rgb(var(--ink-border))] bg-[rgb(var(--ink-deep))]'
                 }`}
                 data-testid={`kind-${k}`}
               >
@@ -98,10 +98,10 @@ function AddItemCard({ onAdded }) {
             <div className="flex flex-col sm:flex-row gap-2">
               <input value={linkUrl} onChange={e => setLinkUrl(e.target.value)} placeholder="Link (optional)" className={inputCls} />
               <input ref={fileRef} type="file" onChange={e => setFile(e.target.files?.[0] || null)}
-                className="text-xs text-[#94A3B8] file:mr-2 file:px-3 file:py-1.5 file:rounded file:border file:border-[#D4AF37]/30 file:bg-[#D4AF37]/10 file:text-[#D4AF37] file:text-xs file:cursor-pointer" />
+                className="text-xs text-[rgb(var(--text-muted))] file:mr-2 file:px-3 file:py-1.5 file:rounded file:border file:border-[rgb(var(--gold)/0.3)] file:bg-[rgb(var(--gold)/0.1)] file:text-[rgb(var(--gold))] file:text-xs file:cursor-pointer" />
             </div>
           )}
-          <label className="flex items-center gap-2 text-xs text-[#94A3B8] cursor-pointer">
+          <label className="flex items-center gap-2 text-xs text-[rgb(var(--text-muted))] cursor-pointer">
             <input type="checkbox" checked={visibility === 'shared'}
               onChange={e => setVisibility(e.target.checked ? 'shared' : 'private')} />
             Share with my facilitators and family
@@ -129,39 +129,39 @@ function ItemCard({ item, onChanged }) {
     try { await apiDelete(`/api/portfolio/${item.id}`); onChanged(); } catch (e) { alert(e.message); }
   };
   return (
-    <Card className="bg-[#0F172A] border-[#1E293B]" data-testid={`portfolio-item-${item.id}`}>
+    <Card className="bg-[rgb(var(--ink-card))] border-[rgb(var(--ink-border))]" data-testid={`portfolio-item-${item.id}`}>
       <CardContent className="p-4">
         <div className="flex items-start gap-3">
-          <Icon size={18} weight="duotone" className="text-[#D4AF37] mt-0.5 flex-shrink-0" />
+          <Icon size={18} weight="duotone" className="text-[rgb(var(--gold))] mt-0.5 flex-shrink-0" />
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
-              <p className="text-sm text-[#F8FAFC]">{item.title}</p>
+              <p className="text-sm text-[rgb(var(--text-main))]">{item.title}</p>
               <VisibilityBadge visibility={item.visibility} />
             </div>
-            {item.body && <p className="text-xs text-[#94A3B8] mt-1 whitespace-pre-wrap">{item.body}</p>}
+            {item.body && <p className="text-xs text-[rgb(var(--text-muted))] mt-1 whitespace-pre-wrap">{item.body}</p>}
             <div className="flex items-center gap-3 mt-2 flex-wrap">
               {item.link_url && (
                 <a href={item.link_url} target="_blank" rel="noopener noreferrer"
-                  className="flex items-center gap-1 text-[10px] text-[#D4AF37] hover:underline">
+                  className="flex items-center gap-1 text-[10px] text-[rgb(var(--gold))] hover:underline">
                   <LinkSimple size={11} /> {item.link_url.replace(/^https?:\/\//, '').slice(0, 40)}
                 </a>
               )}
               {item.file && (
                 <a href={`${process.env.REACT_APP_BACKEND_URL || ''}${item.file.download_url}`}
                   target="_blank" rel="noopener noreferrer"
-                  className="flex items-center gap-1 text-[10px] text-[#D4AF37] hover:underline">
+                  className="flex items-center gap-1 text-[10px] text-[rgb(var(--gold))] hover:underline">
                   <DownloadSimple size={11} /> {item.file.original_filename}
                 </a>
               )}
-              <span className="text-[9px] text-[#475569]">{new Date(item.created_at).toLocaleDateString()}</span>
+              <span className="text-[9px] text-[rgb(var(--text-faint))]">{new Date(item.created_at).toLocaleDateString()}</span>
             </div>
           </div>
           <div className="flex items-center gap-1 flex-shrink-0">
-            <button onClick={toggleVisibility} className="p-1 text-[#94A3B8] hover:text-[#D4AF37]"
+            <button onClick={toggleVisibility} className="p-1 text-[rgb(var(--text-muted))] hover:text-[rgb(var(--gold))]"
               title={item.visibility === 'shared' ? 'Make private' : 'Share with facilitators & family'}>
               {item.visibility === 'shared' ? <LockSimple size={14} /> : <UsersThree size={14} />}
             </button>
-            <button onClick={remove} className="p-1 text-[#94A3B8] hover:text-red-400" title="Remove">
+            <button onClick={remove} className="p-1 text-[rgb(var(--text-muted))] hover:text-red-400" title="Remove">
               <Trash size={14} />
             </button>
           </div>
@@ -203,25 +203,25 @@ function GoalCard({ goal, onChanged }) {
   };
 
   return (
-    <Card className="bg-[#0F172A] border-[#1E293B]" data-testid={`goal-${goal.id}`}>
+    <Card className="bg-[rgb(var(--ink-card))] border-[rgb(var(--ink-border))]" data-testid={`goal-${goal.id}`}>
       <CardContent className="p-4 space-y-3">
         <div className="flex items-start gap-3">
-          <Target size={18} weight="duotone" className={done ? 'text-emerald-400 mt-0.5' : 'text-[#D4AF37] mt-0.5'} />
+          <Target size={18} weight="duotone" className={done ? 'text-emerald-400 mt-0.5' : 'text-[rgb(var(--gold))] mt-0.5'} />
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
-              <p className={`text-sm ${done ? 'text-[#475569] line-through' : 'text-[#F8FAFC]'}`}>{goal.title}</p>
+              <p className={`text-sm ${done ? 'text-[rgb(var(--text-faint))] line-through' : 'text-[rgb(var(--text-main))]'}`}>{goal.title}</p>
               <span className={`text-[9px] px-1.5 py-0.5 rounded border ${
-                done ? 'text-emerald-400 border-emerald-500/30 bg-emerald-500/10' : 'text-[#D4AF37] border-[#D4AF37]/30 bg-[#D4AF37]/10'
+                done ? 'text-emerald-400 border-emerald-500/30 bg-emerald-500/10' : 'text-[rgb(var(--gold))] border-[rgb(var(--gold)/0.3)] bg-[rgb(var(--gold)/0.1)]'
               }`}>
                 {done ? 'Completed' : goal.target_date ? `By ${goal.target_date}` : 'Active'}
               </span>
             </div>
-            {goal.why && <p className="text-xs text-[#94A3B8] mt-1 italic">Why: {goal.why}</p>}
+            {goal.why && <p className="text-xs text-[rgb(var(--text-muted))] mt-1 italic">Why: {goal.why}</p>}
             {done && goal.reflection && (
-              <p className="text-xs text-[#94A3B8] mt-1 whitespace-pre-wrap">"{goal.reflection}"</p>
+              <p className="text-xs text-[rgb(var(--text-muted))] mt-1 whitespace-pre-wrap">"{goal.reflection}"</p>
             )}
           </div>
-          <button onClick={remove} className="p-1 text-[#94A3B8] hover:text-red-400 flex-shrink-0" title="Delete goal">
+          <button onClick={remove} className="p-1 text-[rgb(var(--text-muted))] hover:text-red-400 flex-shrink-0" title="Delete goal">
             <Trash size={14} />
           </button>
         </div>
@@ -231,13 +231,13 @@ function GoalCard({ goal, onChanged }) {
             <div className="space-y-1.5">
               {(goal.milestones || []).map(m => (
                 <button key={m.id} onClick={() => toggleMilestone(m.id)}
-                  className="w-full flex items-center gap-2 p-2 rounded bg-[#050814] border border-[#1E293B] text-left hover:border-[#D4AF37]/25 transition-colors">
+                  className="w-full flex items-center gap-2 p-2 rounded bg-[rgb(var(--ink-deep))] border border-[rgb(var(--ink-border))] text-left hover:border-[rgb(var(--gold)/0.25)] transition-colors">
                   <span className={`w-4 h-4 rounded border flex items-center justify-center flex-shrink-0 ${
-                    m.done ? 'bg-emerald-500/20 border-emerald-500/50' : 'border-[#334155]'
+                    m.done ? 'bg-emerald-500/20 border-emerald-500/50' : 'border-[rgb(var(--ink-border-strong))]'
                   }`}>
                     {m.done && <Check size={11} className="text-emerald-400" />}
                   </span>
-                  <span className={`text-xs ${m.done ? 'text-[#475569] line-through' : 'text-[#F8FAFC]'}`}>{m.text}</span>
+                  <span className={`text-xs ${m.done ? 'text-[rgb(var(--text-faint))] line-through' : 'text-[rgb(var(--text-main))]'}`}>{m.text}</span>
                 </button>
               ))}
             </div>
@@ -255,7 +255,7 @@ function GoalCard({ goal, onChanged }) {
                   <Button size="sm" onClick={complete} className="bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/25">
                     <Check size={13} className="mr-1" /> Mark complete
                   </Button>
-                  <Button size="sm" variant="ghost" onClick={() => setCompleting(false)} className="text-[#94A3B8]">Cancel</Button>
+                  <Button size="sm" variant="ghost" onClick={() => setCompleting(false)} className="text-[rgb(var(--text-muted))]">Cancel</Button>
                 </div>
               </div>
             ) : (
@@ -266,7 +266,7 @@ function GoalCard({ goal, onChanged }) {
           </>
         )}
         {done && (
-          <button onClick={reopen} className="text-[10px] text-[#94A3B8] hover:text-[#D4AF37]">Reopen this goal</button>
+          <button onClick={reopen} className="text-[10px] text-[rgb(var(--text-muted))] hover:text-[rgb(var(--gold))]">Reopen this goal</button>
         )}
       </CardContent>
     </Card>
@@ -305,17 +305,17 @@ export default function PortfolioPage({ user }) {
     <div className="space-y-6 animate-fade-in-up max-w-3xl" data-testid="portfolio-page">
       <div>
         <div className="flex items-center gap-2 mb-1">
-          <Backpack size={20} weight="duotone" className="text-[#D4AF37]" />
-          <h1 className="text-xl text-[#F8FAFC]" style={{ fontFamily: 'Cormorant Garamond, serif' }}>My Portfolio</h1>
+          <Backpack size={20} weight="duotone" className="text-[rgb(var(--gold))]" />
+          <h1 className="text-xl text-[rgb(var(--text-main))]" style={{ fontFamily: 'Cormorant Garamond, serif' }}>My Portfolio</h1>
         </div>
-        <p className="text-xs text-[#94A3B8]">Yours to keep and carry forward — your work, your reflections, your goals.</p>
+        <p className="text-xs text-[rgb(var(--text-muted))]">Yours to keep and carry forward — your work, your reflections, your goals.</p>
       </div>
 
       <div className="flex gap-2">
         {[['portfolio', 'Portfolio'], ['goals', 'My Goals']].map(([k, label]) => (
           <button key={k} onClick={() => setTab(k)}
             className={`px-4 py-1.5 rounded text-xs border transition-colors ${
-              tab === k ? 'text-[#D4AF37] border-[#D4AF37]/40 bg-[#D4AF37]/10' : 'text-[#94A3B8] border-[#1E293B] bg-[#050814]'
+              tab === k ? 'text-[rgb(var(--gold))] border-[rgb(var(--gold)/0.4)] bg-[rgb(var(--gold)/0.1)]' : 'text-[rgb(var(--text-muted))] border-[rgb(var(--ink-border))] bg-[rgb(var(--ink-deep))]'
             }`}
             data-testid={`tab-${k}`}>
             {label}
@@ -329,16 +329,16 @@ export default function PortfolioPage({ user }) {
 
           {portfolio?.recognitions?.length > 0 && (
             <div>
-              <p className="text-[10px] tracking-[0.15em] uppercase text-[#D4AF37] mb-2 flex items-center gap-1">
+              <p className="text-[10px] tracking-[0.15em] uppercase text-[rgb(var(--gold))] mb-2 flex items-center gap-1">
                 <Medal size={12} /> Recognitions
               </p>
               <div className="grid sm:grid-cols-2 gap-2">
                 {portfolio.recognitions.map((r, i) => (
-                  <div key={i} className="flex items-center gap-2 p-2.5 rounded border border-[#D4AF37]/25 bg-[#D4AF37]/5">
-                    <Medal size={16} weight="duotone" className="text-[#D4AF37] flex-shrink-0" />
+                  <div key={i} className="flex items-center gap-2 p-2.5 rounded border border-[rgb(var(--gold)/0.25)] bg-[rgb(var(--gold)/0.05)]">
+                    <Medal size={16} weight="duotone" className="text-[rgb(var(--gold))] flex-shrink-0" />
                     <div className="min-w-0">
-                      <p className="text-xs text-[#F8FAFC] truncate">{r.title}</p>
-                      <p className="text-[9px] text-[#94A3B8]">
+                      <p className="text-xs text-[rgb(var(--text-main))] truncate">{r.title}</p>
+                      <p className="text-[9px] text-[rgb(var(--text-muted))]">
                         Completed{r.completed_at ? ` · ${new Date(r.completed_at).toLocaleDateString()}` : ''}
                       </p>
                     </div>
@@ -353,9 +353,9 @@ export default function PortfolioPage({ user }) {
               <ItemCard key={item.id} item={item} onChanged={load} />
             ))}
             {portfolio && portfolio.items.length === 0 && (
-              <Card className="bg-[#0F172A] border-[#1E293B]">
+              <Card className="bg-[rgb(var(--ink-card))] border-[rgb(var(--ink-border))]">
                 <CardContent className="p-6 text-center">
-                  <p className="text-sm text-[#94A3B8]">
+                  <p className="text-sm text-[rgb(var(--text-muted))]">
                     Nothing here yet. Add work you're proud of, or a reflection on where you've been —
                     this collection is yours for life.
                   </p>
@@ -368,9 +368,9 @@ export default function PortfolioPage({ user }) {
 
       {tab === 'goals' && (
         <div className="space-y-4">
-          <Card className="bg-[#0F172A] border-[#1E293B]">
+          <Card className="bg-[rgb(var(--ink-card))] border-[rgb(var(--ink-border))]">
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm text-[#F8FAFC]" style={{ fontFamily: 'Cormorant Garamond, serif' }}>
+              <CardTitle className="text-sm text-[rgb(var(--text-main))]" style={{ fontFamily: 'Cormorant Garamond, serif' }}>
                 Set a goal
               </CardTitle>
             </CardHeader>
@@ -389,13 +389,13 @@ export default function PortfolioPage({ user }) {
           <div className="space-y-3">
             {activeGoals.map(g => <GoalCard key={g.id} goal={g} onChanged={load} />)}
             {doneGoals.length > 0 && (
-              <p className="text-[10px] tracking-[0.15em] uppercase text-[#D4AF37] pt-2">Completed</p>
+              <p className="text-[10px] tracking-[0.15em] uppercase text-[rgb(var(--gold))] pt-2">Completed</p>
             )}
             {doneGoals.map(g => <GoalCard key={g.id} goal={g} onChanged={load} />)}
             {goals && goals.length === 0 && (
-              <Card className="bg-[#0F172A] border-[#1E293B]">
+              <Card className="bg-[rgb(var(--ink-card))] border-[rgb(var(--ink-border))]">
                 <CardContent className="p-6 text-center">
-                  <p className="text-sm text-[#94A3B8]">
+                  <p className="text-sm text-[rgb(var(--text-muted))]">
                     No goals yet. Name one thing you're walking toward — your goals are private to you.
                   </p>
                 </CardContent>

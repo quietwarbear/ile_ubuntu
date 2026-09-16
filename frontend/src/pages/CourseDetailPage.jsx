@@ -237,7 +237,7 @@ export default function CourseDetailPage({ user }) {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <div className="w-8 h-8 border-2 border-[#D4AF37] border-t-transparent rounded-full animate-spin" />
+        <div className="w-8 h-8 border-2 border-[rgb(var(--gold))] border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
@@ -245,8 +245,8 @@ export default function CourseDetailPage({ user }) {
   if (!course) {
     return (
       <div className="text-center py-20">
-        <p className="text-[#94A3B8]">Course not found</p>
-        <Button onClick={() => navigate('/courses')} variant="ghost" className="mt-4 text-[#D4AF37]">Back to Courses</Button>
+        <p className="text-[rgb(var(--text-muted))]">Course not found</p>
+        <Button onClick={() => navigate('/courses')} variant="ghost" className="mt-4 text-[rgb(var(--gold))]">Back to Courses</Button>
       </div>
     );
   }
@@ -257,7 +257,7 @@ export default function CourseDetailPage({ user }) {
         accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.txt,.jpg,.jpeg,.png,.gif" data-testid="file-upload-input" />
 
       <button onClick={() => navigate('/courses')}
-        className="flex items-center gap-2 text-sm text-[#94A3B8] hover:text-[#D4AF37] transition-colors"
+        className="flex items-center gap-2 text-sm text-[rgb(var(--text-muted))] hover:text-[rgb(var(--gold))] transition-colors"
         data-testid="back-to-courses">
         <ArrowLeft size={16} /> Back to Courses
       </button>
@@ -270,7 +270,7 @@ export default function CourseDetailPage({ user }) {
 
       {/* Invite students (instructor only) */}
       {isInstructor && (
-        <div className="p-4 rounded-md bg-[#0F172A] border border-[#1E293B]">
+        <div className="p-4 rounded-md bg-[rgb(var(--ink-card))] border border-[rgb(var(--ink-border))]">
           {!inviteCode ? (
             <button
               onClick={async () => {
@@ -279,7 +279,7 @@ export default function CourseDetailPage({ user }) {
                   setInviteCode(res.code);
                 } catch (e) { alert(e.message); }
               }}
-              className="text-sm text-[#D4AF37] hover:underline"
+              className="text-sm text-[rgb(var(--gold))] hover:underline"
               data-testid="invite-students-btn"
             >
               Invite students to this course →
@@ -289,12 +289,12 @@ export default function CourseDetailPage({ user }) {
               <img
                 src={`https://api.qrserver.com/v1/create-qr-code/?size=120x120&bgcolor=15-23-42&color=212-175-55&data=${encodeURIComponent(`${window.location.origin}/join/${inviteCode}`)}`}
                 alt="Course invite QR code"
-                className="w-[120px] h-[120px] rounded border border-[#1E293B] flex-shrink-0"
+                className="w-[120px] h-[120px] rounded border border-[rgb(var(--ink-border))] flex-shrink-0"
               />
               <div className="flex-1 min-w-0 text-center sm:text-left">
-                <p className="text-xs tracking-[0.15em] uppercase text-[#D4AF37] mb-1">Invite link</p>
-                <p className="text-sm text-[#F8FAFC] break-all">{window.location.origin}/join/{inviteCode}</p>
-                <p className="text-xs text-[#94A3B8] mt-1">
+                <p className="text-xs tracking-[0.15em] uppercase text-[rgb(var(--gold))] mb-1">Invite link</p>
+                <p className="text-sm text-[rgb(var(--text-main))] break-all">{window.location.origin}/join/{inviteCode}</p>
+                <p className="text-xs text-[rgb(var(--text-muted))] mt-1">
                   Share the link or let students scan the code. Anyone with it can join
                   {course.is_premium && course.premium_price > 0 ? ' after purchasing' : ''} — even if the course is unlisted.
                 </p>
@@ -304,7 +304,7 @@ export default function CourseDetailPage({ user }) {
                     setInviteCopied(true);
                     setTimeout(() => setInviteCopied(false), 2000);
                   }}
-                  className="mt-2 px-3 py-1.5 rounded text-xs bg-[#D4AF37]/15 text-[#D4AF37] border border-[#D4AF37]/30 hover:bg-[#D4AF37]/25"
+                  className="mt-2 px-3 py-1.5 rounded text-xs bg-[rgb(var(--gold)/0.15)] text-[rgb(var(--gold))] border border-[rgb(var(--gold)/0.3)] hover:bg-[rgb(var(--gold)/0.25)]"
                   data-testid="copy-invite-link"
                 >
                   {inviteCopied ? 'Copied!' : 'Copy link'}
@@ -318,17 +318,17 @@ export default function CourseDetailPage({ user }) {
       {/* Curriculum */}
       <div>
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xs tracking-[0.15em] uppercase text-[#D4AF37]">Curriculum</h2>
+          <h2 className="text-xs tracking-[0.15em] uppercase text-[rgb(var(--gold))]">Curriculum</h2>
           <div className="flex items-center gap-2">
             {(enrollment?.enrolled || isInstructor) && firstLessonId && (
               <Button size="sm" onClick={() => navigate(`/courses/${courseId}/learn/${nextLessonId}`)}
-                className="bg-[#D4AF37] text-[#050814] hover:bg-[#F3E5AB] text-xs" data-testid="start-learning">
+                className="bg-[rgb(var(--gold))] text-[rgb(var(--ink-deep))] hover:bg-[rgb(var(--gold-soft))] text-xs" data-testid="start-learning">
                 {completedLessons.length > 0 ? 'Continue learning' : 'Start learning'}
               </Button>
             )}
             {isInstructor && (
               <Button size="sm" variant="ghost" onClick={() => setShowAddLesson(!showAddLesson)}
-                className="text-[#D4AF37] hover:text-[#F3E5AB] text-xs" data-testid="add-lesson-toggle">
+                className="text-[rgb(var(--gold))] hover:text-[rgb(var(--gold-soft))] text-xs" data-testid="add-lesson-toggle">
                 <Plus size={14} className="mr-1" /> Add Lesson
               </Button>
             )}
@@ -338,31 +338,31 @@ export default function CourseDetailPage({ user }) {
         {/* Instructor: modules (sections) */}
         {isInstructor && (
           <div className="flex flex-wrap items-center gap-2 mb-4">
-            <span className="text-[10px] tracking-[0.15em] uppercase text-[#475569]">Sections:</span>
+            <span className="text-[10px] tracking-[0.15em] uppercase text-[rgb(var(--text-faint))]">Sections:</span>
             {modules.map(m => (
-              <span key={m.id} className="text-[11px] text-[#94A3B8] bg-[#0F172A] border border-[#1E293B] rounded-full px-2.5 py-1">{m.title}</span>
+              <span key={m.id} className="text-[11px] text-[rgb(var(--text-muted))] bg-[rgb(var(--ink-card))] border border-[rgb(var(--ink-border))] rounded-full px-2.5 py-1">{m.title}</span>
             ))}
             <input
               value={newModule}
               onChange={e => setNewModule(e.target.value)}
               onKeyDown={e => e.key === 'Enter' && handleAddModule()}
               placeholder="New section…"
-              className="px-2.5 py-1 rounded-full bg-[#050814] border border-[#1E293B] text-[11px] text-[#F8FAFC] placeholder-[#475569] focus:outline-none focus:border-[#D4AF37]/50 w-32"
+              className="px-2.5 py-1 rounded-full bg-[rgb(var(--ink-deep))] border border-[rgb(var(--ink-border))] text-[11px] text-[rgb(var(--text-main))] placeholder-[rgb(var(--text-faint))] focus:outline-none focus:border-[rgb(var(--gold)/0.5)] w-32"
               data-testid="new-module-input"
             />
-            <button onClick={handleAddModule} className="text-[#D4AF37] hover:text-[#F3E5AB]" title="Add section"><Plus size={14} /></button>
+            <button onClick={handleAddModule} className="text-[rgb(var(--gold))] hover:text-[rgb(var(--gold-soft))]" title="Add section"><Plus size={14} /></button>
           </div>
         )}
 
         {showAddLesson && isInstructor && (
-          <Card className="bg-[#0F172A] border-[#D4AF37]/30 mb-4">
+          <Card className="bg-[rgb(var(--ink-card))] border-[rgb(var(--gold)/0.3)] mb-4">
             <CardContent className="p-4 space-y-3">
               <Input placeholder="Lesson Title" value={lessonForm.title}
                 onChange={e => setLessonForm({ ...lessonForm, title: e.target.value })}
-                className="bg-[#050814] border-[#1E293B] text-[#F8FAFC]" data-testid="new-lesson-title" />
+                className="bg-[rgb(var(--ink-deep))] border-[rgb(var(--ink-border))] text-[rgb(var(--text-main))]" data-testid="new-lesson-title" />
               <Input placeholder="Brief description" value={lessonForm.description}
                 onChange={e => setLessonForm({ ...lessonForm, description: e.target.value })}
-                className="bg-[#050814] border-[#1E293B] text-[#F8FAFC]" data-testid="new-lesson-desc" />
+                className="bg-[rgb(var(--ink-deep))] border-[rgb(var(--ink-border))] text-[rgb(var(--text-main))]" data-testid="new-lesson-desc" />
               <WysiwygEditor
                 value={lessonForm.content}
                 onChange={(v) => setLessonForm({ ...lessonForm, content: v })}
@@ -372,32 +372,32 @@ export default function CourseDetailPage({ user }) {
               <div className="flex flex-col sm:flex-row gap-2">
                 <select value={lessonForm.module_id}
                   onChange={e => setLessonForm({ ...lessonForm, module_id: e.target.value })}
-                  className="flex-1 px-3 py-2 rounded-md bg-[#050814] border border-[#1E293B] text-xs text-[#F8FAFC] focus:outline-none focus:border-[#D4AF37]/50"
+                  className="flex-1 px-3 py-2 rounded-md bg-[rgb(var(--ink-deep))] border border-[rgb(var(--ink-border))] text-xs text-[rgb(var(--text-main))] focus:outline-none focus:border-[rgb(var(--gold)/0.5)]"
                   data-testid="new-lesson-module">
                   <option value="">No section</option>
                   {modules.map(m => <option key={m.id} value={m.id}>{m.title}</option>)}
                 </select>
                 <Input placeholder="Banner image URL (optional)" value={lessonForm.banner_url}
                   onChange={e => setLessonForm({ ...lessonForm, banner_url: e.target.value })}
-                  className="flex-1 bg-[#050814] border-[#1E293B] text-[#F8FAFC] text-xs" data-testid="new-lesson-banner" />
+                  className="flex-1 bg-[rgb(var(--ink-deep))] border-[rgb(var(--ink-border))] text-[rgb(var(--text-main))] text-xs" data-testid="new-lesson-banner" />
               </div>
               <div className="flex flex-col sm:flex-row sm:items-center gap-3 pt-1">
-                <label className="flex items-center gap-2 text-xs text-[#94A3B8] cursor-pointer">
+                <label className="flex items-center gap-2 text-xs text-[rgb(var(--text-muted))] cursor-pointer">
                   <input type="checkbox" checked={lessonForm.hidden}
                     onChange={e => setLessonForm({ ...lessonForm, hidden: e.target.checked })}
-                    className="accent-[#D4AF37]" data-testid="new-lesson-hidden" />
+                    className="accent-[rgb(var(--gold))]" data-testid="new-lesson-hidden" />
                   Hide from students
                 </label>
-                <label className="flex flex-1 items-center gap-2 text-xs text-[#94A3B8]">
+                <label className="flex flex-1 items-center gap-2 text-xs text-[rgb(var(--text-muted))]">
                   <span className="whitespace-nowrap">Release on</span>
                   <Input type="datetime-local" value={lessonForm.available_at}
                     disabled={lessonForm.hidden}
                     onChange={e => setLessonForm({ ...lessonForm, available_at: e.target.value })}
-                    className="flex-1 bg-[#050814] border-[#1E293B] text-[#F8FAFC] text-xs disabled:opacity-40"
+                    className="flex-1 bg-[rgb(var(--ink-deep))] border-[rgb(var(--ink-border))] text-[rgb(var(--text-main))] text-xs disabled:opacity-40"
                     data-testid="new-lesson-available-at" />
                 </label>
               </div>
-              <p className="text-[11px] text-[#64748B]">
+              <p className="text-[11px] text-[rgb(var(--text-dim))]">
                 {lessonForm.hidden
                   ? 'Hidden lessons stay invisible to students until you unhide them.'
                   : lessonForm.available_at
@@ -405,18 +405,18 @@ export default function CourseDetailPage({ user }) {
                     : 'Leave both blank to publish immediately.'}
               </p>
               <div className="flex gap-2">
-                <Button onClick={handleAddLesson} size="sm" className="bg-[#D4AF37] text-[#050814] hover:bg-[#F3E5AB] text-xs" data-testid="submit-lesson-btn">Create Lesson</Button>
-                <Button onClick={() => setShowAddLesson(false)} size="sm" variant="ghost" className="text-[#94A3B8] text-xs">Cancel</Button>
+                <Button onClick={handleAddLesson} size="sm" className="bg-[rgb(var(--gold))] text-[rgb(var(--ink-deep))] hover:bg-[rgb(var(--gold-soft))] text-xs" data-testid="submit-lesson-btn">Create Lesson</Button>
+                <Button onClick={() => setShowAddLesson(false)} size="sm" variant="ghost" className="text-[rgb(var(--text-muted))] text-xs">Cancel</Button>
               </div>
             </CardContent>
           </Card>
         )}
 
         {lessons.length === 0 ? (
-          <Card className="bg-[#0F172A] border-[#1E293B]">
+          <Card className="bg-[rgb(var(--ink-card))] border-[rgb(var(--ink-border))]">
             <CardContent className="p-8 text-center">
-              <BookOpenText size={36} weight="duotone" className="text-[#94A3B8] mx-auto mb-3" />
-              <p className="text-sm text-[#94A3B8]">No lessons have been added yet.</p>
+              <BookOpenText size={36} weight="duotone" className="text-[rgb(var(--text-muted))] mx-auto mb-3" />
+              <p className="text-sm text-[rgb(var(--text-muted))]">No lessons have been added yet.</p>
             </CardContent>
           </Card>
         ) : (
@@ -424,7 +424,7 @@ export default function CourseDetailPage({ user }) {
             {curriculumGroups.map((group, gi) => (
               <div key={group.module?.id || `ungrouped-${gi}`}>
                 {group.module && (
-                  <p className="text-[11px] tracking-[0.15em] uppercase text-[#94A3B8] mb-2 mt-2">{group.module.title}</p>
+                  <p className="text-[11px] tracking-[0.15em] uppercase text-[rgb(var(--text-muted))] mb-2 mt-2">{group.module.title}</p>
                 )}
                 <div className="space-y-2">
                   {group.items.map((lesson) => (

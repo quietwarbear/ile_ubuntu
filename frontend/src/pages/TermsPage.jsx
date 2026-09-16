@@ -6,38 +6,38 @@ export default function TermsPage() {
   const navigate = useNavigate();
 
   return (
-    <div className="min-h-screen bg-[#050814]">
+    <div className="min-h-screen bg-[rgb(var(--ink-deep))]">
       {/* Header */}
       <div className="max-w-4xl mx-auto px-6 pt-12 pb-6">
         <button
           onClick={() => navigate(-1)}
-          className="text-sm text-[#94A3B8] hover:text-[#D4AF37] transition-colors mb-8 flex items-center gap-2"
+          className="text-sm text-[rgb(var(--text-muted))] hover:text-[rgb(var(--gold))] transition-colors mb-8 flex items-center gap-2"
         >
           <span>&larr;</span> Back
         </button>
         <div className="flex items-center gap-3 mb-6">
-          <div className="w-10 h-10 rounded-full bg-[#D4AF37]/10 border border-[#D4AF37]/30 flex items-center justify-center">
+          <div className="w-10 h-10 rounded-full bg-[rgb(var(--gold)/0.1)] border border-[rgb(var(--gold)/0.3)] flex items-center justify-center">
             <BrandMark className="w-6 h-6 object-contain" />
           </div>
-          <span className="text-[#D4AF37] text-sm tracking-[0.15em] uppercase" style={{ fontFamily: 'Cormorant Garamond, serif' }}>
+          <span className="text-[rgb(var(--gold))] text-sm tracking-[0.15em] uppercase" style={{ fontFamily: 'Cormorant Garamond, serif' }}>
             The Ile Ubuntu
           </span>
         </div>
         <h1
-          className="text-3xl sm:text-4xl text-[#F8FAFC] mb-2"
+          className="text-3xl sm:text-4xl text-[rgb(var(--text-main))] mb-2"
           style={{ fontFamily: 'Cormorant Garamond, serif' }}
         >
           Terms of Use
         </h1>
-        <p className="text-sm text-[#94A3B8]">Last updated: April 4, 2026</p>
+        <p className="text-sm text-[rgb(var(--text-muted))]">Last updated: April 4, 2026</p>
       </div>
 
       {/* Content */}
       <div className="max-w-4xl mx-auto px-6 pb-20">
-        <div className="prose prose-invert max-w-none text-[#CBD5E1] text-[15px] leading-relaxed space-y-6">
+        <div className="prose prose-invert max-w-none text-[rgb(var(--text-softer))] text-[15px] leading-relaxed space-y-6">
 
           <section>
-            <h2 className="text-xl text-[#F8FAFC] mb-3" style={{ fontFamily: 'Cormorant Garamond, serif' }}>1. Acceptance of Terms</h2>
+            <h2 className="text-xl text-[rgb(var(--text-main))] mb-3" style={{ fontFamily: 'Cormorant Garamond, serif' }}>1. Acceptance of Terms</h2>
             <p>
               By accessing or using The Ile Ubuntu platform, including the website at www.ile-ubuntu.org and
               The Ile Ubuntu mobile application (collectively, the "Service"), operated by Ubuntu Markets, LLC
@@ -47,7 +47,7 @@ export default function TermsPage() {
           </section>
 
           <section>
-            <h2 className="text-xl text-[#F8FAFC] mb-3" style={{ fontFamily: 'Cormorant Garamond, serif' }}>2. Description of Service</h2>
+            <h2 className="text-xl text-[rgb(var(--text-main))] mb-3" style={{ fontFamily: 'Cormorant Garamond, serif' }}>2. Description of Service</h2>
             <p>
               The Ile Ubuntu is a learning management platform rooted in the Ubuntu philosophy. The Service
               provides access to structured courses, live teaching sessions, community forums, cohort-based
@@ -56,7 +56,7 @@ export default function TermsPage() {
           </section>
 
           <section>
-            <h2 className="text-xl text-[#F8FAFC] mb-3" style={{ fontFamily: 'Cormorant Garamond, serif' }}>3. Account Registration</h2>
+            <h2 className="text-xl text-[rgb(var(--text-main))] mb-3" style={{ fontFamily: 'Cormorant Garamond, serif' }}>3. Account Registration</h2>
             <p>
               To use the Service, you must create an account by providing accurate and complete information.
               You are responsible for maintaining the confidentiality of your account credentials and for all
@@ -65,21 +65,21 @@ export default function TermsPage() {
           </section>
 
           <section>
-            <h2 className="text-xl text-[#F8FAFC] mb-3" style={{ fontFamily: 'Cormorant Garamond, serif' }}>4. Subscription Plans and Pricing</h2>
+            <h2 className="text-xl text-[rgb(var(--text-main))] mb-3" style={{ fontFamily: 'Cormorant Garamond, serif' }}>4. Subscription Plans and Pricing</h2>
             <p>The Ile Ubuntu offers the following membership tiers:</p>
 
             <div className="mt-4 space-y-4">
-              <div className="p-4 rounded-lg border border-[#1E293B] bg-[#0F172A]">
-                <h3 className="text-[#E2E8F0] font-semibold">Explorer (Free)</h3>
-                <p className="text-sm text-[#94A3B8] mt-1">
+              <div className="p-4 rounded-lg border border-[rgb(var(--ink-border))] bg-[rgb(var(--ink-card))]">
+                <h3 className="text-[rgb(var(--text-soft))] font-semibold">Explorer (Free)</h3>
+                <p className="text-sm text-[rgb(var(--text-muted))] mt-1">
                   Browse public courses, access community features, basic archives, and enroll in up to 2 courses.
                   No payment required.
                 </p>
               </div>
 
-              <div className="p-4 rounded-lg border border-[#D4AF37]/20 bg-[#D4AF37]/5">
-                <h3 className="text-[#D4AF37] font-semibold">Scholar &mdash; $19.99/month or annual pricing</h3>
-                <p className="text-sm text-[#94A3B8] mt-1">
+              <div className="p-4 rounded-lg border border-[rgb(var(--gold)/0.2)] bg-[rgb(var(--gold)/0.05)]">
+                <h3 className="text-[rgb(var(--gold))] font-semibold">Scholar &mdash; $19.99/month or annual pricing</h3>
+                <p className="text-sm text-[rgb(var(--text-muted))] mt-1">
                   All Explorer features plus unlimited course enrollment, cohort membership, knowledge spaces
                   access, and priority support.
                 </p>
@@ -87,7 +87,7 @@ export default function TermsPage() {
 
               <div className="p-4 rounded-lg border border-violet-500/20 bg-violet-500/5">
                 <h3 className="text-violet-400 font-semibold">Elder Circle &mdash; $49.99/month or annual pricing</h3>
-                <p className="text-sm text-[#94A3B8] mt-1">
+                <p className="text-sm text-[rgb(var(--text-muted))] mt-1">
                   All Scholar features plus live teaching sessions, protected archives access, and governance
                   participation within the community.
                 </p>
@@ -101,44 +101,44 @@ export default function TermsPage() {
           </section>
 
           <section>
-            <h2 className="text-xl text-[#F8FAFC] mb-3" style={{ fontFamily: 'Cormorant Garamond, serif' }}>5. Auto-Renewable Subscriptions</h2>
+            <h2 className="text-xl text-[rgb(var(--text-main))] mb-3" style={{ fontFamily: 'Cormorant Garamond, serif' }}>5. Auto-Renewable Subscriptions</h2>
             <p>
-              Paid subscriptions (Scholar and Elder Circle) are offered as <strong className="text-[#E2E8F0]">auto-renewable subscriptions</strong>.
+              Paid subscriptions (Scholar and Elder Circle) are offered as <strong className="text-[rgb(var(--text-soft))]">auto-renewable subscriptions</strong>.
               By subscribing, you acknowledge and agree to the following:
             </p>
-            <ul className="list-disc pl-6 space-y-2 text-[#94A3B8] mt-3">
+            <ul className="list-disc pl-6 space-y-2 text-[rgb(var(--text-muted))] mt-3">
               <li>
-                <strong className="text-[#E2E8F0]">Payment:</strong> Payment is charged to your Apple ID account
+                <strong className="text-[rgb(var(--text-soft))]">Payment:</strong> Payment is charged to your Apple ID account
                 (for iOS), your Google Play account (for Android), or your payment method on file (for web via
                 Stripe) at confirmation of purchase.
               </li>
               <li>
-                <strong className="text-[#E2E8F0]">Auto-Renewal:</strong> Subscriptions automatically renew unless
+                <strong className="text-[rgb(var(--text-soft))]">Auto-Renewal:</strong> Subscriptions automatically renew unless
                 auto-renew is turned off at least 24 hours before the end of the current billing period. Your account
                 will be charged for renewal within 24 hours prior to the end of the current period at the same rate.
               </li>
               <li>
-                <strong className="text-[#E2E8F0]">Managing Subscriptions:</strong> You can manage and cancel your
+                <strong className="text-[rgb(var(--text-soft))]">Managing Subscriptions:</strong> You can manage and cancel your
                 subscription at any time. On iOS, go to Settings &gt; [Your Name] &gt; Subscriptions. On Android,
                 go to Google Play Store &gt; Menu &gt; Subscriptions. On web, manage your subscription through
                 your account settings or contact us at support@ubuntu-village.org.
               </li>
               <li>
-                <strong className="text-[#E2E8F0]">Cancellation:</strong> If you cancel your subscription, you will
+                <strong className="text-[rgb(var(--text-soft))]">Cancellation:</strong> If you cancel your subscription, you will
                 continue to have access to your paid features until the end of your current billing period. No refunds
                 are provided for partial billing periods.
               </li>
               <li>
-                <strong className="text-[#E2E8F0]">Free Trial:</strong> If a free trial is offered, any unused portion
+                <strong className="text-[rgb(var(--text-soft))]">Free Trial:</strong> If a free trial is offered, any unused portion
                 of the trial period will be forfeited when you purchase a subscription.
               </li>
             </ul>
           </section>
 
           <section>
-            <h2 className="text-xl text-[#F8FAFC] mb-3" style={{ fontFamily: 'Cormorant Garamond, serif' }}>6. User Conduct</h2>
+            <h2 className="text-xl text-[rgb(var(--text-main))] mb-3" style={{ fontFamily: 'Cormorant Garamond, serif' }}>6. User Conduct</h2>
             <p>You agree not to:</p>
-            <ul className="list-disc pl-6 space-y-1 text-[#94A3B8]">
+            <ul className="list-disc pl-6 space-y-1 text-[rgb(var(--text-muted))]">
               <li>Use the Service for any unlawful purpose</li>
               <li>Post content that is abusive, harassing, defamatory, or discriminatory</li>
               <li>Share your account credentials with others</li>
@@ -152,7 +152,7 @@ export default function TermsPage() {
           </section>
 
           <section>
-            <h2 className="text-xl text-[#F8FAFC] mb-3" style={{ fontFamily: 'Cormorant Garamond, serif' }}>7. Intellectual Property</h2>
+            <h2 className="text-xl text-[rgb(var(--text-main))] mb-3" style={{ fontFamily: 'Cormorant Garamond, serif' }}>7. Intellectual Property</h2>
             <p>
               All content on the Service, including courses, materials, designs, logos, and software, is the
               property of Ubuntu Markets, LLC or its content creators and is protected by intellectual property
@@ -162,7 +162,7 @@ export default function TermsPage() {
           </section>
 
           <section>
-            <h2 className="text-xl text-[#F8FAFC] mb-3" style={{ fontFamily: 'Cormorant Garamond, serif' }}>8. User-Generated Content</h2>
+            <h2 className="text-xl text-[rgb(var(--text-main))] mb-3" style={{ fontFamily: 'Cormorant Garamond, serif' }}>8. User-Generated Content</h2>
             <p>
               By posting content to community forums, discussions, or other public areas of the Service, you
               grant us a non-exclusive, worldwide, royalty-free license to use, display, and distribute that
@@ -171,7 +171,7 @@ export default function TermsPage() {
           </section>
 
           <section>
-            <h2 className="text-xl text-[#F8FAFC] mb-3" style={{ fontFamily: 'Cormorant Garamond, serif' }}>9. Disclaimer of Warranties</h2>
+            <h2 className="text-xl text-[rgb(var(--text-main))] mb-3" style={{ fontFamily: 'Cormorant Garamond, serif' }}>9. Disclaimer of Warranties</h2>
             <p>
               The Service is provided "as is" and "as available" without warranties of any kind, whether express
               or implied. We do not guarantee that the Service will be uninterrupted, error-free, or secure.
@@ -180,7 +180,7 @@ export default function TermsPage() {
           </section>
 
           <section>
-            <h2 className="text-xl text-[#F8FAFC] mb-3" style={{ fontFamily: 'Cormorant Garamond, serif' }}>10. Limitation of Liability</h2>
+            <h2 className="text-xl text-[rgb(var(--text-main))] mb-3" style={{ fontFamily: 'Cormorant Garamond, serif' }}>10. Limitation of Liability</h2>
             <p>
               To the maximum extent permitted by law, Ubuntu Markets, LLC shall not be liable for any indirect,
               incidental, special, consequential, or punitive damages arising from your use of the Service,
@@ -189,7 +189,7 @@ export default function TermsPage() {
           </section>
 
           <section>
-            <h2 className="text-xl text-[#F8FAFC] mb-3" style={{ fontFamily: 'Cormorant Garamond, serif' }}>11. Changes to These Terms</h2>
+            <h2 className="text-xl text-[rgb(var(--text-main))] mb-3" style={{ fontFamily: 'Cormorant Garamond, serif' }}>11. Changes to These Terms</h2>
             <p>
               We may update these Terms of Use from time to time. We will notify you of material changes by
               posting the updated terms on this page and updating the "Last updated" date. Your continued use
@@ -198,7 +198,7 @@ export default function TermsPage() {
           </section>
 
           <section>
-            <h2 className="text-xl text-[#F8FAFC] mb-3" style={{ fontFamily: 'Cormorant Garamond, serif' }}>12. Governing Law</h2>
+            <h2 className="text-xl text-[rgb(var(--text-main))] mb-3" style={{ fontFamily: 'Cormorant Garamond, serif' }}>12. Governing Law</h2>
             <p>
               These Terms of Use shall be governed by and construed in accordance with the laws of the State
               of California, without regard to its conflict of law provisions.
@@ -206,19 +206,19 @@ export default function TermsPage() {
           </section>
 
           <section>
-            <h2 className="text-xl text-[#F8FAFC] mb-3" style={{ fontFamily: 'Cormorant Garamond, serif' }}>13. Contact Us</h2>
+            <h2 className="text-xl text-[rgb(var(--text-main))] mb-3" style={{ fontFamily: 'Cormorant Garamond, serif' }}>13. Contact Us</h2>
             <p>If you have questions about these Terms of Use, please contact us at:</p>
-            <div className="mt-2 text-[#94A3B8]">
+            <div className="mt-2 text-[rgb(var(--text-muted))]">
               <p>Ubuntu Markets, LLC</p>
               <p>Email: support@ubuntu-village.org</p>
               <p>Website: www.ile-ubuntu.org</p>
             </div>
           </section>
 
-          <section className="mt-8 pt-6 border-t border-[#1E293B]">
-            <p className="text-sm text-[#64748B]">
+          <section className="mt-8 pt-6 border-t border-[rgb(var(--ink-border))]">
+            <p className="text-sm text-[rgb(var(--text-dim))]">
               See also our{' '}
-              <Link to="/privacy-policy" className="text-[#D4AF37] hover:underline">Privacy Policy</Link>.
+              <Link to="/privacy-policy" className="text-[rgb(var(--gold))] hover:underline">Privacy Policy</Link>.
             </p>
           </section>
 

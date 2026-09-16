@@ -59,7 +59,7 @@ export default function GuideWidget({ user }) {
       {!open && (
         <button
           onClick={() => setOpen(true)}
-          className="fixed bottom-5 right-5 z-40 h-12 pl-4 pr-5 rounded-full bg-[#D4AF37] text-[#050814] shadow-lg shadow-black/40 flex items-center justify-center gap-2 hover:bg-[#F3E5AB] transition-colors"
+          className="fixed bottom-5 right-5 z-40 h-12 pl-4 pr-5 rounded-full bg-[rgb(var(--gold))] text-[rgb(var(--ink-deep))] shadow-lg shadow-black/40 flex items-center justify-center gap-2 hover:bg-[rgb(var(--gold-soft))] transition-colors"
           title="Ask the Village Guide"
           data-testid="guide-launcher"
         >
@@ -71,30 +71,30 @@ export default function GuideWidget({ user }) {
 
       {/* Panel */}
       {open && (
-        <div className="fixed bottom-5 right-5 z-40 w-[min(92vw,360px)] rounded-lg border border-[#D4AF37]/30 bg-[#0F172A] shadow-2xl shadow-black/60 flex flex-col overflow-hidden" data-testid="guide-panel">
-          <div className="flex items-center justify-between px-4 py-3 bg-[#050814] border-b border-[#1E293B]">
-            <span className="flex items-center gap-2 text-sm text-[#F8FAFC]" style={{ fontFamily: 'Cormorant Garamond, serif' }}>
-              <Compass size={16} weight="duotone" className="text-[#D4AF37]" /> Village Guide
+        <div className="fixed bottom-5 right-5 z-40 w-[min(92vw,360px)] rounded-lg border border-[rgb(var(--gold)/0.3)] bg-[rgb(var(--ink-card))] shadow-2xl shadow-black/60 flex flex-col overflow-hidden" data-testid="guide-panel">
+          <div className="flex items-center justify-between px-4 py-3 bg-[rgb(var(--ink-deep))] border-b border-[rgb(var(--ink-border))]">
+            <span className="flex items-center gap-2 text-sm text-[rgb(var(--text-main))]" style={{ fontFamily: 'Cormorant Garamond, serif' }}>
+              <Compass size={16} weight="duotone" className="text-[rgb(var(--gold))]" /> Village Guide
             </span>
-            <button onClick={() => setOpen(false)} className="text-[#94A3B8] hover:text-[#F8FAFC]" data-testid="guide-close">
+            <button onClick={() => setOpen(false)} className="text-[rgb(var(--text-muted))] hover:text-[rgb(var(--text-main))]" data-testid="guide-close">
               <X size={16} />
             </button>
           </div>
 
           <div className="flex-1 max-h-[50vh] overflow-y-auto p-3 space-y-2">
-            <div className="text-xs text-[#94A3B8] bg-[#050814] border border-[#1E293B] rounded-md p-2.5">{greeting}</div>
+            <div className="text-xs text-[rgb(var(--text-muted))] bg-[rgb(var(--ink-deep))] border border-[rgb(var(--ink-border))] rounded-md p-2.5">{greeting}</div>
             {thread.map((m, i) => (
               <div key={i} className={m.who === 'me' ? 'text-right' : ''}>
                 <div className={`inline-block text-left text-xs rounded-md p-2.5 max-w-[90%] ${
                   m.who === 'me'
-                    ? 'bg-[#D4AF37]/15 text-[#F3E5AB] border border-[#D4AF37]/25'
-                    : 'bg-[#050814] text-[#E2E8F0] border border-[#1E293B]'
+                    ? 'bg-[rgb(var(--gold)/0.15)] text-[rgb(var(--gold-soft))] border border-[rgb(var(--gold)/0.25)]'
+                    : 'bg-[rgb(var(--ink-deep))] text-[rgb(var(--text-soft))] border border-[rgb(var(--ink-border))]'
                 }`}>
                   <span className="whitespace-pre-wrap">{m.text}</span>
                   {m.route && (
                     <button
                       onClick={() => { navigate(m.route); setOpen(false); }}
-                      className="block mt-2 text-[11px] text-[#D4AF37] hover:underline"
+                      className="block mt-2 text-[11px] text-[rgb(var(--gold))] hover:underline"
                       data-testid="guide-take-me"
                     >
                       Take me there →
@@ -103,22 +103,22 @@ export default function GuideWidget({ user }) {
                 </div>
               </div>
             ))}
-            {busy && <div className="text-[10px] text-[#475569] italic">The guide is thinking…</div>}
+            {busy && <div className="text-[10px] text-[rgb(var(--text-faint))] italic">The guide is thinking…</div>}
             <div ref={endRef} />
           </div>
 
-          <div className="flex gap-2 p-3 border-t border-[#1E293B]">
+          <div className="flex gap-2 p-3 border-t border-[rgb(var(--ink-border))]">
             <input
               value={question}
               onChange={e => setQuestion(e.target.value)}
               onKeyDown={e => e.key === 'Enter' && ask()}
               placeholder="How do I…?"
               maxLength={500}
-              className="flex-1 px-3 py-2 rounded bg-[#050814] border border-[#1E293B] text-xs text-[#F8FAFC] placeholder-[#475569] focus:outline-none focus:border-[#D4AF37]/50"
+              className="flex-1 px-3 py-2 rounded bg-[rgb(var(--ink-deep))] border border-[rgb(var(--ink-border))] text-xs text-[rgb(var(--text-main))] placeholder-[rgb(var(--text-faint))] focus:outline-none focus:border-[rgb(var(--gold)/0.5)]"
               data-testid="guide-input"
             />
             <button onClick={ask} disabled={busy || !question.trim()}
-              className="px-3 rounded bg-[#D4AF37]/15 text-[#D4AF37] border border-[#D4AF37]/30 hover:bg-[#D4AF37]/25 disabled:opacity-40"
+              className="px-3 rounded bg-[rgb(var(--gold)/0.15)] text-[rgb(var(--gold))] border border-[rgb(var(--gold)/0.3)] hover:bg-[rgb(var(--gold)/0.25)] disabled:opacity-40"
               data-testid="guide-send">
               <PaperPlaneRight size={14} />
             </button>

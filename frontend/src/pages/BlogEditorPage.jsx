@@ -50,8 +50,8 @@ export default function BlogEditorPage({ user }) {
   if (!isFaculty) {
     return (
       <div className="text-center py-20">
-        <p className="text-[#94A3B8]">Only faculty, elders, and admins can write posts.</p>
-        <Button onClick={() => navigate('/blog')} variant="ghost" className="mt-4 text-[#D4AF37]">Back to Blog</Button>
+        <p className="text-[rgb(var(--text-muted))]">Only faculty, elders, and admins can write posts.</p>
+        <Button onClick={() => navigate('/blog')} variant="ghost" className="mt-4 text-[rgb(var(--gold))]">Back to Blog</Button>
       </div>
     );
   }
@@ -84,7 +84,7 @@ export default function BlogEditorPage({ user }) {
   if (loading) {
     return (
       <div className="flex justify-center py-20">
-        <div className="w-8 h-8 border-2 border-[#D4AF37] border-t-transparent rounded-full animate-spin" />
+        <div className="w-8 h-8 border-2 border-[rgb(var(--gold))] border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
@@ -93,28 +93,28 @@ export default function BlogEditorPage({ user }) {
     <div className="max-w-3xl mx-auto space-y-6 animate-fade-in-up" data-testid="blog-editor-page">
       <button
         onClick={() => navigate('/blog')}
-        className="flex items-center gap-2 text-sm text-[#94A3B8] hover:text-[#D4AF37] transition-colors"
+        className="flex items-center gap-2 text-sm text-[rgb(var(--text-muted))] hover:text-[rgb(var(--gold))] transition-colors"
       >
         <ArrowLeft size={16} /> Back to Blog
       </button>
 
       <h1
-        className="text-3xl font-light text-[#F8FAFC]"
+        className="text-3xl font-light text-[rgb(var(--text-main))]"
         style={{ fontFamily: 'Cormorant Garamond, serif' }}
       >
         {isEdit ? 'Edit Post' : 'Write a New Post'}
       </h1>
 
-      <Card className="bg-[#0F172A] border-[#1E293B]">
+      <Card className="bg-[rgb(var(--ink-card))] border-[rgb(var(--ink-border))]">
         <CardContent className="p-6 space-y-5">
           {/* Title */}
           <div>
-            <label className="text-[10px] uppercase tracking-wider text-[#D4AF37] block mb-1.5">Title</label>
+            <label className="text-[10px] uppercase tracking-wider text-[rgb(var(--gold))] block mb-1.5">Title</label>
             <Input
               placeholder="Your post title"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              className="bg-[#050814] border-[#1E293B] text-[#F8FAFC] text-lg"
+              className="bg-[rgb(var(--ink-deep))] border-[rgb(var(--ink-border))] text-[rgb(var(--text-main))] text-lg"
               style={{ fontFamily: 'Cormorant Garamond, serif' }}
               data-testid="post-title-input"
             />
@@ -122,7 +122,7 @@ export default function BlogEditorPage({ user }) {
 
           {/* Cover Image */}
           <div>
-            <label className="text-[10px] uppercase tracking-wider text-[#D4AF37] block mb-1.5">
+            <label className="text-[10px] uppercase tracking-wider text-[rgb(var(--gold))] block mb-1.5">
               <ImageIcon size={10} className="inline mr-1" /> Cover Image URL (optional)
             </label>
             <div className="flex gap-2">
@@ -130,17 +130,17 @@ export default function BlogEditorPage({ user }) {
                 placeholder="https://images.unsplash.com/..."
                 value={coverImage}
                 onChange={(e) => setCoverImage(e.target.value)}
-                className="bg-[#050814] border-[#1E293B] text-[#F8FAFC] text-xs flex-1"
+                className="bg-[rgb(var(--ink-deep))] border-[rgb(var(--ink-border))] text-[rgb(var(--text-main))] text-xs flex-1"
                 data-testid="cover-image-input"
               />
               {coverImage && (
-                <button onClick={() => setCoverImage('')} className="text-[#94A3B8] hover:text-red-400 p-2">
+                <button onClick={() => setCoverImage('')} className="text-[rgb(var(--text-muted))] hover:text-red-400 p-2">
                   <X size={14} />
                 </button>
               )}
             </div>
             {coverImage && (
-              <div className="mt-2 h-32 rounded-md overflow-hidden border border-[#1E293B]">
+              <div className="mt-2 h-32 rounded-md overflow-hidden border border-[rgb(var(--ink-border))]">
                 <img src={coverImage} alt="Cover preview" className="w-full h-full object-cover" />
               </div>
             )}
@@ -148,7 +148,7 @@ export default function BlogEditorPage({ user }) {
 
           {/* Category */}
           <div>
-            <label className="text-[10px] uppercase tracking-wider text-[#D4AF37] block mb-1.5">Category</label>
+            <label className="text-[10px] uppercase tracking-wider text-[rgb(var(--gold))] block mb-1.5">Category</label>
             <div className="flex flex-wrap gap-2">
               {CATEGORIES.map(cat => (
                 <button
@@ -156,8 +156,8 @@ export default function BlogEditorPage({ user }) {
                   onClick={() => setCategory(category === cat ? '' : cat)}
                   className={`px-3 py-1.5 text-[10px] rounded-full border transition-all ${
                     category === cat
-                      ? 'bg-[#D4AF37] text-[#050814] border-[#D4AF37]'
-                      : 'text-[#94A3B8] border-[#1E293B] hover:border-[#D4AF37]/30'
+                      ? 'bg-[rgb(var(--gold))] text-[rgb(var(--ink-deep))] border-[rgb(var(--gold))]'
+                      : 'text-[rgb(var(--text-muted))] border-[rgb(var(--ink-border))] hover:border-[rgb(var(--gold)/0.3)]'
                   }`}
                   data-testid={`category-${cat.toLowerCase()}`}
                 >
@@ -169,40 +169,40 @@ export default function BlogEditorPage({ user }) {
 
           {/* Content */}
           <div>
-            <label className="text-[10px] uppercase tracking-wider text-[#D4AF37] block mb-1.5">
+            <label className="text-[10px] uppercase tracking-wider text-[rgb(var(--gold))] block mb-1.5">
               Content (Markdown supported)
             </label>
             <Textarea
               placeholder="Write your post content here... Markdown is fully supported:&#10;&#10;## Heading&#10;**Bold**, *italic*&#10;- Lists&#10;> Blockquotes&#10;[Links](url)&#10;![Images](url)"
               value={content}
               onChange={(e) => setContent(e.target.value)}
-              className="bg-[#050814] border-[#1E293B] text-[#F8FAFC] text-sm min-h-[300px] font-mono leading-relaxed"
+              className="bg-[rgb(var(--ink-deep))] border-[rgb(var(--ink-border))] text-[rgb(var(--text-main))] text-sm min-h-[300px] font-mono leading-relaxed"
               data-testid="post-content-input"
             />
           </div>
 
           {/* Tags */}
           <div>
-            <label className="text-[10px] uppercase tracking-wider text-[#D4AF37] block mb-1.5">Tags (comma-separated)</label>
+            <label className="text-[10px] uppercase tracking-wider text-[rgb(var(--gold))] block mb-1.5">Tags (comma-separated)</label>
             <Input
               placeholder="ubuntu, education, community"
               value={tags}
               onChange={(e) => setTags(e.target.value)}
-              className="bg-[#050814] border-[#1E293B] text-[#F8FAFC] text-xs"
+              className="bg-[rgb(var(--ink-deep))] border-[rgb(var(--ink-border))] text-[rgb(var(--text-main))] text-xs"
               data-testid="post-tags-input"
             />
           </div>
 
           {/* Visibility */}
           <div>
-            <label className="text-[10px] uppercase tracking-wider text-[#D4AF37] block mb-1.5">Visibility</label>
+            <label className="text-[10px] uppercase tracking-wider text-[rgb(var(--gold))] block mb-1.5">Visibility</label>
             <div className="flex gap-3">
               <button
                 onClick={() => setVisibility('public')}
                 className={`flex items-center gap-2 px-4 py-2.5 rounded-md border text-xs transition-all ${
                   visibility === 'public'
                     ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30'
-                    : 'text-[#94A3B8] border-[#1E293B] hover:border-[#D4AF37]/30'
+                    : 'text-[rgb(var(--text-muted))] border-[rgb(var(--ink-border))] hover:border-[rgb(var(--gold)/0.3)]'
                 }`}
                 data-testid="visibility-public"
               >
@@ -213,7 +213,7 @@ export default function BlogEditorPage({ user }) {
                 className={`flex items-center gap-2 px-4 py-2.5 rounded-md border text-xs transition-all ${
                   visibility === 'members'
                     ? 'bg-violet-500/10 text-violet-400 border-violet-500/30'
-                    : 'text-[#94A3B8] border-[#1E293B] hover:border-[#D4AF37]/30'
+                    : 'text-[rgb(var(--text-muted))] border-[rgb(var(--ink-border))] hover:border-[rgb(var(--gold)/0.3)]'
                 }`}
                 data-testid="visibility-members"
               >
@@ -223,8 +223,8 @@ export default function BlogEditorPage({ user }) {
           </div>
 
           {/* Actions */}
-          <div className="flex items-center justify-between pt-4 border-t border-[#1E293B]">
-            <Button variant="ghost" onClick={() => navigate('/blog')} className="text-[#94A3B8] text-xs">
+          <div className="flex items-center justify-between pt-4 border-t border-[rgb(var(--ink-border))]">
+            <Button variant="ghost" onClick={() => navigate('/blog')} className="text-[rgb(var(--text-muted))] text-xs">
               Cancel
             </Button>
             <div className="flex gap-2">
@@ -232,7 +232,7 @@ export default function BlogEditorPage({ user }) {
                 onClick={() => handleSubmit('draft')}
                 variant="outline"
                 disabled={saving}
-                className="border-[#1E293B] text-[#94A3B8] text-xs"
+                className="border-[rgb(var(--ink-border))] text-[rgb(var(--text-muted))] text-xs"
                 data-testid="save-draft-btn"
               >
                 Save as Draft
@@ -240,7 +240,7 @@ export default function BlogEditorPage({ user }) {
               <Button
                 onClick={() => handleSubmit('published')}
                 disabled={saving}
-                className="bg-[#D4AF37] text-[#050814] hover:bg-[#F3E5AB] text-xs"
+                className="bg-[rgb(var(--gold))] text-[rgb(var(--ink-deep))] hover:bg-[rgb(var(--gold-soft))] text-xs"
                 data-testid="publish-btn"
               >
                 {saving ? 'Publishing...' : isEdit ? 'Update Post' : 'Publish'}

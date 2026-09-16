@@ -16,13 +16,13 @@ import { apiUpload, BACKEND_URL } from '../../lib/api';
 // A short, readable set on the dark editor surface. Anything else goes through
 // the native picker beside them.
 const TEXT_COLORS = [
-  { hex: '#D4AF37', name: 'Gold' },
+  { hex: 'rgb(var(--gold))', name: 'Gold' },
   { hex: '#EF4444', name: 'Red' },
   { hex: '#F59E0B', name: 'Amber' },
   { hex: '#10B981', name: 'Green' },
   { hex: '#3B82F6', name: 'Blue' },
   { hex: '#A78BFA', name: 'Purple' },
-  { hex: '#F8FAFC', name: 'White' },
+  { hex: 'rgb(var(--text-main))', name: 'White' },
 ];
 
 export default function WysiwygEditor({ value, onChange, placeholder, minHeight = 200, testId }) {
@@ -169,44 +169,44 @@ export default function WysiwygEditor({ value, onChange, placeholder, minHeight 
 
   const Btn = ({ icon: Icon, label, onClick }) => (
     <button type="button" onMouseDown={(e) => { e.preventDefault(); onClick(); }} title={label}
-      className="p-1.5 rounded text-[#94A3B8] hover:text-[#D4AF37] hover:bg-[#0F172A] transition-colors">
+      className="p-1.5 rounded text-[rgb(var(--text-muted))] hover:text-[rgb(var(--gold))] hover:bg-[rgb(var(--ink-card))] transition-colors">
       <Icon size={15} weight="bold" />
     </button>
   );
 
   return (
-    <div className="rounded-md border border-[#1E293B] bg-[#050814] overflow-hidden" data-testid={testId}>
-      <div className="flex items-center gap-0.5 px-1.5 py-1 border-b border-[#1E293B] flex-wrap">
+    <div className="rounded-md border border-[rgb(var(--ink-border))] bg-[rgb(var(--ink-deep))] overflow-hidden" data-testid={testId}>
+      <div className="flex items-center gap-0.5 px-1.5 py-1 border-b border-[rgb(var(--ink-border))] flex-wrap">
         <Btn icon={TextHOne} label="Heading" onClick={() => cmd('formatBlock', 'h2')} />
         <Btn icon={TextB} label="Bold" onClick={() => cmd('bold')} />
         <Btn icon={TextItalic} label="Italic" onClick={() => cmd('italic')} />
         <Btn icon={ListBullets} label="Bullet list" onClick={() => cmd('insertUnorderedList')} />
         <Btn icon={Quotes} label="Quote" onClick={() => cmd('formatBlock', 'blockquote')} />
-        <span className="w-px h-4 bg-[#1E293B] mx-1" />
+        <span className="w-px h-4 bg-[rgb(var(--ink-border))] mx-1" />
         <Btn icon={LinkSimple} label="Link" onClick={() => insertUrl('link')} />
         <Btn icon={ImageIcon} label="Image" onClick={() => insertUrl('image')} />
         <Btn icon={VideoCamera} label="Video (YouTube/Vimeo)" onClick={() => insertUrl('video')} />
         <Btn icon={FilePdf} label={uploadingPdf ? 'Uploading PDF…' : 'Upload PDF from your device'}
           onClick={() => !uploadingPdf && pdfInputRef.current?.click()} />
-        <span className="w-px h-4 bg-[#1E293B] mx-1" />
+        <span className="w-px h-4 bg-[rgb(var(--ink-border))] mx-1" />
         <div className="relative">
           <button type="button" title="Text colour"
             onMouseDown={(e) => { e.preventDefault(); rememberSelection(); setShowColors((v) => !v); }}
-            className="p-1.5 rounded text-[#94A3B8] hover:text-[#D4AF37] hover:bg-[#0F172A] transition-colors"
+            className="p-1.5 rounded text-[rgb(var(--text-muted))] hover:text-[rgb(var(--gold))] hover:bg-[rgb(var(--ink-card))] transition-colors"
             data-testid={testId ? `${testId}-color` : undefined}>
             <Palette size={15} weight="bold" />
           </button>
           {showColors && (
-            <div className="absolute left-0 top-full z-20 mt-1 flex items-center gap-1 rounded-md border border-[#1E293B] bg-[#0F172A] p-2 shadow-lg">
+            <div className="absolute left-0 top-full z-20 mt-1 flex items-center gap-1 rounded-md border border-[rgb(var(--ink-border))] bg-[rgb(var(--ink-card))] p-2 shadow-lg">
               {TEXT_COLORS.map(({ hex, name }) => (
                 <button key={hex} type="button" title={name}
                   onMouseDown={(e) => { e.preventDefault(); applyColor(hex); }}
-                  className="h-5 w-5 rounded-full border border-[#334155]"
+                  className="h-5 w-5 rounded-full border border-[rgb(var(--ink-border-strong))]"
                   style={{ backgroundColor: hex }}
                   data-testid={`color-${hex.replace('#', '')}`} />
               ))}
               <label title="Any colour"
-                className="flex h-5 w-5 cursor-pointer items-center justify-center rounded-full border border-dashed border-[#475569] text-[9px] text-[#94A3B8]">
+                className="flex h-5 w-5 cursor-pointer items-center justify-center rounded-full border border-dashed border-[rgb(var(--text-faint))] text-[9px] text-[rgb(var(--text-muted))]">
                 +
                 <input type="color" className="sr-only"
                   onMouseDown={rememberSelection}
@@ -214,14 +214,14 @@ export default function WysiwygEditor({ value, onChange, placeholder, minHeight 
               </label>
               <button type="button" title="Remove colour"
                 onMouseDown={(e) => { e.preventDefault(); clearColor(); }}
-                className="ml-1 text-[10px] text-[#94A3B8] hover:text-[#D4AF37]"
+                className="ml-1 text-[10px] text-[rgb(var(--text-muted))] hover:text-[rgb(var(--gold))]"
                 data-testid="color-clear">
                 Clear
               </button>
             </div>
           )}
         </div>
-        <span className="ml-auto text-[9px] text-[#475569] pr-1.5 hidden sm:block">
+        <span className="ml-auto text-[9px] text-[rgb(var(--text-faint))] pr-1.5 hidden sm:block">
           {uploadingPdf ? 'Uploading PDF…' : 'Live preview · saved as markdown'}
         </span>
       </div>
@@ -234,18 +234,18 @@ export default function WysiwygEditor({ value, onChange, placeholder, minHeight 
         onInput={emit}
         data-placeholder={placeholder}
         style={{ minHeight }}
-        className="wys-editor prose prose-invert prose-sm max-w-none px-3 py-2 text-[#F8FAFC] focus:outline-none
-          prose-headings:text-[#F8FAFC] prose-h2:text-lg prose-h3:text-base
-          prose-p:text-[#F8FAFC] prose-strong:text-[#F8FAFC] prose-em:text-[#D4AF37]
-          prose-a:text-[#D4AF37] prose-li:text-[#F8FAFC]
-          prose-blockquote:border-l-[#D4AF37] prose-blockquote:text-[#94A3B8]
-          prose-img:rounded-md prose-img:border prose-img:border-[#1E293B] prose-img:max-h-72"
+        className="wys-editor prose prose-invert prose-sm max-w-none px-3 py-2 text-[rgb(var(--text-main))] focus:outline-none
+          prose-headings:text-[rgb(var(--text-main))] prose-h2:text-lg prose-h3:text-base
+          prose-p:text-[rgb(var(--text-main))] prose-strong:text-[rgb(var(--text-main))] prose-em:text-[rgb(var(--gold))]
+          prose-a:text-[rgb(var(--gold))] prose-li:text-[rgb(var(--text-main))]
+          prose-blockquote:border-l-[rgb(var(--gold))] prose-blockquote:text-[rgb(var(--text-muted))]
+          prose-img:rounded-md prose-img:border prose-img:border-[rgb(var(--ink-border))] prose-img:max-h-72"
         data-testid={testId ? `${testId}-editable` : undefined}
       />
       <style>{`
         .wys-editor:empty:before { content: attr(data-placeholder); color: #475569; }
-        .wys-embed { margin: 8px 0; padding: 8px 10px; border-radius: 6px; background:#0F172A;
-          border:1px solid #1E293B; color:#D4AF37; font-size:12px; word-break:break-all; }
+        .wys-embed { margin: 8px 0; padding: 8px 10px; border-radius: 6px; background:rgb(var(--ink-card));
+          border:1px solid rgb(var(--ink-border)); color:rgb(var(--gold)); font-size:12px; word-break:break-all; }
       `}</style>
     </div>
   );

@@ -114,29 +114,29 @@ export default function LessonContentViewer({ content, banner }) {
         <img
           src={banner}
           alt=""
-          className="w-full max-h-72 object-cover rounded-lg border border-[#1E293B] mb-5"
+          className="w-full max-h-72 object-cover rounded-lg border border-[rgb(var(--ink-border))] mb-5"
           data-testid="lesson-banner"
         />
       )}
 
       {/* Markdown Content */}
       <div className="prose prose-invert prose-sm max-w-none
-        prose-headings:text-[#F8FAFC] prose-headings:font-light
+        prose-headings:text-[rgb(var(--text-main))] prose-headings:font-light
         prose-h1:text-xl prose-h2:text-lg prose-h3:text-base
-        prose-p:text-[#94A3B8] prose-p:leading-relaxed prose-p:text-sm
-        prose-strong:text-[#F8FAFC]
-        prose-em:text-[#D4AF37]
-        prose-a:text-[#D4AF37] prose-a:no-underline hover:prose-a:underline
-        prose-code:text-[#D4AF37] prose-code:bg-[#050814] prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:text-xs prose-code:border prose-code:border-[#1E293B]
-        prose-pre:bg-[#050814] prose-pre:border prose-pre:border-[#1E293B] prose-pre:rounded-md
-        prose-blockquote:border-l-[#D4AF37] prose-blockquote:text-[#94A3B8] prose-blockquote:bg-[#050814]/50 prose-blockquote:py-1 prose-blockquote:px-3 prose-blockquote:rounded-r
-        prose-ul:text-[#94A3B8] prose-ol:text-[#94A3B8]
-        prose-li:text-sm prose-li:marker:text-[#D4AF37]
-        prose-hr:border-[#1E293B]
-        prose-img:rounded-md prose-img:border prose-img:border-[#1E293B]
+        prose-p:text-[rgb(var(--text-muted))] prose-p:leading-relaxed prose-p:text-sm
+        prose-strong:text-[rgb(var(--text-main))]
+        prose-em:text-[rgb(var(--gold))]
+        prose-a:text-[rgb(var(--gold))] prose-a:no-underline hover:prose-a:underline
+        prose-code:text-[rgb(var(--gold))] prose-code:bg-[rgb(var(--ink-deep))] prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:text-xs prose-code:border prose-code:border-[rgb(var(--ink-border))]
+        prose-pre:bg-[rgb(var(--ink-deep))] prose-pre:border prose-pre:border-[rgb(var(--ink-border))] prose-pre:rounded-md
+        prose-blockquote:border-l-[rgb(var(--gold))] prose-blockquote:text-[rgb(var(--text-muted))] prose-blockquote:bg-[rgb(var(--ink-deep)/0.5)] prose-blockquote:py-1 prose-blockquote:px-3 prose-blockquote:rounded-r
+        prose-ul:text-[rgb(var(--text-muted))] prose-ol:text-[rgb(var(--text-muted))]
+        prose-li:text-sm prose-li:marker:text-[rgb(var(--gold))]
+        prose-hr:border-[rgb(var(--ink-border))]
+        prose-img:rounded-md prose-img:border prose-img:border-[rgb(var(--ink-border))]
         prose-table:border-collapse
-        prose-th:bg-[#050814] prose-th:text-[#D4AF37] prose-th:text-xs prose-th:px-3 prose-th:py-2 prose-th:border prose-th:border-[#1E293B]
-        prose-td:text-[#94A3B8] prose-td:text-xs prose-td:px-3 prose-td:py-2 prose-td:border prose-td:border-[#1E293B]
+        prose-th:bg-[rgb(var(--ink-deep))] prose-th:text-[rgb(var(--gold))] prose-th:text-xs prose-th:px-3 prose-th:py-2 prose-th:border prose-th:border-[rgb(var(--ink-border))]
+        prose-td:text-[rgb(var(--text-muted))] prose-td:text-xs prose-td:px-3 prose-td:py-2 prose-td:border prose-td:border-[rgb(var(--ink-border))]
       ">
         <ReactMarkdown remarkPlugins={[remarkGfm]} components={MARKDOWN_COMPONENTS}>{text}</ReactMarkdown>
       </div>
@@ -145,7 +145,7 @@ export default function LessonContentViewer({ content, banner }) {
       {embeds.length > 0 && (
         <div className="mt-4 space-y-3">
           {embeds.map((embed, idx) => (
-            <div key={idx} className="rounded-md overflow-hidden border border-[#1E293B]" data-testid={`embed-${embed.type}-${idx}`}>
+            <div key={idx} className="rounded-md overflow-hidden border border-[rgb(var(--ink-border))]" data-testid={`embed-${embed.type}-${idx}`}>
               {embed.type === 'youtube' && (
                 <iframe
                   src={`https://www.youtube.com/embed/${embed.id}`}

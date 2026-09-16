@@ -55,17 +55,17 @@ function CircleCard({ circle, currentUserId, onEnded }) {
   };
 
   return (
-    <Card className="bg-[#0F172A] border-[#1E293B]" data-testid={`circle-${circle.id}`}>
+    <Card className="bg-[rgb(var(--ink-card))] border-[rgb(var(--ink-border))]" data-testid={`circle-${circle.id}`}>
       <CardHeader className="pb-2 cursor-pointer" onClick={() => setOpen(o => !o)}>
         <div className="flex items-center justify-between">
-          <CardTitle className="text-sm text-[#F8FAFC] flex items-center gap-2" style={{ fontFamily: 'Cormorant Garamond, serif' }}>
+          <CardTitle className="text-sm text-[rgb(var(--text-main))] flex items-center gap-2" style={{ fontFamily: 'Cormorant Garamond, serif' }}>
             <Avatar person={other} />
             <span>
               {other?.name}
-              <span className="text-[10px] text-[#94A3B8] ml-2">your co-learner</span>
+              <span className="text-[10px] text-[rgb(var(--text-muted))] ml-2">your co-learner</span>
             </span>
           </CardTitle>
-          {open ? <CaretUp size={14} className="text-[#94A3B8]" /> : <CaretDown size={14} className="text-[#94A3B8]" />}
+          {open ? <CaretUp size={14} className="text-[rgb(var(--text-muted))]" /> : <CaretDown size={14} className="text-[rgb(var(--text-muted))]" />}
         </div>
       </CardHeader>
       {open && (
@@ -73,7 +73,7 @@ function CircleCard({ circle, currentUserId, onEnded }) {
           <div className="flex gap-2">
             <button
               onClick={() => navigate('/messages')}
-              className="flex items-center gap-1 text-xs text-[#D4AF37] hover:underline"
+              className="flex items-center gap-1 text-xs text-[rgb(var(--gold))] hover:underline"
             >
               <ChatCircle size={13} /> Message {other?.name?.split(' ')[0]}
             </button>
@@ -81,7 +81,7 @@ function CircleCard({ circle, currentUserId, onEnded }) {
 
           {/* Shared goals */}
           <div>
-            <p className="text-[10px] tracking-[0.15em] uppercase text-[#D4AF37] mb-2 flex items-center gap-1">
+            <p className="text-[10px] tracking-[0.15em] uppercase text-[rgb(var(--gold))] mb-2 flex items-center gap-1">
               <Target size={12} /> Our goals
             </p>
             <div className="space-y-1.5 mb-2">
@@ -89,19 +89,19 @@ function CircleCard({ circle, currentUserId, onEnded }) {
                 <button
                   key={g.id}
                   onClick={() => toggleGoal(g.id)}
-                  className="w-full flex items-center gap-2 p-2 rounded bg-[#050814] border border-[#1E293B] text-left hover:border-[#D4AF37]/25 transition-colors"
+                  className="w-full flex items-center gap-2 p-2 rounded bg-[rgb(var(--ink-deep))] border border-[rgb(var(--ink-border))] text-left hover:border-[rgb(var(--gold)/0.25)] transition-colors"
                   data-testid={`goal-${g.id}`}
                 >
                   <span className={`w-4 h-4 rounded border flex items-center justify-center flex-shrink-0 ${
-                    g.done ? 'bg-emerald-500/20 border-emerald-500/50' : 'border-[#334155]'
+                    g.done ? 'bg-emerald-500/20 border-emerald-500/50' : 'border-[rgb(var(--ink-border-strong))]'
                   }`}>
                     {g.done && <Check size={11} className="text-emerald-400" />}
                   </span>
-                  <span className={`text-xs ${g.done ? 'text-[#475569] line-through' : 'text-[#F8FAFC]'}`}>{g.text}</span>
+                  <span className={`text-xs ${g.done ? 'text-[rgb(var(--text-faint))] line-through' : 'text-[rgb(var(--text-main))]'}`}>{g.text}</span>
                 </button>
               ))}
               {detail && detail.goals.length === 0 && (
-                <p className="text-xs text-[#475569]">No goals yet — set the first one together.</p>
+                <p className="text-xs text-[rgb(var(--text-faint))]">No goals yet — set the first one together.</p>
               )}
             </div>
             <div className="flex gap-2">
@@ -110,9 +110,9 @@ function CircleCard({ circle, currentUserId, onEnded }) {
                 onChange={e => setGoalInput(e.target.value)}
                 onKeyDown={e => e.key === 'Enter' && addGoal()}
                 placeholder="A goal we're walking toward…"
-                className="flex-1 px-3 py-1.5 rounded bg-[#050814] border border-[#1E293B] text-xs text-[#F8FAFC] placeholder-[#475569] focus:outline-none focus:border-[#D4AF37]/50"
+                className="flex-1 px-3 py-1.5 rounded bg-[rgb(var(--ink-deep))] border border-[rgb(var(--ink-border))] text-xs text-[rgb(var(--text-main))] placeholder-[rgb(var(--text-faint))] focus:outline-none focus:border-[rgb(var(--gold)/0.5)]"
               />
-              <Button size="sm" onClick={addGoal} disabled={busy} className="bg-[#D4AF37]/15 text-[#D4AF37] border border-[#D4AF37]/30 hover:bg-[#D4AF37]/25 h-8">
+              <Button size="sm" onClick={addGoal} disabled={busy} className="bg-[rgb(var(--gold)/0.15)] text-[rgb(var(--gold))] border border-[rgb(var(--gold)/0.3)] hover:bg-[rgb(var(--gold)/0.25)] h-8">
                 <Plus size={13} />
               </Button>
             </div>
@@ -120,9 +120,9 @@ function CircleCard({ circle, currentUserId, onEnded }) {
 
           {/* Shared journal */}
           <div>
-            <p className="text-[10px] tracking-[0.15em] uppercase text-[#D4AF37] mb-2 flex items-center gap-1">
+            <p className="text-[10px] tracking-[0.15em] uppercase text-[rgb(var(--gold))] mb-2 flex items-center gap-1">
               <NotePencil size={12} /> Our journal
-              <span className="text-[#475569] normal-case tracking-normal ml-1">(shared with your facilitator)</span>
+              <span className="text-[rgb(var(--text-faint))] normal-case tracking-normal ml-1">(shared with your facilitator)</span>
             </p>
             <div className="flex gap-2 mb-2">
               <input
@@ -130,17 +130,17 @@ function CircleCard({ circle, currentUserId, onEnded }) {
                 onChange={e => setNoteInput(e.target.value)}
                 onKeyDown={e => e.key === 'Enter' && addNote()}
                 placeholder="A reflection from this week…"
-                className="flex-1 px-3 py-1.5 rounded bg-[#050814] border border-[#1E293B] text-xs text-[#F8FAFC] placeholder-[#475569] focus:outline-none focus:border-[#D4AF37]/50"
+                className="flex-1 px-3 py-1.5 rounded bg-[rgb(var(--ink-deep))] border border-[rgb(var(--ink-border))] text-xs text-[rgb(var(--text-main))] placeholder-[rgb(var(--text-faint))] focus:outline-none focus:border-[rgb(var(--gold)/0.5)]"
               />
-              <Button size="sm" onClick={addNote} disabled={busy} className="bg-[#D4AF37]/15 text-[#D4AF37] border border-[#D4AF37]/30 hover:bg-[#D4AF37]/25 h-8">
+              <Button size="sm" onClick={addNote} disabled={busy} className="bg-[rgb(var(--gold)/0.15)] text-[rgb(var(--gold))] border border-[rgb(var(--gold)/0.3)] hover:bg-[rgb(var(--gold)/0.25)] h-8">
                 <Plus size={13} />
               </Button>
             </div>
             <div className="space-y-1.5 max-h-56 overflow-y-auto">
               {(detail?.notes || []).map(n => (
-                <div key={n.id} className="p-2 rounded bg-[#050814] border border-[#1E293B]">
-                  <p className="text-xs text-[#F8FAFC]">{n.text}</p>
-                  <p className="text-[9px] text-[#475569] mt-1">
+                <div key={n.id} className="p-2 rounded bg-[rgb(var(--ink-deep))] border border-[rgb(var(--ink-border))]">
+                  <p className="text-xs text-[rgb(var(--text-main))]">{n.text}</p>
+                  <p className="text-[9px] text-[rgb(var(--text-faint))] mt-1">
                     {n.author_name} · {new Date(n.created_at).toLocaleDateString()}
                   </p>
                 </div>
@@ -187,16 +187,16 @@ export default function LearningCirclePage({ user }) {
     catch (e) { setMessage({ type: 'error', text: e.message }); }
   };
 
-  const selectCls = "flex-1 px-3 py-2 rounded-md bg-[#050814] border border-[#1E293B] text-xs text-[#F8FAFC] focus:outline-none focus:border-[#D4AF37]/50";
+  const selectCls = "flex-1 px-3 py-2 rounded-md bg-[rgb(var(--ink-deep))] border border-[rgb(var(--ink-border))] text-xs text-[rgb(var(--text-main))] focus:outline-none focus:border-[rgb(var(--gold)/0.5)]";
 
   return (
     <div className="space-y-6 animate-fade-in-up max-w-3xl" data-testid="learning-circle-page">
       <div>
         <div className="flex items-center gap-2 mb-1">
-          <HandHeart size={20} weight="duotone" className="text-[#D4AF37]" />
-          <h1 className="text-xl text-[#F8FAFC]" style={{ fontFamily: 'Cormorant Garamond, serif' }}>Learning Circles</h1>
+          <HandHeart size={20} weight="duotone" className="text-[rgb(var(--gold))]" />
+          <h1 className="text-xl text-[rgb(var(--text-main))]" style={{ fontFamily: 'Cormorant Garamond, serif' }}>Learning Circles</h1>
         </div>
-        <p className="text-xs text-[#94A3B8]">Wisdom flows in every direction — co-learners walking together, one circle at a time.</p>
+        <p className="text-xs text-[rgb(var(--text-muted))]">Wisdom flows in every direction — co-learners walking together, one circle at a time.</p>
       </div>
 
       {message && (
@@ -217,9 +217,9 @@ export default function LearningCirclePage({ user }) {
           ))}
         </div>
       ) : (
-        <Card className="bg-[#0F172A] border-[#1E293B]">
+        <Card className="bg-[rgb(var(--ink-card))] border-[rgb(var(--ink-border))]">
           <CardContent className="p-6 text-center">
-            <p className="text-sm text-[#94A3B8]">
+            <p className="text-sm text-[rgb(var(--text-muted))]">
               No learning circles yet. Circles are formed by your facilitators —
               {user?.intent === 'mentor'
                 ? " they know you're here to walk with others, and they'll reach out."
@@ -231,9 +231,9 @@ export default function LearningCirclePage({ user }) {
 
       {/* Faculty: form + manage circles */}
       {isFaculty && (
-        <Card className="bg-[#0F172A] border-[#1E293B]">
+        <Card className="bg-[rgb(var(--ink-card))] border-[rgb(var(--ink-border))]">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm text-[#F8FAFC]" style={{ fontFamily: 'Cormorant Garamond, serif' }}>
+            <CardTitle className="text-sm text-[rgb(var(--text-main))]" style={{ fontFamily: 'Cormorant Garamond, serif' }}>
               Form a learning circle
             </CardTitle>
           </CardHeader>
@@ -251,24 +251,24 @@ export default function LearningCirclePage({ user }) {
                   <option key={u.id} value={u.id}>{u.name}{u.is_minor ? ' · youth' : ''} ({u.intent || u.role})</option>
                 ))}
               </select>
-              <Button onClick={handleForm} disabled={busy || !aId || !bId} className="bg-[#D4AF37] text-[#050814] hover:bg-[#F3E5AB]">
+              <Button onClick={handleForm} disabled={busy || !aId || !bId} className="bg-[rgb(var(--gold))] text-[rgb(var(--ink-deep))] hover:bg-[rgb(var(--gold-soft))]">
                 Form
               </Button>
             </div>
-            <p className="text-[10px] text-[#475569] mb-3">
+            <p className="text-[10px] text-[rgb(var(--text-faint))] mb-3">
               Forming a circle opens a direct message channel between them — including for youth — so pair with care.
             </p>
             {data?.all?.length > 0 && (
               <div className="space-y-1.5">
-                <p className="text-[10px] tracking-[0.15em] uppercase text-[#D4AF37]">All circles</p>
+                <p className="text-[10px] tracking-[0.15em] uppercase text-[rgb(var(--gold))]">All circles</p>
                 {data.all.map(c => (
-                  <div key={c.id} className="flex items-center gap-2 p-2 rounded bg-[#050814] border border-[#1E293B]">
+                  <div key={c.id} className="flex items-center gap-2 p-2 rounded bg-[rgb(var(--ink-deep))] border border-[rgb(var(--ink-border))]">
                     <Avatar person={c.co_learner_a} size="w-5 h-5" />
-                    <span className="text-xs text-[#F8FAFC]">{c.co_learner_a?.name}</span>
-                    <span className="text-[10px] text-[#475569]">walks with</span>
+                    <span className="text-xs text-[rgb(var(--text-main))]">{c.co_learner_a?.name}</span>
+                    <span className="text-[10px] text-[rgb(var(--text-faint))]">walks with</span>
                     <Avatar person={c.co_learner_b} size="w-5 h-5" />
-                    <span className="text-xs text-[#F8FAFC] flex-1">{c.co_learner_b?.name}</span>
-                    <button onClick={() => handleEnd(c.id)} className="text-[#475569] hover:text-red-400" title="Close circle">
+                    <span className="text-xs text-[rgb(var(--text-main))] flex-1">{c.co_learner_b?.name}</span>
+                    <button onClick={() => handleEnd(c.id)} className="text-[rgb(var(--text-faint))] hover:text-red-400" title="Close circle">
                       <Trash size={13} />
                     </button>
                   </div>

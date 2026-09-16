@@ -231,10 +231,10 @@ export default function SettingsPage({ user }) {
   const roleColor = (role) => {
     const colors = {
       admin: 'bg-red-500/10 text-red-400 border-red-500/20',
-      elder: 'bg-[#D4AF37]/10 text-[#D4AF37] border-[#D4AF37]/20',
+      elder: 'bg-[rgb(var(--gold)/0.1)] text-[rgb(var(--gold))] border-[rgb(var(--gold)/0.2)]',
       faculty: 'bg-blue-500/10 text-blue-400 border-blue-500/20',
       assistant: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
-      student: 'bg-[#94A3B8]/10 text-[#94A3B8] border-[#94A3B8]/20',
+      student: 'bg-[rgb(var(--text-muted)/0.1)] text-[rgb(var(--text-muted))] border-[rgb(var(--text-muted)/0.2)]',
     };
     return colors[role] || colors.student;
   };
@@ -242,50 +242,50 @@ export default function SettingsPage({ user }) {
   return (
     <div className="space-y-6 animate-fade-in-up" data-testid="settings-page">
       <div>
-        <h1 className="text-3xl font-light text-[#F8FAFC]" style={{ fontFamily: 'Cormorant Garamond, serif' }}>Settings</h1>
-        <p className="text-sm text-[#94A3B8]">Profile and platform management</p>
+        <h1 className="text-3xl font-light text-[rgb(var(--text-main))]" style={{ fontFamily: 'Cormorant Garamond, serif' }}>Settings</h1>
+        <p className="text-sm text-[rgb(var(--text-muted))]">Profile and platform management</p>
       </div>
 
       {/* Profile Card */}
-      <Card className="bg-[#0F172A] border-[#1E293B]">
+      <Card className="bg-[rgb(var(--ink-card))] border-[rgb(var(--ink-border))]">
         <CardHeader>
-          <CardTitle className="text-lg text-[#F8FAFC]" style={{ fontFamily: 'Cormorant Garamond, serif' }}>
+          <CardTitle className="text-lg text-[rgb(var(--text-main))]" style={{ fontFamily: 'Cormorant Garamond, serif' }}>
             Your Profile
           </CardTitle>
         </CardHeader>
         <CardContent className="flex items-center gap-4">
-          <img src={user?.picture} alt={user?.name} className="w-14 h-14 rounded-full border-2 border-[#D4AF37]/30" />
+          <img src={user?.picture} alt={user?.name} className="w-14 h-14 rounded-full border-2 border-[rgb(var(--gold)/0.3)]" />
           <div>
-            <p className="text-lg text-[#F8FAFC]">{user?.name}</p>
-            <p className="text-sm text-[#94A3B8]">{user?.email}</p>
+            <p className="text-lg text-[rgb(var(--text-main))]">{user?.name}</p>
+            <p className="text-sm text-[rgb(var(--text-muted))]">{user?.email}</p>
             <Badge className={`mt-1 text-[10px] ${roleColor(user?.role)}`}>{user?.role}</Badge>
           </div>
         </CardContent>
       </Card>
 
       {/* Push Notifications */}
-      <Card className="bg-[#0F172A] border-[#1E293B]" data-testid="push-notification-card">
+      <Card className="bg-[rgb(var(--ink-card))] border-[rgb(var(--ink-border))]" data-testid="push-notification-card">
         <CardHeader>
-          <CardTitle className="text-lg text-[#F8FAFC] flex items-center gap-2" style={{ fontFamily: 'Cormorant Garamond, serif' }}>
-            <Bell size={20} weight="duotone" className="text-[#D4AF37]" />
+          <CardTitle className="text-lg text-[rgb(var(--text-main))] flex items-center gap-2" style={{ fontFamily: 'Cormorant Garamond, serif' }}>
+            <Bell size={20} weight="duotone" className="text-[rgb(var(--gold))]" />
             Push Notifications
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-xs text-[#94A3B8] mb-4">
+          <p className="text-xs text-[rgb(var(--text-muted))] mb-4">
             Get notified about new enrollments, cohort updates, and community activity.
           </p>
           {!pushSupported ? (
-            <p className="text-xs text-[#475569]">Push notifications are not supported in this browser.</p>
+            <p className="text-xs text-[rgb(var(--text-faint))]">Push notifications are not supported in this browser.</p>
           ) : (
-            <div className="flex items-center justify-between p-3 bg-[#050814] border border-[#1E293B] rounded-md">
+            <div className="flex items-center justify-between p-3 bg-[rgb(var(--ink-deep))] border border-[rgb(var(--ink-border))] rounded-md">
               <div className="flex items-center gap-2">
                 {pushEnabled ? (
                   <Bell size={18} weight="fill" className="text-emerald-400" />
                 ) : (
-                  <BellSlash size={18} weight="duotone" className="text-[#94A3B8]" />
+                  <BellSlash size={18} weight="duotone" className="text-[rgb(var(--text-muted))]" />
                 )}
-                <span className={`text-sm ${pushEnabled ? 'text-emerald-400' : 'text-[#94A3B8]'}`}>
+                <span className={`text-sm ${pushEnabled ? 'text-emerald-400' : 'text-[rgb(var(--text-muted))]'}`}>
                   {pushEnabled ? 'Notifications enabled' : 'Notifications disabled'}
                 </span>
               </div>
@@ -295,7 +295,7 @@ export default function SettingsPage({ user }) {
                 disabled={pushLoading}
                 className={pushEnabled
                   ? 'bg-red-500/10 text-red-400 border border-red-500/20 hover:bg-red-500/20 text-xs'
-                  : 'bg-[#D4AF37] text-[#050814] hover:bg-[#F3E5AB] text-xs'}
+                  : 'bg-[rgb(var(--gold))] text-[rgb(var(--ink-deep))] hover:bg-[rgb(var(--gold-soft))] text-xs'}
                 data-testid="toggle-push-btn"
               >
                 {pushLoading ? 'Processing...' : pushEnabled ? 'Disable' : 'Enable'}
@@ -307,21 +307,21 @@ export default function SettingsPage({ user }) {
 
       {/* Class alerts (Faculty+) */}
       {isFaculty && alerts && (
-        <Card className="bg-[#0F172A] border-[#1E293B]" data-testid="teacher-alerts-card">
+        <Card className="bg-[rgb(var(--ink-card))] border-[rgb(var(--ink-border))]" data-testid="teacher-alerts-card">
           <CardHeader>
-            <CardTitle className="text-lg text-[#F8FAFC] flex items-center gap-2" style={{ fontFamily: 'Cormorant Garamond, serif' }}>
-              <Bell size={20} weight="duotone" className="text-[#D4AF37]" />
+            <CardTitle className="text-lg text-[rgb(var(--text-main))] flex items-center gap-2" style={{ fontFamily: 'Cormorant Garamond, serif' }}>
+              <Bell size={20} weight="duotone" className="text-[rgb(var(--gold))]" />
               Class Alerts
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <p className="text-xs text-[#94A3B8]">
+            <p className="text-xs text-[rgb(var(--text-muted))]">
               Emails when something happens in a course you teach. You are never
               emailed about your own posts.
             </p>
 
             <div className="space-y-2">
-              <label className="block text-[11px] uppercase tracking-wide text-[#94A3B8]">
+              <label className="block text-[11px] uppercase tracking-wide text-[rgb(var(--text-muted))]">
                 Send alerts to
               </label>
               <div className="flex flex-col gap-2 sm:flex-row">
@@ -330,20 +330,20 @@ export default function SettingsPage({ user }) {
                   value={alertEmail}
                   onChange={(e) => setAlertEmail(e.target.value)}
                   placeholder={alerts.account_email || 'you@example.com'}
-                  className="flex-1 rounded-md border border-[#1E293B] bg-[#050814] px-3 py-2 text-sm text-[#F8FAFC] focus:border-[#D4AF37]/50 focus:outline-none"
+                  className="flex-1 rounded-md border border-[rgb(var(--ink-border))] bg-[rgb(var(--ink-deep))] px-3 py-2 text-sm text-[rgb(var(--text-main))] focus:border-[rgb(var(--gold)/0.5)] focus:outline-none"
                   data-testid="alert-email-input"
                 />
                 <Button
                   size="sm"
                   disabled={alertSaving}
                   onClick={() => saveAlerts({ notification_email: alertEmail })}
-                  className="bg-[#D4AF37] text-[#050814] hover:bg-[#F3E5AB] text-xs"
+                  className="bg-[rgb(var(--gold))] text-[rgb(var(--ink-deep))] hover:bg-[rgb(var(--gold-soft))] text-xs"
                   data-testid="save-alert-email-btn"
                 >
                   {alertSaving ? 'Saving…' : 'Save'}
                 </Button>
               </div>
-              <p className="text-[10px] text-[#475569]">
+              <p className="text-[10px] text-[rgb(var(--text-faint))]">
                 Leave blank to use your account address, {alerts.account_email || 'your login email'}.
               </p>
             </div>
@@ -352,15 +352,15 @@ export default function SettingsPage({ user }) {
               { key: 'notify_submissions', label: 'When a student hands in work' },
               { key: 'notify_discussions', label: 'When someone posts in a class discussion' },
             ].map(({ key, label }) => (
-              <div key={key} className="flex items-center justify-between rounded-md border border-[#1E293B] bg-[#050814] p-3">
-                <span className={`text-sm ${alerts[key] ? 'text-[#F8FAFC]' : 'text-[#94A3B8]'}`}>{label}</span>
+              <div key={key} className="flex items-center justify-between rounded-md border border-[rgb(var(--ink-border))] bg-[rgb(var(--ink-deep))] p-3">
+                <span className={`text-sm ${alerts[key] ? 'text-[rgb(var(--text-main))]' : 'text-[rgb(var(--text-muted))]'}`}>{label}</span>
                 <Button
                   size="sm"
                   disabled={alertSaving}
                   onClick={() => saveAlerts({ [key]: !alerts[key] })}
                   className={alerts[key]
                     ? 'bg-red-500/10 text-red-400 border border-red-500/20 hover:bg-red-500/20 text-xs'
-                    : 'bg-[#D4AF37] text-[#050814] hover:bg-[#F3E5AB] text-xs'}
+                    : 'bg-[rgb(var(--gold))] text-[rgb(var(--ink-deep))] hover:bg-[rgb(var(--gold-soft))] text-xs'}
                   data-testid={`toggle-${key}`}
                 >
                   {alerts[key] ? 'Turn off' : 'Turn on'}
@@ -368,26 +368,26 @@ export default function SettingsPage({ user }) {
               </div>
             ))}
 
-            {alertNote && <p className="text-[11px] text-[#94A3B8]" data-testid="alert-note">{alertNote}</p>}
+            {alertNote && <p className="text-[11px] text-[rgb(var(--text-muted))]" data-testid="alert-note">{alertNote}</p>}
           </CardContent>
         </Card>
       )}
 
       {/* Instructor Tools (Faculty+) — student unblock + email check */}
       {isFaculty && (
-        <Card className="bg-[#0F172A] border-[#1E293B]" data-testid="instructor-tools-card">
+        <Card className="bg-[rgb(var(--ink-card))] border-[rgb(var(--ink-border))]" data-testid="instructor-tools-card">
           <CardHeader>
-            <CardTitle className="text-lg text-[#F8FAFC] flex items-center gap-2" style={{ fontFamily: 'Cormorant Garamond, serif' }}>
-              <Key size={20} weight="duotone" className="text-[#D4AF37]" />
+            <CardTitle className="text-lg text-[rgb(var(--text-main))] flex items-center gap-2" style={{ fontFamily: 'Cormorant Garamond, serif' }}>
+              <Key size={20} weight="duotone" className="text-[rgb(var(--gold))]" />
               Instructor Tools
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-5">
             <div className="space-y-2">
-              <label className="block text-[11px] uppercase tracking-wide text-[#94A3B8]">
+              <label className="block text-[11px] uppercase tracking-wide text-[rgb(var(--text-muted))]">
                 Unblock a locked-out student
               </label>
-              <p className="text-xs text-[#94A3B8]">
+              <p className="text-xs text-[rgb(var(--text-muted))]">
                 Sets a temporary password so a student can sign in right now. Share it
                 with them directly and have them change it in Settings. Works only on
                 student accounts.
@@ -398,7 +398,7 @@ export default function SettingsPage({ user }) {
                   value={unblockEmail}
                   onChange={(e) => setUnblockEmail(e.target.value)}
                   placeholder="student@example.com"
-                  className="flex-1 rounded-md border border-[#1E293B] bg-[#050814] px-3 py-2 text-sm text-[#F8FAFC] focus:border-[#D4AF37]/50 focus:outline-none"
+                  className="flex-1 rounded-md border border-[rgb(var(--ink-border))] bg-[rgb(var(--ink-deep))] px-3 py-2 text-sm text-[rgb(var(--text-main))] focus:border-[rgb(var(--gold)/0.5)] focus:outline-none"
                   data-testid="unblock-email-input"
                 />
                 <input
@@ -406,24 +406,24 @@ export default function SettingsPage({ user }) {
                   value={unblockPassword}
                   onChange={(e) => setUnblockPassword(e.target.value)}
                   placeholder="Temporary password"
-                  className="flex-1 rounded-md border border-[#1E293B] bg-[#050814] px-3 py-2 text-sm text-[#F8FAFC] focus:border-[#D4AF37]/50 focus:outline-none"
+                  className="flex-1 rounded-md border border-[rgb(var(--ink-border))] bg-[rgb(var(--ink-deep))] px-3 py-2 text-sm text-[rgb(var(--text-main))] focus:border-[rgb(var(--gold)/0.5)] focus:outline-none"
                   data-testid="unblock-password-input"
                 />
                 <Button
                   size="sm"
                   disabled={unblockBusy}
                   onClick={handleUnblockStudent}
-                  className="bg-[#D4AF37] text-[#050814] hover:bg-[#F3E5AB] text-xs"
+                  className="bg-[rgb(var(--gold))] text-[rgb(var(--ink-deep))] hover:bg-[rgb(var(--gold-soft))] text-xs"
                   data-testid="unblock-student-btn"
                 >
                   {unblockBusy ? 'Setting…' : 'Set password'}
                 </Button>
               </div>
-              {unblockNote && <p className="text-[11px] text-[#94A3B8]" data-testid="unblock-note">{unblockNote}</p>}
+              {unblockNote && <p className="text-[11px] text-[rgb(var(--text-muted))]" data-testid="unblock-note">{unblockNote}</p>}
             </div>
 
-            <div className="space-y-2 border-t border-[#1E293B] pt-4">
-              <label className="block text-[11px] uppercase tracking-wide text-[#94A3B8]">
+            <div className="space-y-2 border-t border-[rgb(var(--ink-border))] pt-4">
+              <label className="block text-[11px] uppercase tracking-wide text-[rgb(var(--text-muted))]">
                 Email system check
               </label>
               <div className="flex items-center gap-3">
@@ -431,13 +431,13 @@ export default function SettingsPage({ user }) {
                   size="sm"
                   disabled={testEmailBusy}
                   onClick={handleTestEmail}
-                  className="bg-[#050814] border border-[#1E293B] text-[#F8FAFC] hover:bg-[#1E293B] text-xs"
+                  className="bg-[rgb(var(--ink-deep))] border border-[rgb(var(--ink-border))] text-[rgb(var(--text-main))] hover:bg-[rgb(var(--ink-border))] text-xs"
                   data-testid="test-email-btn"
                 >
                   <PaperPlaneTilt size={14} className="mr-1" />
                   {testEmailBusy ? 'Sending…' : 'Send me a test email'}
                 </Button>
-                {testEmailNote && <p className="text-[11px] text-[#94A3B8]" data-testid="test-email-note">{testEmailNote}</p>}
+                {testEmailNote && <p className="text-[11px] text-[rgb(var(--text-muted))]" data-testid="test-email-note">{testEmailNote}</p>}
               </div>
             </div>
           </CardContent>
@@ -446,24 +446,24 @@ export default function SettingsPage({ user }) {
 
       {/* Google Account Connection (Faculty+) */}
       {isFaculty && (
-        <Card className="bg-[#0F172A] border-[#1E293B]" data-testid="google-connection-card">
+        <Card className="bg-[rgb(var(--ink-card))] border-[rgb(var(--ink-border))]" data-testid="google-connection-card">
           <CardHeader>
-            <CardTitle className="text-lg text-[#F8FAFC] flex items-center gap-2" style={{ fontFamily: 'Cormorant Garamond, serif' }}>
-              <Plugs size={20} weight="duotone" className="text-[#D4AF37]" />
+            <CardTitle className="text-lg text-[rgb(var(--text-main))] flex items-center gap-2" style={{ fontFamily: 'Cormorant Garamond, serif' }}>
+              <Plugs size={20} weight="duotone" className="text-[rgb(var(--gold))]" />
               Google Integration
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-xs text-[#94A3B8] mb-4">
+            <p className="text-xs text-[rgb(var(--text-muted))] mb-4">
               Connect your Google account to import Slides and Docs directly into your courses.
             </p>
             {googleLoading ? (
-              <div className="flex items-center gap-2 text-sm text-[#94A3B8]">
-                <span className="w-4 h-4 border border-[#D4AF37] border-t-transparent rounded-full animate-spin" />
+              <div className="flex items-center gap-2 text-sm text-[rgb(var(--text-muted))]">
+                <span className="w-4 h-4 border border-[rgb(var(--gold))] border-t-transparent rounded-full animate-spin" />
                 Checking connection...
               </div>
             ) : googleConnected ? (
-              <div className="flex items-center justify-between p-3 bg-[#050814] border border-emerald-500/20 rounded-md">
+              <div className="flex items-center justify-between p-3 bg-[rgb(var(--ink-deep))] border border-emerald-500/20 rounded-md">
                 <div className="flex items-center gap-2">
                   <CheckCircle size={18} weight="fill" className="text-emerald-400" />
                   <span className="text-sm text-emerald-400">Google account connected</span>
@@ -481,7 +481,7 @@ export default function SettingsPage({ user }) {
             ) : (
               <Button
                 onClick={handleConnectGoogle}
-                className="bg-white text-[#050814] hover:bg-gray-100 font-medium"
+                className="bg-white text-[rgb(var(--ink-deep))] hover:bg-gray-100 font-medium"
                 data-testid="connect-google-btn"
               >
                 <GoogleLogo size={18} weight="bold" className="mr-2" />
@@ -494,32 +494,32 @@ export default function SettingsPage({ user }) {
 
       {/* Role Management (Admin/Elder only) */}
       {isAdmin && (
-        <Card className="bg-[#0F172A] border-[#1E293B]">
+        <Card className="bg-[rgb(var(--ink-card))] border-[rgb(var(--ink-border))]">
           <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle className="text-lg text-[#F8FAFC]" style={{ fontFamily: 'Cormorant Garamond, serif' }}>
-              <Shield size={20} weight="duotone" className="inline mr-2 text-[#D4AF37]" />
+            <CardTitle className="text-lg text-[rgb(var(--text-main))]" style={{ fontFamily: 'Cormorant Garamond, serif' }}>
+              <Shield size={20} weight="duotone" className="inline mr-2 text-[rgb(var(--gold))]" />
               Role Management
             </CardTitle>
             {!loaded && (
-              <Button size="sm" onClick={loadUsers} className="bg-[#D4AF37] text-[#050814] hover:bg-[#F3E5AB] text-xs" data-testid="load-users-btn">
+              <Button size="sm" onClick={loadUsers} className="bg-[rgb(var(--gold))] text-[rgb(var(--ink-deep))] hover:bg-[rgb(var(--gold-soft))] text-xs" data-testid="load-users-btn">
                 Load Users
               </Button>
             )}
           </CardHeader>
           <CardContent className="space-y-3">
             {loaded && users.map(u => (
-              <div key={u.id} className="flex items-center justify-between p-3 bg-[#050814] border border-[#1E293B] rounded-md" data-testid={`user-row-${u.id}`}>
+              <div key={u.id} className="flex items-center justify-between p-3 bg-[rgb(var(--ink-deep))] border border-[rgb(var(--ink-border))] rounded-md" data-testid={`user-row-${u.id}`}>
                 <div className="flex items-center gap-3">
                   <img src={u.picture} alt={u.name} className="w-8 h-8 rounded-full" />
                   <div>
-                    <p className="text-sm text-[#F8FAFC]">{u.name}</p>
-                    <p className="text-[10px] text-[#94A3B8]">{u.email}</p>
+                    <p className="text-sm text-[rgb(var(--text-main))]">{u.name}</p>
+                    <p className="text-[10px] text-[rgb(var(--text-muted))]">{u.email}</p>
                   </div>
                 </div>
                 <select
                   value={u.role}
                   onChange={(e) => changeRole(u.id, e.target.value)}
-                  className="px-2 py-1 text-xs bg-[#0F172A] border border-[#1E293B] text-[#F8FAFC] rounded"
+                  className="px-2 py-1 text-xs bg-[rgb(var(--ink-card))] border border-[rgb(var(--ink-border))] text-[rgb(var(--text-main))] rounded"
                   data-testid={`role-select-${u.id}`}
                 >
                   {['student', 'assistant', 'faculty', 'elder', 'admin'].map(r => (
@@ -528,13 +528,13 @@ export default function SettingsPage({ user }) {
                 </select>
               </div>
             ))}
-            {loaded && users.length === 0 && <p className="text-sm text-[#94A3B8] text-center py-4">No users found</p>}
+            {loaded && users.length === 0 && <p className="text-sm text-[rgb(var(--text-muted))] text-center py-4">No users found</p>}
           </CardContent>
         </Card>
       )}
 
       {/* Danger Zone — Account Deletion (Apple App Store Guideline 5.1.1(v)) */}
-      <Card className="bg-[#0F172A] border-red-500/30" data-testid="delete-account-card">
+      <Card className="bg-[rgb(var(--ink-card))] border-red-500/30" data-testid="delete-account-card">
         <CardHeader>
           <CardTitle className="text-lg text-red-400 flex items-center gap-2" style={{ fontFamily: 'Cormorant Garamond, serif' }}>
             <Warning size={20} weight="duotone" className="text-red-400" />
@@ -542,7 +542,7 @@ export default function SettingsPage({ user }) {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-xs text-[#94A3B8] mb-4">
+          <p className="text-xs text-[rgb(var(--text-muted))] mb-4">
             Permanently delete your Ile Ubuntu account and all associated data — your profile,
             enrollments, comments, posts, messages, and notification preferences. This cannot be undone.
           </p>
@@ -559,7 +559,7 @@ export default function SettingsPage({ user }) {
 
       <AlertDialog open={deleteDialogOpen} onOpenChange={(open) => { if (!deleteInProgress) setDeleteDialogOpen(open); }}>
         <AlertDialogContent
-          className="bg-[#0F172A] border border-red-500/30 text-[#F8FAFC]"
+          className="bg-[rgb(var(--ink-card))] border border-red-500/30 text-[rgb(var(--text-main))]"
           data-testid="delete-account-dialog"
         >
           <AlertDialogHeader>
@@ -567,8 +567,8 @@ export default function SettingsPage({ user }) {
               <Warning size={20} weight="duotone" />
               Permanently delete your account?
             </AlertDialogTitle>
-            <AlertDialogDescription className="text-[#94A3B8]">
-              This will <span className="text-[#F8FAFC] font-medium">immediately and permanently</span> delete:
+            <AlertDialogDescription className="text-[rgb(var(--text-muted))]">
+              This will <span className="text-[rgb(var(--text-main))] font-medium">immediately and permanently</span> delete:
               <br />
               <br />
               • Your profile, name, email, and bio
@@ -593,7 +593,7 @@ export default function SettingsPage({ user }) {
           <AlertDialogFooter>
             <AlertDialogCancel
               disabled={deleteInProgress}
-              className="bg-[#050814] border-[#1E293B] text-[#F8FAFC] hover:bg-[#1E293B]"
+              className="bg-[rgb(var(--ink-deep))] border-[rgb(var(--ink-border))] text-[rgb(var(--text-main))] hover:bg-[rgb(var(--ink-border))]"
               data-testid="cancel-delete-account-btn"
             >
               Cancel

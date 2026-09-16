@@ -79,22 +79,22 @@ export default function SearchResultsPage() {
     <div className="space-y-5" data-testid="search-results-page">
       {/* Search Bar */}
       <form onSubmit={handleSearch} className="flex gap-2">
-        <div className="flex-1 flex items-center gap-2 bg-[#0F172A] border border-[#1E293B] rounded-md px-3 py-2 focus-within:border-[#D4AF37]/40">
-          <MagnifyingGlass size={16} className="text-[#94A3B8]" />
+        <div className="flex-1 flex items-center gap-2 bg-[rgb(var(--ink-card))] border border-[rgb(var(--ink-border))] rounded-md px-3 py-2 focus-within:border-[rgb(var(--gold)/0.4)]">
+          <MagnifyingGlass size={16} className="text-[rgb(var(--text-muted))]" />
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search across the entire platform..."
-            className="bg-transparent text-sm text-[#F8FAFC] outline-none flex-1"
+            className="bg-transparent text-sm text-[rgb(var(--text-main))] outline-none flex-1"
             data-testid="search-page-input"
           />
           {query && (
-            <button type="button" onClick={() => { setQuery(''); setResults(null); }} className="text-[#94A3B8] hover:text-[#F8FAFC]">
+            <button type="button" onClick={() => { setQuery(''); setResults(null); }} className="text-[rgb(var(--text-muted))] hover:text-[rgb(var(--text-main))]">
               <X size={14} />
             </button>
           )}
         </div>
-        <button type="submit" className="px-4 py-2 bg-[#D4AF37] text-[#050814] rounded-md text-xs font-medium" data-testid="search-submit">
+        <button type="submit" className="px-4 py-2 bg-[rgb(var(--gold))] text-[rgb(var(--ink-deep))] rounded-md text-xs font-medium" data-testid="search-submit">
           Search
         </button>
       </form>
@@ -103,11 +103,11 @@ export default function SearchResultsPage() {
         {/* Filters Sidebar */}
         <div className="space-y-3" data-testid="search-filters">
           {/* Type Filter */}
-          <Card className="bg-[#0F172A] border-[#1E293B]">
+          <Card className="bg-[rgb(var(--ink-card))] border-[rgb(var(--ink-border))]">
             <CardContent className="p-3">
               <div className="flex items-center gap-1.5 mb-2">
-                <Funnel size={12} weight="duotone" className="text-[#D4AF37]" />
-                <span className="text-[9px] text-[#D4AF37] uppercase tracking-wider">Type</span>
+                <Funnel size={12} weight="duotone" className="text-[rgb(var(--gold))]" />
+                <span className="text-[9px] text-[rgb(var(--gold))] uppercase tracking-wider">Type</span>
               </div>
               <div className="space-y-1">
                 {TYPE_OPTIONS.map(opt => {
@@ -117,7 +117,7 @@ export default function SearchResultsPage() {
                       key={opt.value}
                       onClick={() => { setTypeFilter(opt.value); }}
                       className={`w-full text-left px-2 py-1.5 rounded text-xs flex items-center gap-2 transition-all ${
-                        typeFilter === opt.value ? 'bg-[#D4AF37]/10 text-[#D4AF37]' : 'text-[#94A3B8] hover:bg-[#050814]'
+                        typeFilter === opt.value ? 'bg-[rgb(var(--gold)/0.1)] text-[rgb(var(--gold))]' : 'text-[rgb(var(--text-muted))] hover:bg-[rgb(var(--ink-deep))]'
                       }`}
                       data-testid={`filter-type-${opt.value || 'all'}`}
                     >
@@ -130,11 +130,11 @@ export default function SearchResultsPage() {
           </Card>
 
           {/* Sort */}
-          <Card className="bg-[#0F172A] border-[#1E293B]">
+          <Card className="bg-[rgb(var(--ink-card))] border-[rgb(var(--ink-border))]">
             <CardContent className="p-3">
               <div className="flex items-center gap-1.5 mb-2">
-                <SortAscending size={12} weight="duotone" className="text-[#D4AF37]" />
-                <span className="text-[9px] text-[#D4AF37] uppercase tracking-wider">Sort</span>
+                <SortAscending size={12} weight="duotone" className="text-[rgb(var(--gold))]" />
+                <span className="text-[9px] text-[rgb(var(--gold))] uppercase tracking-wider">Sort</span>
               </div>
               <div className="space-y-1">
                 {SORT_OPTIONS.map(opt => (
@@ -142,7 +142,7 @@ export default function SearchResultsPage() {
                     key={opt.value}
                     onClick={() => setSortBy(opt.value)}
                     className={`w-full text-left px-2 py-1.5 rounded text-xs transition-all ${
-                      sortBy === opt.value ? 'bg-[#D4AF37]/10 text-[#D4AF37]' : 'text-[#94A3B8] hover:bg-[#050814]'
+                      sortBy === opt.value ? 'bg-[rgb(var(--gold)/0.1)] text-[rgb(var(--gold))]' : 'text-[rgb(var(--text-muted))] hover:bg-[rgb(var(--ink-deep))]'
                     }`}
                     data-testid={`filter-sort-${opt.value}`}
                   >
@@ -154,11 +154,11 @@ export default function SearchResultsPage() {
           </Card>
 
           {/* Access Level */}
-          <Card className="bg-[#0F172A] border-[#1E293B]">
+          <Card className="bg-[rgb(var(--ink-card))] border-[rgb(var(--ink-border))]">
             <CardContent className="p-3">
               <div className="flex items-center gap-1.5 mb-2">
-                <ShieldCheck size={12} weight="duotone" className="text-[#D4AF37]" />
-                <span className="text-[9px] text-[#D4AF37] uppercase tracking-wider">Access</span>
+                <ShieldCheck size={12} weight="duotone" className="text-[rgb(var(--gold))]" />
+                <span className="text-[9px] text-[rgb(var(--gold))] uppercase tracking-wider">Access</span>
               </div>
               <div className="space-y-1">
                 {['', 'public', 'restricted', 'members'].map(lvl => (
@@ -166,7 +166,7 @@ export default function SearchResultsPage() {
                     key={lvl}
                     onClick={() => setAccessLevel(lvl)}
                     className={`w-full text-left px-2 py-1.5 rounded text-xs transition-all ${
-                      accessLevel === lvl ? 'bg-[#D4AF37]/10 text-[#D4AF37]' : 'text-[#94A3B8] hover:bg-[#050814]'
+                      accessLevel === lvl ? 'bg-[rgb(var(--gold)/0.1)] text-[rgb(var(--gold))]' : 'text-[rgb(var(--text-muted))] hover:bg-[rgb(var(--ink-deep))]'
                     }`}
                     data-testid={`filter-access-${lvl || 'all'}`}
                   >
@@ -182,25 +182,25 @@ export default function SearchResultsPage() {
         <div className="md:col-span-3" data-testid="search-results-area">
           {loading ? (
             <div className="flex items-center justify-center h-32">
-              <div className="w-5 h-5 border-2 border-[#D4AF37] border-t-transparent rounded-full animate-spin" />
+              <div className="w-5 h-5 border-2 border-[rgb(var(--gold))] border-t-transparent rounded-full animate-spin" />
             </div>
           ) : !results ? (
-            <Card className="bg-[#0F172A] border-[#1E293B]">
+            <Card className="bg-[rgb(var(--ink-card))] border-[rgb(var(--ink-border))]">
               <CardContent className="p-12 text-center">
-                <MagnifyingGlass size={40} weight="duotone" className="text-[#94A3B8] mx-auto mb-3" />
-                <p className="text-sm text-[#94A3B8]">Enter a search term to explore the commons</p>
+                <MagnifyingGlass size={40} weight="duotone" className="text-[rgb(var(--text-muted))] mx-auto mb-3" />
+                <p className="text-sm text-[rgb(var(--text-muted))]">Enter a search term to explore the commons</p>
               </CardContent>
             </Card>
           ) : totalResults === 0 ? (
-            <Card className="bg-[#0F172A] border-[#1E293B]">
+            <Card className="bg-[rgb(var(--ink-card))] border-[rgb(var(--ink-border))]">
               <CardContent className="p-8 text-center">
-                <p className="text-sm text-[#94A3B8]">No results for "{query}"</p>
-                <p className="text-xs text-[#475569] mt-1">Try different keywords or clear filters</p>
+                <p className="text-sm text-[rgb(var(--text-muted))]">No results for "{query}"</p>
+                <p className="text-xs text-[rgb(var(--text-faint))] mt-1">Try different keywords or clear filters</p>
               </CardContent>
             </Card>
           ) : (
             <div className="space-y-3">
-              <p className="text-xs text-[#94A3B8]">{totalResults} result{totalResults !== 1 ? 's' : ''} for "{query}"</p>
+              <p className="text-xs text-[rgb(var(--text-muted))]">{totalResults} result{totalResults !== 1 ? 's' : ''} for "{query}"</p>
 
               {Object.entries(results).filter(([k]) => k !== 'total').map(([section, items]) => {
                 if (!items || items.length === 0) return null;
@@ -208,9 +208,9 @@ export default function SearchResultsPage() {
                 return (
                   <div key={section}>
                     <div className="flex items-center gap-1.5 mb-2">
-                      <Icon size={14} weight="duotone" className="text-[#D4AF37]" />
-                      <span className="text-[10px] text-[#D4AF37] uppercase tracking-wider">{section}</span>
-                      <Badge className="bg-[#D4AF37]/10 text-[#D4AF37] border-[#D4AF37]/20 text-[8px]">{items.length}</Badge>
+                      <Icon size={14} weight="duotone" className="text-[rgb(var(--gold))]" />
+                      <span className="text-[10px] text-[rgb(var(--gold))] uppercase tracking-wider">{section}</span>
+                      <Badge className="bg-[rgb(var(--gold)/0.1)] text-[rgb(var(--gold))] border-[rgb(var(--gold)/0.2)] text-[8px]">{items.length}</Badge>
                     </div>
                     <div className="space-y-1.5">
                       {items.map((item, i) => (
@@ -220,16 +220,16 @@ export default function SearchResultsPage() {
                             const route = SECTION_ROUTES[section]?.(item);
                             if (route) navigate(route);
                           }}
-                          className="w-full text-left p-3 bg-[#0F172A] border border-[#1E293B] rounded-md hover:border-[#D4AF37]/20 transition-all"
+                          className="w-full text-left p-3 bg-[rgb(var(--ink-card))] border border-[rgb(var(--ink-border))] rounded-md hover:border-[rgb(var(--gold)/0.2)] transition-all"
                           data-testid={`result-${section}-${i}`}
                         >
-                          <p className="text-xs text-[#F8FAFC]">{item.title || item.name}</p>
-                          {item.description && <p className="text-[9px] text-[#94A3B8] mt-0.5 truncate">{item.description}</p>}
+                          <p className="text-xs text-[rgb(var(--text-main))]">{item.title || item.name}</p>
+                          {item.description && <p className="text-[9px] text-[rgb(var(--text-muted))] mt-0.5 truncate">{item.description}</p>}
                           <div className="flex gap-2 mt-1">
                             {item.status && <Badge className="bg-emerald-500/10 text-emerald-400 border-emerald-500/20 text-[7px]">{item.status}</Badge>}
                             {item.access_level && <Badge className="bg-violet-500/10 text-violet-400 border-violet-500/20 text-[7px]">{item.access_level}</Badge>}
-                            {item.enrolled_count !== undefined && <span className="text-[8px] text-[#475569]">{item.enrolled_count} enrolled</span>}
-                            {item.member_count !== undefined && <span className="text-[8px] text-[#475569]">{item.member_count} members</span>}
+                            {item.enrolled_count !== undefined && <span className="text-[8px] text-[rgb(var(--text-faint))]">{item.enrolled_count} enrolled</span>}
+                            {item.member_count !== undefined && <span className="text-[8px] text-[rgb(var(--text-faint))]">{item.member_count} members</span>}
                           </div>
                         </button>
                       ))}

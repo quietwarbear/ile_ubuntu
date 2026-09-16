@@ -27,15 +27,15 @@ function YouthCard({ youth, onUnlink }) {
   const showedUp = week && (week.lessons_completed || week.live_sessions_joined || week.posts_and_replies || week.quizzes_attempted);
 
   return (
-    <Card className="bg-[#0F172A] border-[#1E293B]" data-testid={`youth-card-${youth.id}`}>
+    <Card className="bg-[rgb(var(--ink-card))] border-[rgb(var(--ink-border))]" data-testid={`youth-card-${youth.id}`}>
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
-          <CardTitle className="text-sm text-[#F8FAFC] flex items-center gap-2" style={{ fontFamily: 'Cormorant Garamond, serif' }}>
+          <CardTitle className="text-sm text-[rgb(var(--text-main))] flex items-center gap-2" style={{ fontFamily: 'Cormorant Garamond, serif' }}>
             <Avatar person={youth} size="w-7 h-7" /> {youth.name}
           </CardTitle>
           <button
             onClick={() => onUnlink(youth.id)}
-            className="text-[#475569] hover:text-red-400 transition-colors"
+            className="text-[rgb(var(--text-faint))] hover:text-red-400 transition-colors"
             title="Remove this family link"
             data-testid={`unlink-${youth.id}`}
           >
@@ -47,32 +47,32 @@ function YouthCard({ youth, onUnlink }) {
         {error ? (
           <p className="text-xs text-red-400">{error}</p>
         ) : !summary ? (
-          <p className="text-xs text-[#94A3B8]">Loading…</p>
+          <p className="text-xs text-[rgb(var(--text-muted))]">Loading…</p>
         ) : (
           <div className="space-y-3">
             {/* This week, warmly */}
             <div>
-              <p className="text-[10px] tracking-[0.15em] uppercase text-[#D4AF37] mb-1.5">This week</p>
+              <p className="text-[10px] tracking-[0.15em] uppercase text-[rgb(var(--gold))] mb-1.5">This week</p>
               {showedUp ? (
                 <div className="flex flex-wrap gap-2">
                   {week.lessons_completed > 0 && (
-                    <span className="flex items-center gap-1 text-[10px] text-[#F8FAFC] bg-[#050814] border border-[#1E293B] rounded-full px-2 py-1">
-                      <BookOpenText size={11} className="text-[#D4AF37]" /> {week.lessons_completed} lesson{week.lessons_completed !== 1 ? 's' : ''} completed
+                    <span className="flex items-center gap-1 text-[10px] text-[rgb(var(--text-main))] bg-[rgb(var(--ink-deep))] border border-[rgb(var(--ink-border))] rounded-full px-2 py-1">
+                      <BookOpenText size={11} className="text-[rgb(var(--gold))]" /> {week.lessons_completed} lesson{week.lessons_completed !== 1 ? 's' : ''} completed
                     </span>
                   )}
                   {week.live_sessions_joined > 0 && (
-                    <span className="flex items-center gap-1 text-[10px] text-[#F8FAFC] bg-[#050814] border border-[#1E293B] rounded-full px-2 py-1">
-                      <VideoCamera size={11} className="text-[#D4AF37]" /> joined {week.live_sessions_joined} live session{week.live_sessions_joined !== 1 ? 's' : ''}
+                    <span className="flex items-center gap-1 text-[10px] text-[rgb(var(--text-main))] bg-[rgb(var(--ink-deep))] border border-[rgb(var(--ink-border))] rounded-full px-2 py-1">
+                      <VideoCamera size={11} className="text-[rgb(var(--gold))]" /> joined {week.live_sessions_joined} live session{week.live_sessions_joined !== 1 ? 's' : ''}
                     </span>
                   )}
                   {week.posts_and_replies > 0 && (
-                    <span className="flex items-center gap-1 text-[10px] text-[#F8FAFC] bg-[#050814] border border-[#1E293B] rounded-full px-2 py-1">
-                      <Chats size={11} className="text-[#D4AF37]" /> {week.posts_and_replies} community contribution{week.posts_and_replies !== 1 ? 's' : ''}
+                    <span className="flex items-center gap-1 text-[10px] text-[rgb(var(--text-main))] bg-[rgb(var(--ink-deep))] border border-[rgb(var(--ink-border))] rounded-full px-2 py-1">
+                      <Chats size={11} className="text-[rgb(var(--gold))]" /> {week.posts_and_replies} community contribution{week.posts_and_replies !== 1 ? 's' : ''}
                     </span>
                   )}
                   {week.quizzes_attempted > 0 && (
-                    <span className="flex items-center gap-1 text-[10px] text-[#F8FAFC] bg-[#050814] border border-[#1E293B] rounded-full px-2 py-1">
-                      <PencilSimple size={11} className="text-[#D4AF37]" /> {week.quizzes_attempted} quiz{week.quizzes_attempted !== 1 ? 'zes' : ''} tried
+                    <span className="flex items-center gap-1 text-[10px] text-[rgb(var(--text-main))] bg-[rgb(var(--ink-deep))] border border-[rgb(var(--ink-border))] rounded-full px-2 py-1">
+                      <PencilSimple size={11} className="text-[rgb(var(--gold))]" /> {week.quizzes_attempted} quiz{week.quizzes_attempted !== 1 ? 'zes' : ''} tried
                     </span>
                   )}
                   {week.courses_completed > 0 && (
@@ -82,27 +82,27 @@ function YouthCard({ youth, onUnlink }) {
                   )}
                 </div>
               ) : (
-                <p className="text-xs text-[#94A3B8]">A quiet week so far — a little encouragement goes a long way.</p>
+                <p className="text-xs text-[rgb(var(--text-muted))]">A quiet week so far — a little encouragement goes a long way.</p>
               )}
             </div>
 
             {/* Learning journey */}
             <div>
-              <p className="text-[10px] tracking-[0.15em] uppercase text-[#D4AF37] mb-1.5">Learning journey</p>
+              <p className="text-[10px] tracking-[0.15em] uppercase text-[rgb(var(--gold))] mb-1.5">Learning journey</p>
               {summary.enrollments.length === 0 ? (
-                <p className="text-xs text-[#94A3B8]">Not enrolled in any courses yet.</p>
+                <p className="text-xs text-[rgb(var(--text-muted))]">Not enrolled in any courses yet.</p>
               ) : (
                 <div className="space-y-1.5">
                   {summary.enrollments.map((e, i) => (
                     <div key={i} className="flex items-center gap-2">
-                      <span className="text-xs text-[#F8FAFC] truncate flex-1">{e.course_title}</span>
-                      <div className="w-24 h-2 bg-[#0A1128] rounded-full overflow-hidden">
+                      <span className="text-xs text-[rgb(var(--text-main))] truncate flex-1">{e.course_title}</span>
+                      <div className="w-24 h-2 bg-[rgb(var(--ink-secondary))] rounded-full overflow-hidden">
                         <div
-                          className={`h-full rounded-full ${e.completed ? 'bg-emerald-400' : 'bg-[#D4AF37]'}`}
+                          className={`h-full rounded-full ${e.completed ? 'bg-emerald-400' : 'bg-[rgb(var(--gold))]'}`}
                           style={{ width: `${Math.max(e.progress, 2)}%` }}
                         />
                       </div>
-                      <span className={`text-[10px] w-8 text-right ${e.completed ? 'text-emerald-400' : 'text-[#94A3B8]'}`}>{e.progress}%</span>
+                      <span className={`text-[10px] w-8 text-right ${e.completed ? 'text-emerald-400' : 'text-[rgb(var(--text-muted))]'}`}>{e.progress}%</span>
                     </div>
                   ))}
                 </div>
@@ -136,17 +136,17 @@ function DigestTextCard({ prefs, onSaved, setMessage }) {
     setBusy(false);
   };
 
-  const selectCls = "px-3 py-2 rounded-md bg-[#050814] border border-[#1E293B] text-xs text-[#F8FAFC] focus:outline-none focus:border-[#D4AF37]/50";
+  const selectCls = "px-3 py-2 rounded-md bg-[rgb(var(--ink-deep))] border border-[rgb(var(--ink-border))] text-xs text-[rgb(var(--text-main))] focus:outline-none focus:border-[rgb(var(--gold)/0.5)]";
 
   return (
-    <Card className="bg-[#0F172A] border-[#1E293B]" data-testid="digest-text-card">
+    <Card className="bg-[rgb(var(--ink-card))] border-[rgb(var(--ink-border))]" data-testid="digest-text-card">
       <CardHeader className="pb-2">
-        <CardTitle className="text-sm text-[#F8FAFC] flex items-center gap-2" style={{ fontFamily: 'Cormorant Garamond, serif' }}>
-          <ChatText size={16} weight="duotone" className="text-[#D4AF37]" /> Weekly digest by text
+        <CardTitle className="text-sm text-[rgb(var(--text-main))] flex items-center gap-2" style={{ fontFamily: 'Cormorant Garamond, serif' }}>
+          <ChatText size={16} weight="duotone" className="text-[rgb(var(--gold))]" /> Weekly digest by text
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <p className="text-xs text-[#94A3B8] mb-3">
+        <p className="text-xs text-[rgb(var(--text-muted))] mb-3">
           The full digest arrives by email every Sunday. Add your number and we'll also send one short
           {prefs.available_channels.includes('whatsapp') ? ' SMS or WhatsApp' : ' text'} message per week when it's ready.
           Msg & data rates may apply. Reply STOP anytime to cancel, HELP for help.
@@ -162,12 +162,12 @@ function DigestTextCard({ prefs, onSaved, setMessage }) {
               value={phone}
               onChange={e => setPhone(e.target.value)}
               placeholder="+15105551234"
-              className="flex-1 px-3 py-2 rounded-md bg-[#050814] border border-[#1E293B] text-xs text-[#F8FAFC] placeholder-[#475569] focus:outline-none focus:border-[#D4AF37]/50"
+              className="flex-1 px-3 py-2 rounded-md bg-[rgb(var(--ink-deep))] border border-[rgb(var(--ink-border))] text-xs text-[rgb(var(--text-main))] placeholder-[rgb(var(--text-faint))] focus:outline-none focus:border-[rgb(var(--gold)/0.5)]"
               data-testid="digest-phone"
             />
           )}
           <Button size="sm" onClick={save} disabled={busy || (channel !== 'off' && !phone.trim())}
-            className="bg-[#D4AF37]/15 text-[#D4AF37] border border-[#D4AF37]/30 hover:bg-[#D4AF37]/25">
+            className="bg-[rgb(var(--gold)/0.15)] text-[rgb(var(--gold))] border border-[rgb(var(--gold)/0.3)] hover:bg-[rgb(var(--gold)/0.25)]">
             Save
           </Button>
         </div>
@@ -221,10 +221,10 @@ export default function FamilyPage({ user }) {
     <div className="space-y-6 animate-fade-in-up max-w-3xl" data-testid="family-page">
       <div>
         <div className="flex items-center gap-2 mb-1">
-          <House size={20} weight="duotone" className="text-[#D4AF37]" />
-          <h1 className="text-xl text-[#F8FAFC]" style={{ fontFamily: 'Cormorant Garamond, serif' }}>Family</h1>
+          <House size={20} weight="duotone" className="text-[rgb(var(--gold))]" />
+          <h1 className="text-xl text-[rgb(var(--text-main))]" style={{ fontFamily: 'Cormorant Garamond, serif' }}>Family</h1>
         </div>
-        <p className="text-xs text-[#94A3B8]">
+        <p className="text-xs text-[rgb(var(--text-muted))]">
           The village around each learner — linked with care, shared with dignity.
         </p>
       </div>
@@ -240,14 +240,14 @@ export default function FamilyPage({ user }) {
       )}
 
       {/* Guardian side: link + youth cards */}
-      <Card className="bg-[#0F172A] border-[#1E293B]">
+      <Card className="bg-[rgb(var(--ink-card))] border-[rgb(var(--ink-border))]">
         <CardHeader className="pb-2">
-          <CardTitle className="text-sm text-[#F8FAFC] flex items-center gap-2" style={{ fontFamily: 'Cormorant Garamond, serif' }}>
-            <LinkSimple size={16} weight="duotone" className="text-[#D4AF37]" /> Link a young person
+          <CardTitle className="text-sm text-[rgb(var(--text-main))] flex items-center gap-2" style={{ fontFamily: 'Cormorant Garamond, serif' }}>
+            <LinkSimple size={16} weight="duotone" className="text-[rgb(var(--gold))]" /> Link a young person
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-xs text-[#94A3B8] mb-3">
+          <p className="text-xs text-[rgb(var(--text-muted))] mb-3">
             Ask your young person for their family code (they'll find it on this page when signed in), then enter it here.
           </p>
           <div className="flex gap-2">
@@ -255,10 +255,10 @@ export default function FamilyPage({ user }) {
               value={codeInput}
               onChange={e => setCodeInput(e.target.value.toUpperCase())}
               placeholder="e.g. K7XQ2A"
-              className="flex-1 px-3 py-2 rounded-md bg-[#050814] border border-[#1E293B] text-sm text-[#F8FAFC] placeholder-[#475569] focus:outline-none focus:border-[#D4AF37]/50 tracking-[0.2em] uppercase"
+              className="flex-1 px-3 py-2 rounded-md bg-[rgb(var(--ink-deep))] border border-[rgb(var(--ink-border))] text-sm text-[rgb(var(--text-main))] placeholder-[rgb(var(--text-faint))] focus:outline-none focus:border-[rgb(var(--gold)/0.5)] tracking-[0.2em] uppercase"
               data-testid="family-code-input"
             />
-            <Button onClick={handleLink} disabled={busy || !codeInput.trim()} className="bg-[#D4AF37] text-[#050814] hover:bg-[#F3E5AB]">
+            <Button onClick={handleLink} disabled={busy || !codeInput.trim()} className="bg-[rgb(var(--gold))] text-[rgb(var(--ink-deep))] hover:bg-[rgb(var(--gold-soft))]">
               Link
             </Button>
           </div>
@@ -268,7 +268,7 @@ export default function FamilyPage({ user }) {
       {family?.youth?.length > 0 && (
         <div className="space-y-3">
           <div className="flex items-center justify-between">
-            <h2 className="text-xs tracking-[0.15em] uppercase text-[#D4AF37] flex items-center gap-2">
+            <h2 className="text-xs tracking-[0.15em] uppercase text-[rgb(var(--gold))] flex items-center gap-2">
               <GraduationCap size={14} weight="duotone" /> My young people
             </h2>
             <button
@@ -281,7 +281,7 @@ export default function FamilyPage({ user }) {
                 setBusy(false);
               }}
               disabled={busy}
-              className="text-[10px] text-[#94A3B8] hover:text-[#D4AF37] transition-colors"
+              className="text-[10px] text-[rgb(var(--text-muted))] hover:text-[rgb(var(--gold))] transition-colors"
               data-testid="digest-preview-btn"
             >
               Email me this week's digest →
@@ -301,29 +301,29 @@ export default function FamilyPage({ user }) {
 
       {/* Youth side: my code + my guardians (hidden for family-intent accounts) */}
       {!isFamilyIntent && (
-        <Card className="bg-[#0F172A] border-[#1E293B]">
+        <Card className="bg-[rgb(var(--ink-card))] border-[rgb(var(--ink-border))]">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm text-[#F8FAFC] flex items-center gap-2" style={{ fontFamily: 'Cormorant Garamond, serif' }}>
-              <UsersThree size={16} weight="duotone" className="text-[#D4AF37]" /> My family code
+            <CardTitle className="text-sm text-[rgb(var(--text-main))] flex items-center gap-2" style={{ fontFamily: 'Cormorant Garamond, serif' }}>
+              <UsersThree size={16} weight="duotone" className="text-[rgb(var(--gold))]" /> My family code
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-xs text-[#94A3B8] mb-3">
+            <p className="text-xs text-[rgb(var(--text-muted))] mb-3">
               Share this code with a parent, guardian, or elder so they can follow and encourage your journey.
               They'll see your progress and participation — never your private messages.
             </p>
             <div className="flex items-center gap-3">
               {family?.family_code ? (
-                <span className="px-4 py-2 rounded-md bg-[#050814] border border-[#D4AF37]/30 text-lg tracking-[0.3em] text-[#D4AF37] font-medium" data-testid="my-family-code">
+                <span className="px-4 py-2 rounded-md bg-[rgb(var(--ink-deep))] border border-[rgb(var(--gold)/0.3)] text-lg tracking-[0.3em] text-[rgb(var(--gold))] font-medium" data-testid="my-family-code">
                   {family.family_code}
                 </span>
               ) : (
-                <span className="text-xs text-[#475569]">No code yet</span>
+                <span className="text-xs text-[rgb(var(--text-faint))]">No code yet</span>
               )}
               <button
                 onClick={handleGenerateCode}
                 disabled={busy}
-                className="flex items-center gap-1 text-xs text-[#94A3B8] hover:text-[#D4AF37] transition-colors"
+                className="flex items-center gap-1 text-xs text-[rgb(var(--text-muted))] hover:text-[rgb(var(--gold))] transition-colors"
                 data-testid="generate-family-code"
               >
                 <ArrowsClockwise size={13} /> {family?.family_code ? 'New code' : 'Create code'}
@@ -332,13 +332,13 @@ export default function FamilyPage({ user }) {
 
             {family?.guardians?.length > 0 && (
               <div className="mt-4">
-                <p className="text-[10px] tracking-[0.15em] uppercase text-[#D4AF37] mb-2">My family</p>
+                <p className="text-[10px] tracking-[0.15em] uppercase text-[rgb(var(--gold))] mb-2">My family</p>
                 <div className="space-y-1.5">
                   {family.guardians.map(g => (
-                    <div key={g.id} className="flex items-center gap-2 p-2 rounded bg-[#050814] border border-[#1E293B]">
+                    <div key={g.id} className="flex items-center gap-2 p-2 rounded bg-[rgb(var(--ink-deep))] border border-[rgb(var(--ink-border))]">
                       <Avatar person={g} size="w-6 h-6" />
-                      <span className="text-xs text-[#F8FAFC] flex-1">{g.name}</span>
-                      <button onClick={() => handleUnlink(g.id)} className="text-[#475569] hover:text-red-400" title="Remove">
+                      <span className="text-xs text-[rgb(var(--text-main))] flex-1">{g.name}</span>
+                      <button onClick={() => handleUnlink(g.id)} className="text-[rgb(var(--text-faint))] hover:text-red-400" title="Remove">
                         <Trash size={13} />
                       </button>
                     </div>

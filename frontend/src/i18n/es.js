@@ -30,6 +30,8 @@ const es = {
   nav_facilitate: 'Facilitar',
   nav_account: 'Cuenta',
   nav_help: 'Ayuda',
+  theme_dark: 'Noche',
+  theme_light: 'Día',
   village_guide: 'Guía del Pueblo',
   teacher_dashboard: 'Panel del Docente',
   dashboard: 'Panel',

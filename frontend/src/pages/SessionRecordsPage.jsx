@@ -82,7 +82,7 @@ export default function SessionRecordsPage({ user }) {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64" data-testid="records-loading">
-        <div className="w-6 h-6 border-2 border-[#D4AF37] border-t-transparent rounded-full animate-spin" />
+        <div className="w-6 h-6 border-2 border-[rgb(var(--gold))] border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
@@ -91,33 +91,33 @@ export default function SessionRecordsPage({ user }) {
     <div className="space-y-6" data-testid="session-records-page">
       <div>
         <div className="flex items-center gap-2 mb-1">
-          <VideoCamera size={20} weight="duotone" className="text-[#D4AF37]" />
-          <h1 className="text-xl text-[#F8FAFC]" style={{ fontFamily: 'Cormorant Garamond, serif' }}>
+          <VideoCamera size={20} weight="duotone" className="text-[rgb(var(--gold))]" />
+          <h1 className="text-xl text-[rgb(var(--text-main))]" style={{ fontFamily: 'Cormorant Garamond, serif' }}>
             Session Records
           </h1>
         </div>
-        <p className="text-xs text-[#94A3B8]">Review past live sessions, add notes, and track attendance</p>
+        <p className="text-xs text-[rgb(var(--text-muted))]">Review past live sessions, add notes, and track attendance</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {/* List */}
         <div className="space-y-3">
-          <div className="flex items-center gap-2 bg-[#0F172A] border border-[#1E293B] rounded-md px-3 py-1.5">
-            <MagnifyingGlass size={14} className="text-[#94A3B8]" />
+          <div className="flex items-center gap-2 bg-[rgb(var(--ink-card))] border border-[rgb(var(--ink-border))] rounded-md px-3 py-1.5">
+            <MagnifyingGlass size={14} className="text-[rgb(var(--text-muted))]" />
             <input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search sessions..."
-              className="bg-transparent text-xs text-[#F8FAFC] outline-none flex-1"
+              className="bg-transparent text-xs text-[rgb(var(--text-main))] outline-none flex-1"
               data-testid="records-search"
             />
           </div>
 
           {filtered.length === 0 ? (
-            <Card className="bg-[#0F172A] border-[#1E293B]">
+            <Card className="bg-[rgb(var(--ink-card))] border-[rgb(var(--ink-border))]">
               <CardContent className="p-6 text-center">
-                <VideoCamera size={32} weight="duotone" className="text-[#94A3B8] mx-auto mb-2" />
-                <p className="text-xs text-[#94A3B8]">No ended sessions yet.</p>
+                <VideoCamera size={32} weight="duotone" className="text-[rgb(var(--text-muted))] mx-auto mb-2" />
+                <p className="text-xs text-[rgb(var(--text-muted))]">No ended sessions yet.</p>
               </CardContent>
             </Card>
           ) : (
@@ -127,13 +127,13 @@ export default function SessionRecordsPage({ user }) {
                 onClick={() => loadDetail(r.id)}
                 className={`w-full text-left p-3 rounded-md border transition-all ${
                   selected === r.id
-                    ? 'bg-[#0F172A] border-[#D4AF37]/30'
-                    : 'bg-[#0F172A] border-[#1E293B] hover:border-[#D4AF37]/20'
+                    ? 'bg-[rgb(var(--ink-card))] border-[rgb(var(--gold)/0.3)]'
+                    : 'bg-[rgb(var(--ink-card))] border-[rgb(var(--ink-border))] hover:border-[rgb(var(--gold)/0.2)]'
                 }`}
                 data-testid={`record-${r.id}`}
               >
-                <p className="text-xs text-[#F8FAFC] font-medium truncate">{r.title}</p>
-                <div className="flex items-center gap-2 mt-1 text-[9px] text-[#94A3B8]">
+                <p className="text-xs text-[rgb(var(--text-main))] font-medium truncate">{r.title}</p>
+                <div className="flex items-center gap-2 mt-1 text-[9px] text-[rgb(var(--text-muted))]">
                   <span>{r.host_name}</span>
                   {r.ended_at && <span>{new Date(r.ended_at).toLocaleDateString()}</span>}
                   <span>{(r.attendees || []).length} attendees</span>
@@ -147,22 +147,22 @@ export default function SessionRecordsPage({ user }) {
         {/* Detail */}
         <div className="md:col-span-2">
           {!detail ? (
-            <Card className="bg-[#0F172A] border-[#1E293B]">
+            <Card className="bg-[rgb(var(--ink-card))] border-[rgb(var(--ink-border))]">
               <CardContent className="p-12 text-center">
-                <Eye size={40} weight="duotone" className="text-[#94A3B8] mx-auto mb-3" />
-                <p className="text-sm text-[#94A3B8]">Select a session to view details</p>
+                <Eye size={40} weight="duotone" className="text-[rgb(var(--text-muted))] mx-auto mb-3" />
+                <p className="text-sm text-[rgb(var(--text-muted))]">Select a session to view details</p>
               </CardContent>
             </Card>
           ) : (
             <div className="space-y-3">
-              <Card className="bg-[#0F172A] border-[#1E293B]">
+              <Card className="bg-[rgb(var(--ink-card))] border-[rgb(var(--ink-border))]">
                 <CardHeader className="pb-2">
                   <div className="flex items-center justify-between">
-                    <CardTitle className="text-sm text-[#F8FAFC]" style={{ fontFamily: 'Cormorant Garamond, serif' }}>
+                    <CardTitle className="text-sm text-[rgb(var(--text-main))]" style={{ fontFamily: 'Cormorant Garamond, serif' }}>
                       {detail.title}
                     </CardTitle>
                     <div className="flex gap-2">
-                      <Button size="sm" variant="outline" className="h-7 text-[10px] border-[#1E293B] text-[#94A3B8]" onClick={exportCSV} data-testid="export-csv">
+                      <Button size="sm" variant="outline" className="h-7 text-[10px] border-[rgb(var(--ink-border))] text-[rgb(var(--text-muted))]" onClick={exportCSV} data-testid="export-csv">
                         <Export size={12} className="mr-1" /> Export CSV
                       </Button>
                     </div>
@@ -170,37 +170,37 @@ export default function SessionRecordsPage({ user }) {
                 </CardHeader>
                 <CardContent>
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-3">
-                    <div className="p-2 bg-[#050814] border border-[#1E293B] rounded text-center">
-                      <Clock size={14} weight="duotone" className="text-[#D4AF37] mx-auto mb-1" />
-                      <p className="text-[9px] text-[#94A3B8]">
+                    <div className="p-2 bg-[rgb(var(--ink-deep))] border border-[rgb(var(--ink-border))] rounded text-center">
+                      <Clock size={14} weight="duotone" className="text-[rgb(var(--gold))] mx-auto mb-1" />
+                      <p className="text-[9px] text-[rgb(var(--text-muted))]">
                         {detail.started_at ? new Date(detail.started_at).toLocaleTimeString() : '—'}
                         {detail.ended_at ? ` → ${new Date(detail.ended_at).toLocaleTimeString()}` : ''}
                       </p>
                     </div>
-                    <div className="p-2 bg-[#050814] border border-[#1E293B] rounded text-center">
-                      <CalendarBlank size={14} weight="duotone" className="text-[#D4AF37] mx-auto mb-1" />
-                      <p className="text-[9px] text-[#94A3B8]">{detail.ended_at ? new Date(detail.ended_at).toLocaleDateString() : '—'}</p>
+                    <div className="p-2 bg-[rgb(var(--ink-deep))] border border-[rgb(var(--ink-border))] rounded text-center">
+                      <CalendarBlank size={14} weight="duotone" className="text-[rgb(var(--gold))] mx-auto mb-1" />
+                      <p className="text-[9px] text-[rgb(var(--text-muted))]">{detail.ended_at ? new Date(detail.ended_at).toLocaleDateString() : '—'}</p>
                     </div>
-                    <div className="p-2 bg-[#050814] border border-[#1E293B] rounded text-center">
-                      <Users size={14} weight="duotone" className="text-[#D4AF37] mx-auto mb-1" />
-                      <p className="text-[9px] text-[#94A3B8]">{(detail.attendees || []).length} attendees</p>
+                    <div className="p-2 bg-[rgb(var(--ink-deep))] border border-[rgb(var(--ink-border))] rounded text-center">
+                      <Users size={14} weight="duotone" className="text-[rgb(var(--gold))] mx-auto mb-1" />
+                      <p className="text-[9px] text-[rgb(var(--text-muted))]">{(detail.attendees || []).length} attendees</p>
                     </div>
-                    <div className="p-2 bg-[#050814] border border-[#1E293B] rounded text-center">
-                      <VideoCamera size={14} weight="duotone" className="text-[#D4AF37] mx-auto mb-1" />
-                      <p className="text-[9px] text-[#94A3B8]">{detail.host_name}</p>
+                    <div className="p-2 bg-[rgb(var(--ink-deep))] border border-[rgb(var(--ink-border))] rounded text-center">
+                      <VideoCamera size={14} weight="duotone" className="text-[rgb(var(--gold))] mx-auto mb-1" />
+                      <p className="text-[9px] text-[rgb(var(--text-muted))]">{detail.host_name}</p>
                     </div>
                   </div>
 
                   {/* Attendees */}
                   {(detail.attendee_details || []).length > 0 && (
                     <div className="mb-3">
-                      <p className="text-[9px] text-[#D4AF37] uppercase tracking-wider mb-1">Attendees</p>
+                      <p className="text-[9px] text-[rgb(var(--gold))] uppercase tracking-wider mb-1">Attendees</p>
                       <div className="flex flex-wrap gap-1">
                         {detail.attendee_details.map(a => (
-                          <div key={a.id} className="flex items-center gap-1 p-1 bg-[#050814] border border-[#1E293B] rounded text-[9px]">
+                          <div key={a.id} className="flex items-center gap-1 p-1 bg-[rgb(var(--ink-deep))] border border-[rgb(var(--ink-border))] rounded text-[9px]">
                             <img src={a.picture || `https://ui-avatars.com/api/?name=${a.name}&background=050814&color=D4AF37&size=16`} alt="" className="w-4 h-4 rounded-full" />
-                            <span className="text-[#F8FAFC]">{a.name}</span>
-                            <Badge className="bg-[#D4AF37]/10 text-[#D4AF37] border-[#D4AF37]/20 text-[7px]">{a.role}</Badge>
+                            <span className="text-[rgb(var(--text-main))]">{a.name}</span>
+                            <Badge className="bg-[rgb(var(--gold)/0.1)] text-[rgb(var(--gold))] border-[rgb(var(--gold)/0.2)] text-[7px]">{a.role}</Badge>
                           </div>
                         ))}
                       </div>
@@ -221,14 +221,14 @@ export default function SessionRecordsPage({ user }) {
               </Card>
 
               {/* Notes Section */}
-              <Card className="bg-[#0F172A] border-[#1E293B]">
+              <Card className="bg-[rgb(var(--ink-card))] border-[rgb(var(--ink-border))]">
                 <CardHeader className="pb-2">
                   <div className="flex items-center justify-between">
-                    <CardTitle className="text-sm text-[#F8FAFC] flex items-center gap-2" style={{ fontFamily: 'Cormorant Garamond, serif' }}>
-                      <NotePencil size={16} weight="duotone" className="text-[#D4AF37]" /> Session Notes
+                    <CardTitle className="text-sm text-[rgb(var(--text-main))] flex items-center gap-2" style={{ fontFamily: 'Cormorant Garamond, serif' }}>
+                      <NotePencil size={16} weight="duotone" className="text-[rgb(var(--gold))]" /> Session Notes
                     </CardTitle>
                     {isFaculty && !editingNotes && (
-                      <Button size="sm" variant="outline" className="h-7 text-[10px] border-[#1E293B] text-[#D4AF37]" onClick={() => setEditingNotes(true)} data-testid="edit-notes-btn">
+                      <Button size="sm" variant="outline" className="h-7 text-[10px] border-[rgb(var(--ink-border))] text-[rgb(var(--gold))]" onClick={() => setEditingNotes(true)} data-testid="edit-notes-btn">
                         Edit
                       </Button>
                     )}
@@ -238,51 +238,51 @@ export default function SessionRecordsPage({ user }) {
                   {editingNotes ? (
                     <div className="space-y-3">
                       <div>
-                        <label className="text-[9px] text-[#94A3B8] uppercase tracking-wider">Notes</label>
+                        <label className="text-[9px] text-[rgb(var(--text-muted))] uppercase tracking-wider">Notes</label>
                         <textarea
                           value={notes}
                           onChange={(e) => setNotes(e.target.value)}
-                          className="w-full mt-1 bg-[#050814] border border-[#1E293B] rounded-md p-2 text-xs text-[#F8FAFC] h-24 outline-none focus:border-[#D4AF37]/40"
+                          className="w-full mt-1 bg-[rgb(var(--ink-deep))] border border-[rgb(var(--ink-border))] rounded-md p-2 text-xs text-[rgb(var(--text-main))] h-24 outline-none focus:border-[rgb(var(--gold)/0.4)]"
                           data-testid="notes-textarea"
                         />
                       </div>
                       <div>
-                        <label className="text-[9px] text-[#94A3B8] uppercase tracking-wider">Key Takeaways (one per line)</label>
+                        <label className="text-[9px] text-[rgb(var(--text-muted))] uppercase tracking-wider">Key Takeaways (one per line)</label>
                         <textarea
                           value={takeaways}
                           onChange={(e) => setTakeaways(e.target.value)}
-                          className="w-full mt-1 bg-[#050814] border border-[#1E293B] rounded-md p-2 text-xs text-[#F8FAFC] h-16 outline-none focus:border-[#D4AF37]/40"
+                          className="w-full mt-1 bg-[rgb(var(--ink-deep))] border border-[rgb(var(--ink-border))] rounded-md p-2 text-xs text-[rgb(var(--text-main))] h-16 outline-none focus:border-[rgb(var(--gold)/0.4)]"
                           data-testid="takeaways-textarea"
                         />
                       </div>
                       <div>
-                        <label className="text-[9px] text-[#94A3B8] uppercase tracking-wider">Tags (comma-separated)</label>
+                        <label className="text-[9px] text-[rgb(var(--text-muted))] uppercase tracking-wider">Tags (comma-separated)</label>
                         <input
                           value={tags}
                           onChange={(e) => setTags(e.target.value)}
-                          className="w-full mt-1 bg-[#050814] border border-[#1E293B] rounded-md px-2 py-1.5 text-xs text-[#F8FAFC] outline-none focus:border-[#D4AF37]/40"
+                          className="w-full mt-1 bg-[rgb(var(--ink-deep))] border border-[rgb(var(--ink-border))] rounded-md px-2 py-1.5 text-xs text-[rgb(var(--text-main))] outline-none focus:border-[rgb(var(--gold)/0.4)]"
                           data-testid="tags-input"
                         />
                       </div>
                       <div className="flex gap-2">
-                        <Button size="sm" className="bg-[#D4AF37] text-[#050814] text-[10px] h-7" onClick={saveNotes} data-testid="save-notes-btn">Save</Button>
-                        <Button size="sm" variant="outline" className="border-[#1E293B] text-[#94A3B8] text-[10px] h-7" onClick={() => setEditingNotes(false)}>Cancel</Button>
+                        <Button size="sm" className="bg-[rgb(var(--gold))] text-[rgb(var(--ink-deep))] text-[10px] h-7" onClick={saveNotes} data-testid="save-notes-btn">Save</Button>
+                        <Button size="sm" variant="outline" className="border-[rgb(var(--ink-border))] text-[rgb(var(--text-muted))] text-[10px] h-7" onClick={() => setEditingNotes(false)}>Cancel</Button>
                       </div>
                     </div>
                   ) : (
                     <div>
                       {detail.notes ? (
-                        <p className="text-xs text-[#94A3B8] whitespace-pre-wrap">{detail.notes}</p>
+                        <p className="text-xs text-[rgb(var(--text-muted))] whitespace-pre-wrap">{detail.notes}</p>
                       ) : (
-                        <p className="text-xs text-[#475569] italic">No notes yet. {isFaculty ? 'Click Edit to add notes.' : ''}</p>
+                        <p className="text-xs text-[rgb(var(--text-faint))] italic">No notes yet. {isFaculty ? 'Click Edit to add notes.' : ''}</p>
                       )}
                       {(detail.key_takeaways || []).length > 0 && (
                         <div className="mt-3">
-                          <p className="text-[9px] text-[#D4AF37] uppercase tracking-wider mb-1">Key Takeaways</p>
+                          <p className="text-[9px] text-[rgb(var(--gold))] uppercase tracking-wider mb-1">Key Takeaways</p>
                           <ul className="space-y-1">
                             {detail.key_takeaways.map((t) => (
-                              <li key={t} className="text-xs text-[#94A3B8] flex items-start gap-2">
-                                <span className="text-[#D4AF37] mt-0.5">&#9679;</span>{t}
+                              <li key={t} className="text-xs text-[rgb(var(--text-muted))] flex items-start gap-2">
+                                <span className="text-[rgb(var(--gold))] mt-0.5">&#9679;</span>{t}
                               </li>
                             ))}
                           </ul>

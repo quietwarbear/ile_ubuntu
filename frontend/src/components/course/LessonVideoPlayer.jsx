@@ -81,13 +81,13 @@ export function LessonVideoPlayer({
 
   return (
     <div className="space-y-2" data-testid="lesson-video-player">
-      <span className="text-[10px] tracking-[0.15em] uppercase text-[#D4AF37] flex items-center gap-1">
+      <span className="text-[10px] tracking-[0.15em] uppercase text-[rgb(var(--gold))] flex items-center gap-1">
         <VideoCamera size={12} weight="duotone" /> Lesson Video
       </span>
 
       {/* Video display */}
       {embedSrc && (
-        <div className="rounded-md overflow-hidden border border-[#1E293B]">
+        <div className="rounded-md overflow-hidden border border-[rgb(var(--ink-border))]">
           <iframe
             src={embedSrc}
             className="w-full aspect-video"
@@ -99,7 +99,7 @@ export function LessonVideoPlayer({
       )}
 
       {isDirectUrl && (
-        <div className="rounded-md overflow-hidden border border-[#1E293B]">
+        <div className="rounded-md overflow-hidden border border-[rgb(var(--ink-border))]">
           <video controls className="w-full" src={lesson.video_url}>
             Your browser does not support the video tag.
           </video>
@@ -107,7 +107,7 @@ export function LessonVideoPlayer({
       )}
 
       {lesson.video_file_id && !lesson.video_url && (
-        <div className="rounded-md overflow-hidden border border-[#1E293B]">
+        <div className="rounded-md overflow-hidden border border-[rgb(var(--ink-border))]">
           <video controls className="w-full"
             src={`${BACKEND_URL}/api/files/${lesson.video_file_id}/stream`}>
             Your browser does not support the video tag.
@@ -130,12 +130,12 @@ export function LessonVideoPlayer({
             <div className="flex gap-2">
               <Button size="sm" variant="ghost"
                 onClick={() => setMode('url')}
-                className="text-[#D4AF37] hover:text-[#F3E5AB] text-[10px] h-7">
+                className="text-[rgb(var(--gold))] hover:text-[rgb(var(--gold-soft))] text-[10px] h-7">
                 <LinkIcon size={12} className="mr-1" /> Add Video URL
               </Button>
               <Button size="sm" variant="ghost"
                 onClick={() => setMode('upload')}
-                className="text-[#D4AF37] hover:text-[#F3E5AB] text-[10px] h-7">
+                className="text-[rgb(var(--gold))] hover:text-[rgb(var(--gold-soft))] text-[10px] h-7">
                 <Upload size={12} className="mr-1" /> Upload Video
               </Button>
             </div>
@@ -147,14 +147,14 @@ export function LessonVideoPlayer({
                 placeholder="YouTube, Vimeo, or direct video URL..."
                 value={videoUrl}
                 onChange={(e) => setVideoUrl(e.target.value)}
-                className="bg-[#050814] border-[#1E293B] text-[#F8FAFC] text-xs flex-1"
+                className="bg-[rgb(var(--ink-deep))] border-[rgb(var(--ink-border))] text-[rgb(var(--text-main))] text-xs flex-1"
               />
               <Button size="sm" onClick={handleSaveUrl}
-                className="bg-[#D4AF37] text-[#050814] hover:bg-[#F3E5AB] text-xs">
+                className="bg-[rgb(var(--gold))] text-[rgb(var(--ink-deep))] hover:bg-[rgb(var(--gold-soft))] text-xs">
                 Save
               </Button>
               <Button size="sm" variant="ghost" onClick={() => { setMode(null); setVideoUrl(''); }}
-                className="text-[#94A3B8] text-xs">
+                className="text-[rgb(var(--text-muted))] text-xs">
                 <X size={14} />
               </Button>
             </div>
@@ -162,13 +162,13 @@ export function LessonVideoPlayer({
 
           {mode === 'upload' && (
             <div className="flex items-center gap-2">
-              <label className="cursor-pointer flex items-center gap-2 px-3 py-1.5 rounded bg-[#050814] border border-[#1E293B] text-xs text-[#D4AF37] hover:border-[#D4AF37]/40 transition-colors">
+              <label className="cursor-pointer flex items-center gap-2 px-3 py-1.5 rounded bg-[rgb(var(--ink-deep))] border border-[rgb(var(--ink-border))] text-xs text-[rgb(var(--gold))] hover:border-[rgb(var(--gold)/0.4)] transition-colors">
                 <Play size={14} />
                 {uploading ? 'Uploading...' : 'Choose Video File'}
                 <input type="file" className="hidden" accept="video/*" onChange={handleUpload} disabled={uploading} />
               </label>
               <Button size="sm" variant="ghost" onClick={() => setMode(null)}
-                className="text-[#94A3B8] text-xs">
+                className="text-[rgb(var(--text-muted))] text-xs">
                 <X size={14} />
               </Button>
             </div>

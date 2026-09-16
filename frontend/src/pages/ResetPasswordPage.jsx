@@ -47,33 +47,33 @@ export default function ResetPasswordPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#050814] px-8" data-testid="reset-password-page">
+    <div className="min-h-screen flex items-center justify-center bg-[rgb(var(--ink-deep))] px-8" data-testid="reset-password-page">
       <div className="w-full max-w-sm space-y-8">
         <div className="text-center">
-          <div className="w-16 h-16 mx-auto rounded-lg bg-[#D4AF37]/10 border border-[#D4AF37]/20 flex items-center justify-center mb-6">
+          <div className="w-16 h-16 mx-auto rounded-lg bg-[rgb(var(--gold)/0.1)] border border-[rgb(var(--gold)/0.2)] flex items-center justify-center mb-6">
             <BrandMark className="w-10 h-10 object-contain" />
           </div>
-          <h1 className="text-3xl font-light text-[#F8FAFC] mb-1" style={{ fontFamily: 'Cormorant Garamond, serif' }}>
+          <h1 className="text-3xl font-light text-[rgb(var(--text-main))] mb-1" style={{ fontFamily: 'Cormorant Garamond, serif' }}>
             Reset Password
           </h1>
-          <p className="text-xs tracking-[0.2em] uppercase text-[#D4AF37]">The Ile Ubuntu</p>
+          <p className="text-xs tracking-[0.2em] uppercase text-[rgb(var(--gold))]">The Ile Ubuntu</p>
         </div>
 
         {!token ? (
           <div className="text-center space-y-4">
-            <p className="text-sm text-[#94A3B8]">
+            <p className="text-sm text-[rgb(var(--text-muted))]">
               This reset link is missing its token. Please use the link from your email, or request a new one.
             </p>
-            <Link to="/login" className="text-sm text-[#D4AF37] hover:underline">Back to sign in</Link>
+            <Link to="/login" className="text-sm text-[rgb(var(--gold))] hover:underline">Back to sign in</Link>
           </div>
         ) : done ? (
           <div className="text-center space-y-4">
             <CheckCircle size={40} weight="duotone" className="mx-auto text-emerald-400" />
-            <p className="text-sm text-[#94A3B8]">
+            <p className="text-sm text-[rgb(var(--text-muted))]">
               Your password has been updated. Please sign in with your new password.
             </p>
             <Link to="/login">
-              <Button className="w-full bg-[#D4AF37] text-[#050814] hover:bg-[#F3E5AB] font-medium py-3">
+              <Button className="w-full bg-[rgb(var(--gold))] text-[rgb(var(--ink-deep))] hover:bg-[rgb(var(--gold-soft))] font-medium py-3">
                 Go to Sign In
               </Button>
             </Link>
@@ -81,7 +81,7 @@ export default function ResetPasswordPage() {
         ) : (
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-xs text-[#94A3B8] mb-1.5 uppercase tracking-wider">New Password</label>
+              <label className="block text-xs text-[rgb(var(--text-muted))] mb-1.5 uppercase tracking-wider">New Password</label>
               <div className="relative">
                 <input
                   type={showPassword ? 'text' : 'password'}
@@ -89,12 +89,12 @@ export default function ResetPasswordPage() {
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="Min 6 characters"
                   required
-                  className="w-full px-4 py-2.5 rounded-md bg-[#0F1629] border border-[#1E293B] text-[#F8FAFC] placeholder-[#475569] focus:outline-none focus:border-[#D4AF37]/50 text-sm pr-10 transition-colors"
+                  className="w-full px-4 py-2.5 rounded-md bg-[rgb(var(--ink-card-alt))] border border-[rgb(var(--ink-border))] text-[rgb(var(--text-main))] placeholder-[rgb(var(--text-faint))] focus:outline-none focus:border-[rgb(var(--gold)/0.5)] text-sm pr-10 transition-colors"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-[#475569] hover:text-[#94A3B8]"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-[rgb(var(--text-faint))] hover:text-[rgb(var(--text-muted))]"
                 >
                   {showPassword ? <EyeSlash size={16} /> : <Eye size={16} />}
                 </button>
@@ -102,14 +102,14 @@ export default function ResetPasswordPage() {
             </div>
 
             <div>
-              <label className="block text-xs text-[#94A3B8] mb-1.5 uppercase tracking-wider">Confirm Password</label>
+              <label className="block text-xs text-[rgb(var(--text-muted))] mb-1.5 uppercase tracking-wider">Confirm Password</label>
               <input
                 type={showPassword ? 'text' : 'password'}
                 value={confirm}
                 onChange={(e) => setConfirm(e.target.value)}
                 placeholder="Repeat new password"
                 required
-                className="w-full px-4 py-2.5 rounded-md bg-[#0F1629] border border-[#1E293B] text-[#F8FAFC] placeholder-[#475569] focus:outline-none focus:border-[#D4AF37]/50 text-sm transition-colors"
+                className="w-full px-4 py-2.5 rounded-md bg-[rgb(var(--ink-card-alt))] border border-[rgb(var(--ink-border))] text-[rgb(var(--text-main))] placeholder-[rgb(var(--text-faint))] focus:outline-none focus:border-[rgb(var(--gold)/0.5)] text-sm transition-colors"
               />
             </div>
 
@@ -120,13 +120,13 @@ export default function ResetPasswordPage() {
             <Button
               type="submit"
               disabled={loading}
-              className="w-full bg-[#D4AF37] text-[#050814] hover:bg-[#F3E5AB] font-medium py-3 transition-all duration-200"
+              className="w-full bg-[rgb(var(--gold))] text-[rgb(var(--ink-deep))] hover:bg-[rgb(var(--gold-soft))] font-medium py-3 transition-all duration-200"
             >
               <LockKey size={18} weight="duotone" className="mr-2" /> Update Password
             </Button>
 
-            <p className="text-center text-xs text-[#94A3B8]">
-              <Link to="/login" className="text-[#D4AF37] hover:underline">Back to sign in</Link>
+            <p className="text-center text-xs text-[rgb(var(--text-muted))]">
+              <Link to="/login" className="text-[rgb(var(--gold))] hover:underline">Back to sign in</Link>
             </p>
           </form>
         )}

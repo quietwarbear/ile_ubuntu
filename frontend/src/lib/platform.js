@@ -52,7 +52,7 @@ export const initializeNativePlugins = async () => {
     );
     await StatusBar.setStyle({ style: Style.Dark });
     if (Platform.isAndroid()) {
-      await StatusBar.setBackgroundColor({ color: "#050814" });
+      await StatusBar.setBackgroundColor({ color: "rgb(var(--ink-deep))" });
     }
   } catch (e) {
     console.warn("[IleUbuntu] StatusBar plugin error:", e);

@@ -140,7 +140,7 @@ export default function LiveSessionsPage({ user }) {
   const statusConfig = {
     scheduled: { color: 'bg-blue-500/10 text-blue-400 border-blue-500/20', label: 'Scheduled' },
     live: { color: 'bg-red-500/10 text-red-400 border-red-500/20', label: 'Live Now' },
-    ended: { color: 'bg-[#94A3B8]/10 text-[#94A3B8] border-[#94A3B8]/20', label: 'Ended' },
+    ended: { color: 'bg-[rgb(var(--text-muted)/0.1)] text-[rgb(var(--text-muted))] border-[rgb(var(--text-muted)/0.2)]', label: 'Ended' },
   };
 
   return (
@@ -148,42 +148,42 @@ export default function LiveSessionsPage({ user }) {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-light text-[#F8FAFC]" style={{ fontFamily: 'Cormorant Garamond, serif' }}>
+          <h1 className="text-3xl font-light text-[rgb(var(--text-main))]" style={{ fontFamily: 'Cormorant Garamond, serif' }}>
             Live Teaching
           </h1>
-          <p className="text-sm text-[#94A3B8]">Real-time sessions and virtual classrooms</p>
+          <p className="text-sm text-[rgb(var(--text-muted))]">Real-time sessions and virtual classrooms</p>
         </div>
         {isFaculty && (
           <Dialog open={createOpen} onOpenChange={setCreateOpen}>
             <DialogTrigger asChild>
-              <Button className="bg-[#D4AF37] text-[#050814] hover:bg-[#F3E5AB]" data-testid="create-session-btn">
+              <Button className="bg-[rgb(var(--gold))] text-[rgb(var(--ink-deep))] hover:bg-[rgb(var(--gold-soft))]" data-testid="create-session-btn">
                 <Plus size={16} weight="bold" className="mr-1.5" /> New Session
               </Button>
             </DialogTrigger>
-            <DialogContent className="bg-[#0F172A] border-[#1E293B]">
+            <DialogContent className="bg-[rgb(var(--ink-card))] border-[rgb(var(--ink-border))]">
               <DialogHeader>
-                <DialogTitle className="text-[#F8FAFC]" style={{ fontFamily: 'Cormorant Garamond, serif' }}>Schedule Live Session</DialogTitle>
+                <DialogTitle className="text-[rgb(var(--text-main))]" style={{ fontFamily: 'Cormorant Garamond, serif' }}>Schedule Live Session</DialogTitle>
               </DialogHeader>
               <div className="space-y-4">
                 <Input
                   placeholder="Session Title"
                   value={form.title}
                   onChange={e => setForm({ ...form, title: e.target.value })}
-                  className="bg-[#050814] border-[#1E293B] text-[#F8FAFC]"
+                  className="bg-[rgb(var(--ink-deep))] border-[rgb(var(--ink-border))] text-[rgb(var(--text-main))]"
                   data-testid="session-title-input"
                 />
                 <Textarea
                   placeholder="Description (optional)"
                   value={form.description}
                   onChange={e => setForm({ ...form, description: e.target.value })}
-                  className="bg-[#050814] border-[#1E293B] text-[#F8FAFC]"
+                  className="bg-[rgb(var(--ink-deep))] border-[rgb(var(--ink-border))] text-[rgb(var(--text-main))]"
                   data-testid="session-desc-input"
                 />
                 {courses.length > 0 && (
                   <select
                     value={form.course_id}
                     onChange={e => setForm({ ...form, course_id: e.target.value })}
-                    className="w-full p-2 rounded-md bg-[#050814] border border-[#1E293B] text-[#F8FAFC] text-sm"
+                    className="w-full p-2 rounded-md bg-[rgb(var(--ink-deep))] border border-[rgb(var(--ink-border))] text-[rgb(var(--text-main))] text-sm"
                     data-testid="session-course-select"
                   >
                     <option value="">No linked course</option>
@@ -191,18 +191,18 @@ export default function LiveSessionsPage({ user }) {
                   </select>
                 )}
                 <div>
-                  <label className="text-xs text-[#94A3B8] mb-1 block">Schedule for (optional)</label>
+                  <label className="text-xs text-[rgb(var(--text-muted))] mb-1 block">Schedule for (optional)</label>
                   <Input
                     type="datetime-local"
                     value={form.scheduled_at}
                     onChange={e => setForm({ ...form, scheduled_at: e.target.value })}
-                    className="bg-[#050814] border-[#1E293B] text-[#F8FAFC]"
+                    className="bg-[rgb(var(--ink-deep))] border-[rgb(var(--ink-border))] text-[rgb(var(--text-main))]"
                     data-testid="session-schedule-input"
                   />
                 </div>
                 <Button
                   onClick={handleCreate}
-                  className="w-full bg-[#D4AF37] text-[#050814] hover:bg-[#F3E5AB]"
+                  className="w-full bg-[rgb(var(--gold))] text-[rgb(var(--ink-deep))] hover:bg-[rgb(var(--gold-soft))]"
                   data-testid="submit-session-btn"
                 >
                   Schedule Session
@@ -214,7 +214,7 @@ export default function LiveSessionsPage({ user }) {
       </div>
 
       {/* Filters */}
-      <div className="flex gap-1 p-1 bg-[#0F172A] border border-[#1E293B] rounded-md w-fit">
+      <div className="flex gap-1 p-1 bg-[rgb(var(--ink-card))] border border-[rgb(var(--ink-border))] rounded-md w-fit">
         {[
           { key: 'all', label: 'All' },
           { key: 'live', label: 'Live Now' },
@@ -225,7 +225,7 @@ export default function LiveSessionsPage({ user }) {
             key={f.key}
             onClick={() => setActiveFilter(f.key)}
             className={`px-4 py-2 text-xs font-medium rounded transition-all ${
-              activeFilter === f.key ? 'bg-[#D4AF37] text-[#050814]' : 'text-[#94A3B8] hover:text-[#F8FAFC]'
+              activeFilter === f.key ? 'bg-[rgb(var(--gold))] text-[rgb(var(--ink-deep))]' : 'text-[rgb(var(--text-muted))] hover:text-[rgb(var(--text-main))]'
             }`}
             data-testid={`filter-${f.key}`}
           >
@@ -237,13 +237,13 @@ export default function LiveSessionsPage({ user }) {
 
       {/* Sessions List */}
       {filteredSessions.length === 0 ? (
-        <Card className="bg-[#0F172A] border-[#1E293B]">
+        <Card className="bg-[rgb(var(--ink-card))] border-[rgb(var(--ink-border))]">
           <CardContent className="p-10 text-center">
-            <VideoCamera size={48} weight="duotone" className="text-[#D4AF37] mx-auto mb-4" />
-            <h3 className="text-lg text-[#F8FAFC] mb-2" style={{ fontFamily: 'Cormorant Garamond, serif' }}>
+            <VideoCamera size={48} weight="duotone" className="text-[rgb(var(--gold))] mx-auto mb-4" />
+            <h3 className="text-lg text-[rgb(var(--text-main))] mb-2" style={{ fontFamily: 'Cormorant Garamond, serif' }}>
               {activeFilter === 'live' ? 'No live sessions right now' : 'No sessions found'}
             </h3>
-            <p className="text-sm text-[#94A3B8]">
+            <p className="text-sm text-[rgb(var(--text-muted))]">
               {isFaculty ? 'Schedule a session to start teaching live.' : 'Check back later for upcoming sessions.'}
             </p>
           </CardContent>
@@ -257,8 +257,8 @@ export default function LiveSessionsPage({ user }) {
             return (
               <Card
                 key={session.id}
-                className={`bg-[#0F172A] border-[#1E293B] transition-all ${
-                  session.status === 'live' ? 'border-l-2 border-l-red-500 hover:border-red-500/50' : 'hover:border-[#D4AF37]/30'
+                className={`bg-[rgb(var(--ink-card))] border-[rgb(var(--ink-border))] transition-all ${
+                  session.status === 'live' ? 'border-l-2 border-l-red-500 hover:border-red-500/50' : 'hover:border-[rgb(var(--gold)/0.3)]'
                 }`}
                 data-testid={`session-card-${session.id}`}
               >
@@ -272,7 +272,7 @@ export default function LiveSessionsPage({ user }) {
                           </span>
                         )}
                         <h3
-                          className="text-base text-[#F8FAFC]"
+                          className="text-base text-[rgb(var(--text-main))]"
                           style={{ fontFamily: 'Cormorant Garamond, serif' }}
                         >
                           {session.title}
@@ -281,16 +281,16 @@ export default function LiveSessionsPage({ user }) {
                       </div>
 
                       {session.description && (
-                        <p className="text-xs text-[#94A3B8] mb-2">{session.description}</p>
+                        <p className="text-xs text-[rgb(var(--text-muted))] mb-2">{session.description}</p>
                       )}
 
-                      <div className="flex items-center gap-4 text-xs text-[#94A3B8]">
+                      <div className="flex items-center gap-4 text-xs text-[rgb(var(--text-muted))]">
                         <span className="flex items-center gap-1">
                           <img src={session.host_picture || `https://ui-avatars.com/api/?name=${session.host_name}&background=0F172A&color=D4AF37&size=16`} alt="" className="w-4 h-4 rounded-full" />
                           {session.host_name}
                         </span>
                         {session.course_title && (
-                          <span className="flex items-center gap-1 text-[#D4AF37]">
+                          <span className="flex items-center gap-1 text-[rgb(var(--gold))]">
                             {session.course_title}
                           </span>
                         )}
@@ -321,7 +321,7 @@ export default function LiveSessionsPage({ user }) {
                         <Button
                           size="sm"
                           onClick={() => handleJoin(session.id)}
-                          className="bg-[#D4AF37] text-[#050814] hover:bg-[#F3E5AB] text-xs"
+                          className="bg-[rgb(var(--gold))] text-[rgb(var(--ink-deep))] hover:bg-[rgb(var(--gold-soft))] text-xs"
                           data-testid={`join-session-${session.id}`}
                         >
                           <VideoCamera size={14} weight="duotone" className="mr-1" /> Join
@@ -332,7 +332,7 @@ export default function LiveSessionsPage({ user }) {
                           <Button
                             size="sm"
                             onClick={() => navigate(`/live/${session.id}`)}
-                            className="bg-[#D4AF37] text-[#050814] hover:bg-[#F3E5AB] text-xs"
+                            className="bg-[rgb(var(--gold))] text-[rgb(var(--ink-deep))] hover:bg-[rgb(var(--gold-soft))] text-xs"
                             data-testid={`rejoin-session-${session.id}`}
                           >
                             <VideoCamera size={14} className="mr-1" /> Rejoin
@@ -353,7 +353,7 @@ export default function LiveSessionsPage({ user }) {
                           size="sm"
                           variant="ghost"
                           onClick={(e) => openAttendance(session, e)}
-                          className="text-[#D4AF37] hover:text-[#F3E5AB] text-xs"
+                          className="text-[rgb(var(--gold))] hover:text-[rgb(var(--gold-soft))] text-xs"
                           data-testid={`attendance-${session.id}`}
                         >
                           <ClipboardText size={14} weight="duotone" className="mr-1" /> Attendance
@@ -389,16 +389,16 @@ export default function LiveSessionsPage({ user }) {
 
       {/* Attendance dialog */}
       <Dialog open={!!attendanceSession} onOpenChange={(open) => !open && setAttendanceSession(null)}>
-        <DialogContent className="bg-[#0F172A] border-[#1E293B] max-h-[80vh] overflow-y-auto">
+        <DialogContent className="bg-[rgb(var(--ink-card))] border-[rgb(var(--ink-border))] max-h-[80vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle className="text-[#F8FAFC]" style={{ fontFamily: 'Cormorant Garamond, serif' }}>
+            <DialogTitle className="text-[rgb(var(--text-main))]" style={{ fontFamily: 'Cormorant Garamond, serif' }}>
               Attendance — {attendanceSession?.title}
             </DialogTitle>
           </DialogHeader>
           {attendanceLoading ? (
-            <p className="text-sm text-[#94A3B8] py-6 text-center">Loading roster…</p>
+            <p className="text-sm text-[rgb(var(--text-muted))] py-6 text-center">Loading roster…</p>
           ) : roster.length === 0 ? (
-            <p className="text-sm text-[#94A3B8] py-6 text-center">
+            <p className="text-sm text-[rgb(var(--text-muted))] py-6 text-center">
               No one to mark yet — the roster fills from call joins and course enrollment.
             </p>
           ) : (
@@ -406,7 +406,7 @@ export default function LiveSessionsPage({ user }) {
               {roster.map(r => (
                 <div
                   key={r.user_id}
-                  className="flex items-center justify-between gap-3 p-2.5 rounded-md bg-[#050814] border border-[#1E293B]"
+                  className="flex items-center justify-between gap-3 p-2.5 rounded-md bg-[rgb(var(--ink-deep))] border border-[rgb(var(--ink-border))]"
                   data-testid={`attendance-row-${r.user_id}`}
                 >
                   <div className="flex items-center gap-2 min-w-0">
@@ -416,7 +416,7 @@ export default function LiveSessionsPage({ user }) {
                       className="w-6 h-6 rounded-full flex-shrink-0"
                     />
                     <div className="min-w-0">
-                      <p className="text-sm text-[#F8FAFC] truncate">{r.name}</p>
+                      <p className="text-sm text-[rgb(var(--text-main))] truncate">{r.name}</p>
                       {r.joined_call && (
                         <p className="text-[9px] text-emerald-400 uppercase tracking-wider">joined call</p>
                       )}
@@ -434,7 +434,7 @@ export default function LiveSessionsPage({ user }) {
                               : status === 'late'
                                 ? 'bg-amber-500/15 text-amber-400 border-amber-500/40'
                                 : 'bg-red-500/15 text-red-400 border-red-500/40'
-                            : 'text-[#475569] border-[#1E293B] hover:text-[#94A3B8]'
+                            : 'text-[rgb(var(--text-faint))] border-[rgb(var(--ink-border))] hover:text-[rgb(var(--text-muted))]'
                         }`}
                         data-testid={`attendance-${r.user_id}-${status}`}
                       >
@@ -447,7 +447,7 @@ export default function LiveSessionsPage({ user }) {
               <Button
                 onClick={saveAttendance}
                 disabled={attendanceSaving}
-                className="w-full bg-[#D4AF37] text-[#050814] hover:bg-[#F3E5AB] mt-2"
+                className="w-full bg-[rgb(var(--gold))] text-[rgb(var(--ink-deep))] hover:bg-[rgb(var(--gold-soft))] mt-2"
                 data-testid="save-attendance-btn"
               >
                 {attendanceSaving ? 'Saving…' : 'Save Attendance'}
