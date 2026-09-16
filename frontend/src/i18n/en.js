@@ -29,6 +29,8 @@ const en = {
   nav_belong: 'Belong',
   nav_facilitate: 'Facilitate',
   nav_account: 'Account',
+  nav_help: 'Help',
+  village_guide: 'Village Guide',
   teacher_dashboard: 'Teacher Dashboard',
   dashboard: 'Dashboard',
   courses: 'Courses',

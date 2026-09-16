@@ -29,6 +29,8 @@ const yo = {
   nav_belong: 'Àjọṣe',
   nav_facilitate: 'Ìdarí',
   nav_account: 'Àkáǹtì',
+  nav_help: 'Ìrànlọ́wọ́',
+  village_guide: 'Amọ̀nà Abúlé',
   teacher_dashboard: 'Pánẹ́lì Olùkọ́',
   dashboard: 'Pánẹ́lì',
   courses: 'Àwọn Ẹ̀kọ́',

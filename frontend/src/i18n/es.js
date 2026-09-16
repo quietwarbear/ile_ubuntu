@@ -29,6 +29,8 @@ const es = {
   nav_belong: 'Pertenecer',
   nav_facilitate: 'Facilitar',
   nav_account: 'Cuenta',
+  nav_help: 'Ayuda',
+  village_guide: 'Guía del Pueblo',
   teacher_dashboard: 'Panel del Docente',
   dashboard: 'Panel',
   courses: 'Cursos',
