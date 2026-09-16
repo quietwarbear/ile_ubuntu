@@ -65,25 +65,25 @@ export default function CohortsPage({ user }) {
     <div className="space-y-6 animate-fade-in-up" data-testid="cohorts-page">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-light text-[#F8FAFC]" style={{ fontFamily: 'Cormorant Garamond, serif' }}>Cohorts</h1>
-          <p className="text-sm text-[#94A3B8]">Time-bound learning groups and study circles</p>
+          <h1 className="text-3xl font-light text-[rgb(var(--text-main))]" style={{ fontFamily: 'Cormorant Garamond, serif' }}>Cohorts</h1>
+          <p className="text-sm text-[rgb(var(--text-muted))]">Time-bound learning groups and study circles</p>
         </div>
         {isFaculty && (
           <Dialog open={createOpen} onOpenChange={setCreateOpen}>
             <DialogTrigger asChild>
-              <Button className="bg-[#D4AF37] text-[#050814] hover:bg-[#F3E5AB]" data-testid="create-cohort-btn">
+              <Button className="bg-[rgb(var(--gold))] text-[rgb(var(--ink-deep))] hover:bg-[rgb(var(--gold-soft))]" data-testid="create-cohort-btn">
                 <Plus size={16} weight="bold" className="mr-1.5" /> New Cohort
               </Button>
             </DialogTrigger>
-            <DialogContent className="bg-[#0F172A] border-[#1E293B]">
+            <DialogContent className="bg-[rgb(var(--ink-card))] border-[rgb(var(--ink-border))]">
               <DialogHeader>
-                <DialogTitle className="text-[#F8FAFC]" style={{ fontFamily: 'Cormorant Garamond, serif' }}>Create Cohort</DialogTitle>
+                <DialogTitle className="text-[rgb(var(--text-main))]" style={{ fontFamily: 'Cormorant Garamond, serif' }}>Create Cohort</DialogTitle>
               </DialogHeader>
               <div className="space-y-4">
-                <Input placeholder="Cohort Name" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} className="bg-[#050814] border-[#1E293B] text-[#F8FAFC]" data-testid="cohort-name-input" />
-                <Textarea placeholder="Description" value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} className="bg-[#050814] border-[#1E293B] text-[#F8FAFC]" data-testid="cohort-desc-input" />
-                <Input type="number" placeholder="Max Members" value={form.max_members} onChange={e => setForm({ ...form, max_members: parseInt(e.target.value) || 30 })} className="bg-[#050814] border-[#1E293B] text-[#F8FAFC]" />
-                <Button onClick={handleCreate} className="w-full bg-[#D4AF37] text-[#050814] hover:bg-[#F3E5AB]" data-testid="submit-cohort-btn">Create Cohort</Button>
+                <Input placeholder="Cohort Name" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} className="bg-[rgb(var(--ink-deep))] border-[rgb(var(--ink-border))] text-[rgb(var(--text-main))]" data-testid="cohort-name-input" />
+                <Textarea placeholder="Description" value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} className="bg-[rgb(var(--ink-deep))] border-[rgb(var(--ink-border))] text-[rgb(var(--text-main))]" data-testid="cohort-desc-input" />
+                <Input type="number" placeholder="Max Members" value={form.max_members} onChange={e => setForm({ ...form, max_members: parseInt(e.target.value) || 30 })} className="bg-[rgb(var(--ink-deep))] border-[rgb(var(--ink-border))] text-[rgb(var(--text-main))]" />
+                <Button onClick={handleCreate} className="w-full bg-[rgb(var(--gold))] text-[rgb(var(--ink-deep))] hover:bg-[rgb(var(--gold-soft))]" data-testid="submit-cohort-btn">Create Cohort</Button>
               </div>
             </DialogContent>
           </Dialog>
@@ -91,11 +91,11 @@ export default function CohortsPage({ user }) {
       </div>
 
       {cohorts.length === 0 ? (
-        <Card className="bg-[#0F172A] border-[#1E293B]">
+        <Card className="bg-[rgb(var(--ink-card))] border-[rgb(var(--ink-border))]">
           <CardContent className="p-10 text-center">
             <UsersThree size={48} weight="duotone" className="text-blue-400 mx-auto mb-4" />
-            <h3 className="text-lg text-[#F8FAFC] mb-2" style={{ fontFamily: 'Cormorant Garamond, serif' }}>No cohorts yet</h3>
-            <p className="text-sm text-[#94A3B8]">Start a learning cohort to bring students together.</p>
+            <h3 className="text-lg text-[rgb(var(--text-main))] mb-2" style={{ fontFamily: 'Cormorant Garamond, serif' }}>No cohorts yet</h3>
+            <p className="text-sm text-[rgb(var(--text-muted))]">Start a learning cohort to bring students together.</p>
           </CardContent>
         </Card>
       ) : (
@@ -104,27 +104,27 @@ export default function CohortsPage({ user }) {
             const isMember = cohort.members?.includes(user?.id);
             const isOwner = cohort.instructor_id === user?.id;
             return (
-              <Card key={cohort.id} className="bg-[#0F172A] border-[#1E293B] hover:border-[#D4AF37]/20 transition-all cursor-pointer" onClick={() => navigate(`/cohorts/${cohort.id}`)} data-testid={`cohort-card-${cohort.id}`}>
+              <Card key={cohort.id} className="bg-[rgb(var(--ink-card))] border-[rgb(var(--ink-border))] hover:border-[rgb(var(--gold)/0.2)] transition-all cursor-pointer" onClick={() => navigate(`/cohorts/${cohort.id}`)} data-testid={`cohort-card-${cohort.id}`}>
                 <CardContent className="p-5 space-y-3">
                   <div className="flex items-start justify-between">
                     <div>
-                      <h3 className="text-base text-[#F8FAFC]" style={{ fontFamily: 'Cormorant Garamond, serif' }}>{cohort.name}</h3>
-                      <p className="text-xs text-[#94A3B8] mt-1">{cohort.description}</p>
+                      <h3 className="text-base text-[rgb(var(--text-main))]" style={{ fontFamily: 'Cormorant Garamond, serif' }}>{cohort.name}</h3>
+                      <p className="text-xs text-[rgb(var(--text-muted))] mt-1">{cohort.description}</p>
                     </div>
                     <Badge className={`text-[10px] ${statusColor(cohort.status)}`}>{cohort.status}</Badge>
                   </div>
-                  <div className="flex items-center gap-3 text-xs text-[#94A3B8]">
+                  <div className="flex items-center gap-3 text-xs text-[rgb(var(--text-muted))]">
                     <span className="flex items-center gap-1"><UsersThree size={14} /> {cohort.members?.length || 0}/{cohort.max_members}</span>
                     <span>Led by {cohort.instructor_name}</span>
                   </div>
                   <div className="flex gap-2 pt-1" onClick={e => e.stopPropagation()}>
                     {!isMember && !isOwner && (
-                      <Button size="sm" onClick={() => handleJoin(cohort.id)} className="bg-[#D4AF37] text-[#050814] hover:bg-[#F3E5AB] text-xs flex-1" data-testid={`join-cohort-${cohort.id}`}>
+                      <Button size="sm" onClick={() => handleJoin(cohort.id)} className="bg-[rgb(var(--gold))] text-[rgb(var(--ink-deep))] hover:bg-[rgb(var(--gold-soft))] text-xs flex-1" data-testid={`join-cohort-${cohort.id}`}>
                         <UserPlus size={14} className="mr-1" /> Join
                       </Button>
                     )}
                     {isMember && !isOwner && (
-                      <Button size="sm" variant="outline" onClick={() => handleLeave(cohort.id)} className="border-[#1E293B] text-[#94A3B8] hover:text-red-400 text-xs flex-1" data-testid={`leave-cohort-${cohort.id}`}>
+                      <Button size="sm" variant="outline" onClick={() => handleLeave(cohort.id)} className="border-[rgb(var(--ink-border))] text-[rgb(var(--text-muted))] hover:text-red-400 text-xs flex-1" data-testid={`leave-cohort-${cohort.id}`}>
                         <LeaveIcon size={14} className="mr-1" /> Leave
                       </Button>
                     )}

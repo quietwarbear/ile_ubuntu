@@ -15,14 +15,14 @@ const when = (value) => {
 function Byline({ post }) {
   return (
     <div className="flex flex-wrap items-center gap-2">
-      <span className="text-xs font-medium text-[#F8FAFC]">{post.author_name || 'Someone'}</span>
+      <span className="text-xs font-medium text-[rgb(var(--text-main))]">{post.author_name || 'Someone'}</span>
       {post.is_instructor && (
-        <span className="rounded-full bg-[#D4AF37]/15 px-2 py-0.5 text-[10px] font-medium text-[#D4AF37]">
+        <span className="rounded-full bg-[rgb(var(--gold)/0.15)] px-2 py-0.5 text-[10px] font-medium text-[rgb(var(--gold))]">
           Teacher
         </span>
       )}
-      <span className="text-[10px] text-[#94A3B8]">{when(post.created_at)}</span>
-      {post.edited && <span className="text-[10px] text-[#64748B]">edited</span>}
+      <span className="text-[10px] text-[rgb(var(--text-muted))]">{when(post.created_at)}</span>
+      {post.edited && <span className="text-[10px] text-[rgb(var(--text-dim))]">edited</span>}
     </div>
   );
 }
@@ -118,21 +118,21 @@ export function CourseDiscussion({ courseId, user, isStaff }) {
     return (
       <div data-testid="discussion-thread">
         <button onClick={() => { setOpenTopic(null); setError(''); }}
-          className="mb-4 text-xs text-[#94A3B8] hover:text-[#D4AF37]" data-testid="back-to-topics">
+          className="mb-4 text-xs text-[rgb(var(--text-muted))] hover:text-[rgb(var(--gold))]" data-testid="back-to-topics">
           ← All topics
         </button>
-        <Card className="bg-[#0F172A] border-[#1E293B]">
+        <Card className="bg-[rgb(var(--ink-card))] border-[rgb(var(--ink-border))]">
           <CardContent className="p-4 space-y-4">
             <div className="flex flex-wrap items-start justify-between gap-2">
-              <h3 className="text-sm font-medium text-[#F8FAFC]">{topic.title}</h3>
+              <h3 className="text-sm font-medium text-[rgb(var(--text-main))]">{topic.title}</h3>
               {isStaff && (
                 <div className="flex gap-1">
                   <Button onClick={() => toggle('pin', !topic.pinned)} disabled={busy} size="sm" variant="ghost"
-                    className="text-[#94A3B8] hover:text-[#D4AF37] text-[11px]" data-testid="toggle-pin">
+                    className="text-[rgb(var(--text-muted))] hover:text-[rgb(var(--gold))] text-[11px]" data-testid="toggle-pin">
                     {topic.pinned ? 'Unpin' : 'Pin'}
                   </Button>
                   <Button onClick={() => toggle('lock', !topic.locked)} disabled={busy} size="sm" variant="ghost"
-                    className="text-[#94A3B8] hover:text-[#D4AF37] text-[11px]" data-testid="toggle-lock">
+                    className="text-[rgb(var(--text-muted))] hover:text-[rgb(var(--gold))] text-[11px]" data-testid="toggle-lock">
                     {topic.locked ? 'Reopen' : 'Close'}
                   </Button>
                 </div>
@@ -140,18 +140,18 @@ export function CourseDiscussion({ courseId, user, isStaff }) {
             </div>
 
             {posts.map(post => (
-              <div key={post.id} className="rounded border border-[#1E293B] bg-[#050814] p-3"
+              <div key={post.id} className="rounded border border-[rgb(var(--ink-border))] bg-[rgb(var(--ink-deep))] p-3"
                 data-testid={`post-${post.id}`}>
                 <div className="flex items-start justify-between gap-2">
                   <Byline post={post} />
                   {(post.author_id === user?.id || isStaff) && !post.is_opening_post && (
                     <button onClick={() => removePost(post)} disabled={busy}
-                      className="text-[10px] text-[#64748B] hover:text-red-400" data-testid={`delete-post-${post.id}`}>
+                      className="text-[10px] text-[rgb(var(--text-dim))] hover:text-red-400" data-testid={`delete-post-${post.id}`}>
                       Delete
                     </button>
                   )}
                 </div>
-                <p className="mt-2 whitespace-pre-wrap text-sm text-[#CBD5E1]">{post.content}</p>
+                <p className="mt-2 whitespace-pre-wrap text-sm text-[rgb(var(--text-softer))]">{post.content}</p>
               </div>
             ))}
 
@@ -159,23 +159,23 @@ export function CourseDiscussion({ courseId, user, isStaff }) {
               <div className="space-y-2">
                 <textarea value={reply} onChange={e => setReply(e.target.value)} rows={3}
                   placeholder={topic.locked ? 'This topic is closed — your reply posts as a teacher.' : 'Add to the conversation…'}
-                  className="w-full rounded-md border border-[#1E293B] bg-[#050814] p-3 text-sm text-[#F8FAFC] focus:border-[#D4AF37]/50 focus:outline-none"
+                  className="w-full rounded-md border border-[rgb(var(--ink-border))] bg-[rgb(var(--ink-deep))] p-3 text-sm text-[rgb(var(--text-main))] focus:border-[rgb(var(--gold)/0.5)] focus:outline-none"
                   data-testid="reply-box" />
                 <div className="flex gap-2">
                   <Button onClick={postReply} disabled={busy || !reply.trim()} size="sm"
-                    className="bg-[#D4AF37] text-[#050814] hover:bg-[#F3E5AB] text-xs" data-testid="submit-reply">
+                    className="bg-[rgb(var(--gold))] text-[rgb(var(--ink-deep))] hover:bg-[rgb(var(--gold-soft))] text-xs" data-testid="submit-reply">
                     {busy ? 'Posting…' : 'Reply'}
                   </Button>
                   {(topic.author_id === user?.id || isStaff) && (
                     <Button onClick={removeTopic} disabled={busy} size="sm" variant="ghost"
-                      className="text-[#94A3B8] hover:text-red-400 text-xs" data-testid="delete-topic">
+                      className="text-[rgb(var(--text-muted))] hover:text-red-400 text-xs" data-testid="delete-topic">
                       Delete topic
                     </Button>
                   )}
                 </div>
               </div>
             ) : (
-              <p className="text-[11px] text-[#64748B]">This topic is closed to new replies.</p>
+              <p className="text-[11px] text-[rgb(var(--text-dim))]">This topic is closed to new replies.</p>
             )}
 
             {error && <p className="text-[11px] text-red-400" data-testid="discussion-error">{error}</p>}
@@ -189,58 +189,58 @@ export function CourseDiscussion({ courseId, user, isStaff }) {
   return (
     <div data-testid="discussion-room">
       <div className="mb-4 flex items-center justify-between">
-        <h2 className="text-xs tracking-[0.15em] uppercase text-[#D4AF37]">
+        <h2 className="text-xs tracking-[0.15em] uppercase text-[rgb(var(--gold))]">
           Class Discussion
         </h2>
         <Button onClick={() => setShowNew(v => !v)} size="sm"
-          className="bg-[#D4AF37] text-[#050814] hover:bg-[#F3E5AB] text-xs" data-testid="new-topic-btn">
+          className="bg-[rgb(var(--gold))] text-[rgb(var(--ink-deep))] hover:bg-[rgb(var(--gold-soft))] text-xs" data-testid="new-topic-btn">
           {showNew ? 'Cancel' : 'Start a Topic'}
         </Button>
       </div>
 
       {showNew && (
-        <Card className="bg-[#0F172A] border-[#D4AF37]/30 mb-4">
+        <Card className="bg-[rgb(var(--ink-card))] border-[rgb(var(--gold)/0.3)] mb-4">
           <CardContent className="p-4 space-y-3">
             <Input placeholder="What is this topic about?" value={form.title} maxLength={140}
               onChange={e => setForm({ ...form, title: e.target.value })}
-              className="bg-[#050814] border-[#1E293B] text-[#F8FAFC]" data-testid="new-topic-title" />
+              className="bg-[rgb(var(--ink-deep))] border-[rgb(var(--ink-border))] text-[rgb(var(--text-main))]" data-testid="new-topic-title" />
             <textarea value={form.content} onChange={e => setForm({ ...form, content: e.target.value })} rows={4}
               placeholder="Say what you're thinking, and what you'd like people to respond to…"
-              className="w-full rounded-md border border-[#1E293B] bg-[#050814] p-3 text-sm text-[#F8FAFC] focus:border-[#D4AF37]/50 focus:outline-none"
+              className="w-full rounded-md border border-[rgb(var(--ink-border))] bg-[rgb(var(--ink-deep))] p-3 text-sm text-[rgb(var(--text-main))] focus:border-[rgb(var(--gold)/0.5)] focus:outline-none"
               data-testid="new-topic-content" />
             <Button onClick={startTopic} disabled={busy || !form.title.trim() || !form.content.trim()} size="sm"
-              className="bg-[#D4AF37] text-[#050814] hover:bg-[#F3E5AB] text-xs" data-testid="submit-topic">
+              className="bg-[rgb(var(--gold))] text-[rgb(var(--ink-deep))] hover:bg-[rgb(var(--gold-soft))] text-xs" data-testid="submit-topic">
               {busy ? 'Posting…' : 'Post Topic'}
             </Button>
           </CardContent>
         </Card>
       )}
 
-      <Card className="bg-[#0F172A] border-[#1E293B]">
+      <Card className="bg-[rgb(var(--ink-card))] border-[rgb(var(--ink-border))]">
         <CardContent className="p-4 space-y-2">
           {topics.length === 0 ? (
-            <p className="py-4 text-center text-sm text-[#94A3B8]">
+            <p className="py-4 text-center text-sm text-[rgb(var(--text-muted))]">
               No topics yet — start the first one.
             </p>
           ) : topics.map(topic => (
             <button key={topic.id} onClick={() => openThread(topic.id)}
-              className="flex w-full items-center justify-between rounded border border-[#1E293B] bg-[#050814] p-3 text-left hover:border-[#D4AF37]/40"
+              className="flex w-full items-center justify-between rounded border border-[rgb(var(--ink-border))] bg-[rgb(var(--ink-deep))] p-3 text-left hover:border-[rgb(var(--gold)/0.4)]"
               data-testid={`topic-${topic.id}`}>
               <div className="min-w-0">
                 <div className="flex flex-wrap items-center gap-2">
                   {topic.pinned && (
-                    <span className="rounded-full bg-[#D4AF37]/15 px-2 py-0.5 text-[10px] text-[#D4AF37]">Pinned</span>
+                    <span className="rounded-full bg-[rgb(var(--gold)/0.15)] px-2 py-0.5 text-[10px] text-[rgb(var(--gold))]">Pinned</span>
                   )}
                   {topic.locked && (
-                    <span className="rounded-full bg-[#334155] px-2 py-0.5 text-[10px] text-[#CBD5E1]">Closed</span>
+                    <span className="rounded-full bg-[rgb(var(--ink-border-strong))] px-2 py-0.5 text-[10px] text-[rgb(var(--text-softer))]">Closed</span>
                   )}
-                  <span className="truncate text-sm text-[#F8FAFC]">{topic.title}</span>
+                  <span className="truncate text-sm text-[rgb(var(--text-main))]">{topic.title}</span>
                 </div>
-                <p className="mt-1 text-[10px] text-[#94A3B8]">
+                <p className="mt-1 text-[10px] text-[rgb(var(--text-muted))]">
                   {topic.author_name} · {when(topic.last_activity_at)}
                 </p>
               </div>
-              <span className="ml-3 shrink-0 text-[10px] text-[#94A3B8]">
+              <span className="ml-3 shrink-0 text-[10px] text-[rgb(var(--text-muted))]">
                 {topic.reply_count || 0} {topic.reply_count === 1 ? 'reply' : 'replies'}
               </span>
             </button>

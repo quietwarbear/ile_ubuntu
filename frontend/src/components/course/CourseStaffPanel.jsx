@@ -72,31 +72,31 @@ export function CourseStaffPanel({ courseId, isOwner }) {
 
   return (
     <div data-testid="course-staff-panel">
-      <h2 className="text-xs tracking-[0.15em] uppercase text-[#D4AF37] mb-4">
+      <h2 className="text-xs tracking-[0.15em] uppercase text-[rgb(var(--gold))] mb-4">
         Teaching Team
       </h2>
-      <Card className="bg-[#0F172A] border-[#1E293B]">
+      <Card className="bg-[rgb(var(--ink-card))] border-[rgb(var(--ink-border))]">
         <CardContent className="p-4 space-y-3">
           {staff.instructor && (
-            <div className="flex items-center justify-between p-2 bg-[#050814] rounded border border-[#1E293B]">
+            <div className="flex items-center justify-between p-2 bg-[rgb(var(--ink-deep))] rounded border border-[rgb(var(--ink-border))]">
               <div>
-                <p className="text-sm text-[#F8FAFC]">{displayName(staff.instructor)}</p>
-                <p className="text-[10px] text-[#94A3B8] break-all">{staff.instructor.email}</p>
+                <p className="text-sm text-[rgb(var(--text-main))]">{displayName(staff.instructor)}</p>
+                <p className="text-[10px] text-[rgb(var(--text-muted))] break-all">{staff.instructor.email}</p>
               </div>
-              <span className="text-[10px] uppercase tracking-wide text-[#D4AF37]">Owner</span>
+              <span className="text-[10px] uppercase tracking-wide text-[rgb(var(--gold))]">Owner</span>
             </div>
           )}
 
           {coTeachers.map(person => (
             <div key={person.id}
-              className="flex items-center justify-between p-2 bg-[#050814] rounded border border-[#1E293B]"
+              className="flex items-center justify-between p-2 bg-[rgb(var(--ink-deep))] rounded border border-[rgb(var(--ink-border))]"
               data-testid={`co-instructor-${person.id}`}>
               <div>
-                <p className="text-sm text-[#F8FAFC]">{displayName(person)}</p>
-                <p className="text-[10px] text-[#94A3B8] break-all">{person.email}</p>
+                <p className="text-sm text-[rgb(var(--text-main))]">{displayName(person)}</p>
+                <p className="text-[10px] text-[rgb(var(--text-muted))] break-all">{person.email}</p>
               </div>
               <Button onClick={() => remove(person)} disabled={busy} size="sm" variant="ghost"
-                className="text-[#94A3B8] hover:text-red-400 text-xs"
+                className="text-[rgb(var(--text-muted))] hover:text-red-400 text-xs"
                 data-testid={`remove-co-instructor-${person.id}`}>
                 Remove
               </Button>
@@ -104,7 +104,7 @@ export function CourseStaffPanel({ courseId, isOwner }) {
           ))}
 
           {atCap ? (
-            <p className="text-[11px] text-[#64748B]">
+            <p className="text-[11px] text-[rgb(var(--text-dim))]">
               This course has its {staff.max_co_instructors} co-teachers. Remove one to add another.
             </p>
           ) : (
@@ -112,17 +112,17 @@ export function CourseStaffPanel({ courseId, isOwner }) {
               <Input type="email" placeholder="Co-teacher's email" value={email}
                 onChange={e => setEmail(e.target.value)}
                 onKeyDown={e => { if (e.key === 'Enter') add(); }}
-                className="flex-1 bg-[#050814] border-[#1E293B] text-[#F8FAFC] text-xs"
+                className="flex-1 bg-[rgb(var(--ink-deep))] border-[rgb(var(--ink-border))] text-[rgb(var(--text-main))] text-xs"
                 data-testid="co-instructor-email" />
               <Button onClick={add} disabled={busy || !email.trim()} size="sm"
-                className="bg-[#D4AF37] text-[#050814] hover:bg-[#F3E5AB] text-xs"
+                className="bg-[rgb(var(--gold))] text-[rgb(var(--ink-deep))] hover:bg-[rgb(var(--gold-soft))] text-xs"
                 data-testid="add-co-instructor-btn">
                 {busy ? 'Adding…' : 'Add Co-teacher'}
               </Button>
             </div>
           )}
 
-          <p className="text-[11px] text-[#64748B]">
+          <p className="text-[11px] text-[rgb(var(--text-dim))]">
             Co-teachers can edit lessons and take part in discussions. They cannot
             delete the course, change who can find it, or add other teachers.
             They need an Ile Ubuntu account first.

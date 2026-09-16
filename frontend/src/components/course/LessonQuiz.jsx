@@ -56,20 +56,20 @@ function QuestionEditor({ question, index, onChange, onRemove }) {
   };
 
   return (
-    <Card className="bg-[#050814] border-[#1E293B]">
+    <Card className="bg-[rgb(var(--ink-deep))] border-[rgb(var(--ink-border))]">
       <CardContent className="p-3 space-y-3">
         <div className="flex items-center justify-between">
-          <span className="text-[10px] text-[#D4AF37] font-medium">Question {index + 1}</span>
+          <span className="text-[10px] text-[rgb(var(--gold))] font-medium">Question {index + 1}</span>
           <div className="flex items-center gap-2">
             <Input
               type="number" min={1} max={100}
               value={q.points || 1}
               onChange={(e) => update('points', parseInt(e.target.value) || 1)}
-              className="w-16 bg-[#0F172A] border-[#1E293B] text-[#F8FAFC] text-[10px] h-6"
+              className="w-16 bg-[rgb(var(--ink-card))] border-[rgb(var(--ink-border))] text-[rgb(var(--text-main))] text-[10px] h-6"
               title="Points"
             />
-            <span className="text-[10px] text-[#64748B]">pts</span>
-            <button onClick={onRemove} className="text-[#64748B] hover:text-red-400 transition-colors">
+            <span className="text-[10px] text-[rgb(var(--text-dim))]">pts</span>
+            <button onClick={onRemove} className="text-[rgb(var(--text-dim))] hover:text-red-400 transition-colors">
               <Trash size={14} />
             </button>
           </div>
@@ -82,8 +82,8 @@ function QuestionEditor({ question, index, onChange, onRemove }) {
               onClick={() => update('type', t.value)}
               className={`flex items-center gap-1 px-2 py-1 rounded text-[10px] transition-colors ${
                 q.type === t.value
-                  ? 'bg-[#D4AF37]/10 text-[#D4AF37] border border-[#D4AF37]/30'
-                  : 'bg-[#0F172A] text-[#64748B] border border-[#1E293B] hover:text-[#94A3B8]'
+                  ? 'bg-[rgb(var(--gold)/0.1)] text-[rgb(var(--gold))] border border-[rgb(var(--gold)/0.3)]'
+                  : 'bg-[rgb(var(--ink-card))] text-[rgb(var(--text-dim))] border border-[rgb(var(--ink-border))] hover:text-[rgb(var(--text-muted))]'
               }`}>
               <t.icon size={12} /> {t.label}
             </button>
@@ -95,13 +95,13 @@ function QuestionEditor({ question, index, onChange, onRemove }) {
           placeholder="Enter your question..."
           value={q.text || ''}
           onChange={(e) => update('text', e.target.value)}
-          className="bg-[#0F172A] border-[#1E293B] text-[#F8FAFC] text-xs min-h-[50px]"
+          className="bg-[rgb(var(--ink-card))] border-[rgb(var(--ink-border))] text-[rgb(var(--text-main))] text-xs min-h-[50px]"
         />
 
         {/* Type-specific fields */}
         {q.type === 'multiple_choice' && (
           <div className="space-y-1.5">
-            <span className="text-[10px] text-[#64748B]">Options (click to set correct answer):</span>
+            <span className="text-[10px] text-[rgb(var(--text-dim))]">Options (click to set correct answer):</span>
             {(q.options || ['', '', '', '']).map((opt, i) => (
               <div key={i} className="flex items-center gap-2">
                 <button
@@ -109,7 +109,7 @@ function QuestionEditor({ question, index, onChange, onRemove }) {
                   className={`w-5 h-5 rounded-full flex-shrink-0 flex items-center justify-center border transition-colors ${
                     q.correct_answer === opt && opt
                       ? 'bg-emerald-500/20 border-emerald-500 text-emerald-400'
-                      : 'border-[#1E293B] text-[#64748B] hover:border-[#D4AF37]'
+                      : 'border-[rgb(var(--ink-border))] text-[rgb(var(--text-dim))] hover:border-[rgb(var(--gold))]'
                   }`}
                   title="Set as correct answer"
                 >
@@ -119,17 +119,17 @@ function QuestionEditor({ question, index, onChange, onRemove }) {
                   placeholder={`Option ${String.fromCharCode(65 + i)}`}
                   value={opt}
                   onChange={(e) => handleOptionChange(i, e.target.value)}
-                  className="bg-[#0F172A] border-[#1E293B] text-[#F8FAFC] text-xs flex-1"
+                  className="bg-[rgb(var(--ink-card))] border-[rgb(var(--ink-border))] text-[rgb(var(--text-main))] text-xs flex-1"
                 />
                 {(q.options || []).length > 2 && (
-                  <button onClick={() => removeOption(i)} className="text-[#64748B] hover:text-red-400">
+                  <button onClick={() => removeOption(i)} className="text-[rgb(var(--text-dim))] hover:text-red-400">
                     <X size={12} />
                   </button>
                 )}
               </div>
             ))}
             <Button size="sm" variant="ghost" onClick={addOption}
-              className="text-[#D4AF37] text-[10px] h-6">
+              className="text-[rgb(var(--gold))] text-[10px] h-6">
               <Plus size={12} className="mr-1" /> Add Option
             </Button>
           </div>
@@ -137,15 +137,15 @@ function QuestionEditor({ question, index, onChange, onRemove }) {
 
         {q.type === 'true_false' && (
           <div className="space-y-1.5">
-            <span className="text-[10px] text-[#64748B]">Correct answer:</span>
+            <span className="text-[10px] text-[rgb(var(--text-dim))]">Correct answer:</span>
             <div className="flex gap-2">
               {['true', 'false'].map(val => (
                 <button key={val}
                   onClick={() => update('correct_answer', val)}
                   className={`px-4 py-1.5 rounded text-xs transition-colors ${
                     q.correct_answer === val
-                      ? 'bg-[#D4AF37]/10 text-[#D4AF37] border border-[#D4AF37]/30'
-                      : 'bg-[#0F172A] text-[#64748B] border border-[#1E293B] hover:text-[#94A3B8]'
+                      ? 'bg-[rgb(var(--gold)/0.1)] text-[rgb(var(--gold))] border border-[rgb(var(--gold)/0.3)]'
+                      : 'bg-[rgb(var(--ink-card))] text-[rgb(var(--text-dim))] border border-[rgb(var(--ink-border))] hover:text-[rgb(var(--text-muted))]'
                   }`}>
                   {val.charAt(0).toUpperCase() + val.slice(1)}
                 </button>
@@ -156,38 +156,38 @@ function QuestionEditor({ question, index, onChange, onRemove }) {
 
         {q.type === 'matching' && (
           <div className="space-y-1.5">
-            <span className="text-[10px] text-[#64748B]">Matching pairs:</span>
+            <span className="text-[10px] text-[rgb(var(--text-dim))]">Matching pairs:</span>
             {(q.matching_pairs || [{ left: '', right: '' }]).map((pair, i) => (
               <div key={i} className="flex items-center gap-2">
                 <Input
                   placeholder="Left item"
                   value={pair.left || ''}
                   onChange={(e) => handlePairChange(i, 'left', e.target.value)}
-                  className="bg-[#0F172A] border-[#1E293B] text-[#F8FAFC] text-xs flex-1"
+                  className="bg-[rgb(var(--ink-card))] border-[rgb(var(--ink-border))] text-[rgb(var(--text-main))] text-xs flex-1"
                 />
-                <ArrowsLeftRight size={14} className="text-[#64748B] flex-shrink-0" />
+                <ArrowsLeftRight size={14} className="text-[rgb(var(--text-dim))] flex-shrink-0" />
                 <Input
                   placeholder="Right item"
                   value={pair.right || ''}
                   onChange={(e) => handlePairChange(i, 'right', e.target.value)}
-                  className="bg-[#0F172A] border-[#1E293B] text-[#F8FAFC] text-xs flex-1"
+                  className="bg-[rgb(var(--ink-card))] border-[rgb(var(--ink-border))] text-[rgb(var(--text-main))] text-xs flex-1"
                 />
                 {(q.matching_pairs || []).length > 1 && (
-                  <button onClick={() => removePair(i)} className="text-[#64748B] hover:text-red-400">
+                  <button onClick={() => removePair(i)} className="text-[rgb(var(--text-dim))] hover:text-red-400">
                     <X size={12} />
                   </button>
                 )}
               </div>
             ))}
             <Button size="sm" variant="ghost" onClick={addPair}
-              className="text-[#D4AF37] text-[10px] h-6">
+              className="text-[rgb(var(--gold))] text-[10px] h-6">
               <Plus size={12} className="mr-1" /> Add Pair
             </Button>
           </div>
         )}
 
         {q.type === 'short_answer' && (
-          <p className="text-[10px] text-[#64748B] italic">
+          <p className="text-[10px] text-[rgb(var(--text-dim))] italic">
             Short answer questions require manual grading by the instructor.
           </p>
         )}
@@ -197,7 +197,7 @@ function QuestionEditor({ question, index, onChange, onRemove }) {
           placeholder="Explanation (shown after grading, optional)"
           value={q.explanation || ''}
           onChange={(e) => update('explanation', e.target.value)}
-          className="bg-[#0F172A] border-[#1E293B] text-[#F8FAFC] text-[10px]"
+          className="bg-[rgb(var(--ink-card))] border-[rgb(var(--ink-border))] text-[rgb(var(--text-main))] text-[10px]"
         />
       </CardContent>
     </Card>
@@ -266,28 +266,28 @@ function QuizBuilder({ courseId, lessonId, existingQuiz, onSaved }) {
     <div className="space-y-3">
       <div className="grid grid-cols-2 gap-2">
         <Input placeholder="Quiz title" value={title} onChange={e => setTitle(e.target.value)}
-          className="bg-[#050814] border-[#1E293B] text-[#F8FAFC] text-xs col-span-2" />
+          className="bg-[rgb(var(--ink-deep))] border-[rgb(var(--ink-border))] text-[rgb(var(--text-main))] text-xs col-span-2" />
         <Input placeholder="Description (optional)" value={description} onChange={e => setDescription(e.target.value)}
-          className="bg-[#050814] border-[#1E293B] text-[#F8FAFC] text-xs col-span-2" />
+          className="bg-[rgb(var(--ink-deep))] border-[rgb(var(--ink-border))] text-[rgb(var(--text-main))] text-xs col-span-2" />
         <div className="flex items-center gap-2">
-          <span className="text-[10px] text-[#64748B] whitespace-nowrap">Pass:</span>
+          <span className="text-[10px] text-[rgb(var(--text-dim))] whitespace-nowrap">Pass:</span>
           <Input type="number" min={0} max={100} value={passThreshold}
             onChange={e => setPassThreshold(parseInt(e.target.value) || 0)}
-            className="bg-[#050814] border-[#1E293B] text-[#F8FAFC] text-xs w-16" />
-          <span className="text-[10px] text-[#64748B]">%</span>
+            className="bg-[rgb(var(--ink-deep))] border-[rgb(var(--ink-border))] text-[rgb(var(--text-main))] text-xs w-16" />
+          <span className="text-[10px] text-[rgb(var(--text-dim))]">%</span>
         </div>
         <div className="flex items-center gap-2">
-          <span className="text-[10px] text-[#64748B] whitespace-nowrap">Max attempts:</span>
+          <span className="text-[10px] text-[rgb(var(--text-dim))] whitespace-nowrap">Max attempts:</span>
           <Input type="number" min={1} max={99} value={maxAttempts}
             onChange={e => setMaxAttempts(parseInt(e.target.value) || 1)}
-            className="bg-[#050814] border-[#1E293B] text-[#F8FAFC] text-xs w-16" />
+            className="bg-[rgb(var(--ink-deep))] border-[rgb(var(--ink-border))] text-[rgb(var(--text-main))] text-xs w-16" />
         </div>
       </div>
 
       <label className="flex items-center gap-2 cursor-pointer">
         <input type="checkbox" checked={showAnswers} onChange={e => setShowAnswers(e.target.checked)}
-          className="accent-[#D4AF37]" />
-        <span className="text-[10px] text-[#94A3B8]">Show correct answers after submission</span>
+          className="accent-[rgb(var(--gold))]" />
+        <span className="text-[10px] text-[rgb(var(--text-muted))]">Show correct answers after submission</span>
       </label>
 
       <div className="space-y-2">
@@ -299,13 +299,13 @@ function QuizBuilder({ courseId, lessonId, existingQuiz, onSaved }) {
       </div>
 
       <Button size="sm" variant="ghost" onClick={addQuestion}
-        className="text-[#D4AF37] text-xs w-full border border-dashed border-[#1E293B] hover:border-[#D4AF37]/40">
+        className="text-[rgb(var(--gold))] text-xs w-full border border-dashed border-[rgb(var(--ink-border))] hover:border-[rgb(var(--gold)/0.4)]">
         <Plus size={14} className="mr-1" /> Add Question
       </Button>
 
       <div className="flex gap-2 pt-2">
         <Button size="sm" onClick={handleSave} disabled={saving}
-          className="bg-[#D4AF37] text-[#050814] hover:bg-[#F3E5AB] text-xs">
+          className="bg-[rgb(var(--gold))] text-[rgb(var(--ink-deep))] hover:bg-[rgb(var(--gold-soft))] text-xs">
           {saving ? 'Saving...' : (isEdit ? 'Update Quiz' : 'Create Quiz')}
         </Button>
         {isEdit && (
@@ -342,14 +342,14 @@ function QuizTaker({ quiz, courseId, lessonId, onComplete }) {
   return (
     <div className="space-y-3">
       {quiz.questions.map((q, i) => (
-        <Card key={q.id} className="bg-[#050814] border-[#1E293B]">
+        <Card key={q.id} className="bg-[rgb(var(--ink-deep))] border-[rgb(var(--ink-border))]">
           <CardContent className="p-3 space-y-2">
             <div className="flex items-center justify-between">
-              <p className="text-xs text-[#F8FAFC]">
-                <span className="text-[#D4AF37] mr-1">{i + 1}.</span>
+              <p className="text-xs text-[rgb(var(--text-main))]">
+                <span className="text-[rgb(var(--gold))] mr-1">{i + 1}.</span>
                 {q.text}
               </p>
-              <span className="text-[10px] text-[#64748B]">{q.points || 1} pt{(q.points || 1) > 1 ? 's' : ''}</span>
+              <span className="text-[10px] text-[rgb(var(--text-dim))]">{q.points || 1} pt{(q.points || 1) > 1 ? 's' : ''}</span>
             </div>
 
             {q.type === 'multiple_choice' && (
@@ -359,10 +359,10 @@ function QuizTaker({ quiz, courseId, lessonId, onComplete }) {
                     onClick={() => setAnswer(q.id, opt)}
                     className={`w-full text-left px-3 py-1.5 rounded text-xs transition-colors ${
                       answers[q.id] === opt
-                        ? 'bg-[#D4AF37]/10 text-[#D4AF37] border border-[#D4AF37]/30'
-                        : 'bg-[#0F172A] text-[#94A3B8] border border-[#1E293B] hover:border-[#D4AF37]/20'
+                        ? 'bg-[rgb(var(--gold)/0.1)] text-[rgb(var(--gold))] border border-[rgb(var(--gold)/0.3)]'
+                        : 'bg-[rgb(var(--ink-card))] text-[rgb(var(--text-muted))] border border-[rgb(var(--ink-border))] hover:border-[rgb(var(--gold)/0.2)]'
                     }`}>
-                    <span className="text-[#64748B] mr-2">{String.fromCharCode(65 + j)}.</span>
+                    <span className="text-[rgb(var(--text-dim))] mr-2">{String.fromCharCode(65 + j)}.</span>
                     {opt}
                   </button>
                 ))}
@@ -376,8 +376,8 @@ function QuizTaker({ quiz, courseId, lessonId, onComplete }) {
                     onClick={() => setAnswer(q.id, val)}
                     className={`flex-1 px-3 py-1.5 rounded text-xs transition-colors ${
                       answers[q.id] === val
-                        ? 'bg-[#D4AF37]/10 text-[#D4AF37] border border-[#D4AF37]/30'
-                        : 'bg-[#0F172A] text-[#94A3B8] border border-[#1E293B] hover:border-[#D4AF37]/20'
+                        ? 'bg-[rgb(var(--gold)/0.1)] text-[rgb(var(--gold))] border border-[rgb(var(--gold)/0.3)]'
+                        : 'bg-[rgb(var(--ink-card))] text-[rgb(var(--text-muted))] border border-[rgb(var(--ink-border))] hover:border-[rgb(var(--gold)/0.2)]'
                     }`}>
                     {val.charAt(0).toUpperCase() + val.slice(1)}
                   </button>
@@ -390,7 +390,7 @@ function QuizTaker({ quiz, courseId, lessonId, onComplete }) {
                 placeholder="Type your answer..."
                 value={answers[q.id] || ''}
                 onChange={(e) => setAnswer(q.id, e.target.value)}
-                className="bg-[#0F172A] border-[#1E293B] text-[#F8FAFC] text-xs min-h-[60px]"
+                className="bg-[rgb(var(--ink-card))] border-[rgb(var(--ink-border))] text-[rgb(var(--text-main))] text-xs min-h-[60px]"
               />
             )}
 
@@ -398,13 +398,13 @@ function QuizTaker({ quiz, courseId, lessonId, onComplete }) {
               <div className="space-y-1.5">
                 {Object.keys(q.correct_answer || q.matching_pairs?.reduce((a, p) => ({ ...a, [p.left]: '' }), {}) || {}).map((left) => (
                   <div key={left} className="flex items-center gap-2">
-                    <span className="text-xs text-[#F8FAFC] flex-1">{left}</span>
-                    <ArrowsLeftRight size={14} className="text-[#64748B] flex-shrink-0" />
+                    <span className="text-xs text-[rgb(var(--text-main))] flex-1">{left}</span>
+                    <ArrowsLeftRight size={14} className="text-[rgb(var(--text-dim))] flex-shrink-0" />
                     <Input
                       placeholder="Match..."
                       value={(answers[q.id] || {})[left] || ''}
                       onChange={(e) => setAnswer(q.id, { ...(answers[q.id] || {}), [left]: e.target.value })}
-                      className="bg-[#0F172A] border-[#1E293B] text-[#F8FAFC] text-xs flex-1"
+                      className="bg-[rgb(var(--ink-card))] border-[rgb(var(--ink-border))] text-[rgb(var(--text-main))] text-xs flex-1"
                     />
                   </div>
                 ))}
@@ -415,7 +415,7 @@ function QuizTaker({ quiz, courseId, lessonId, onComplete }) {
       ))}
 
       <Button onClick={handleSubmit} disabled={submitting}
-        className="w-full bg-[#D4AF37] text-[#050814] hover:bg-[#F3E5AB] text-xs">
+        className="w-full bg-[rgb(var(--gold))] text-[rgb(var(--ink-deep))] hover:bg-[rgb(var(--gold-soft))] text-xs">
         {submitting ? 'Submitting...' : 'Submit Quiz'}
       </Button>
     </div>
@@ -441,8 +441,8 @@ function QuizResults({ attempt, quiz }) {
         ) : (
           <XCircle size={32} className="text-red-400 mx-auto mb-2" />
         )}
-        <p className="text-lg font-light text-[#F8FAFC]">{attempt.score_percentage}%</p>
-        <p className="text-xs text-[#94A3B8]">
+        <p className="text-lg font-light text-[rgb(var(--text-main))]">{attempt.score_percentage}%</p>
+        <p className="text-xs text-[rgb(var(--text-muted))]">
           {attempt.earned_points} / {attempt.total_points} points
         </p>
         <Badge className={`mt-2 text-[10px] ${
@@ -466,14 +466,14 @@ function QuizResults({ attempt, quiz }) {
             ) : (
               <XCircle size={14} className="text-red-400" />
             )}
-            <span className="text-[#F8FAFC]">Q{i + 1}</span>
-            <span className="text-[#64748B]">{r.points_earned}/{r.points_possible} pts</span>
+            <span className="text-[rgb(var(--text-main))]">Q{i + 1}</span>
+            <span className="text-[rgb(var(--text-dim))]">{r.points_earned}/{r.points_possible} pts</span>
           </div>
-          <p className="text-[#94A3B8]">Your answer: {typeof r.user_answer === 'object' ? JSON.stringify(r.user_answer) : String(r.user_answer || '(empty)')}</p>
+          <p className="text-[rgb(var(--text-muted))]">Your answer: {typeof r.user_answer === 'object' ? JSON.stringify(r.user_answer) : String(r.user_answer || '(empty)')}</p>
           {r.correct_answer && !r.needs_review && (
-            <p className="text-[#64748B]">Correct: {typeof r.correct_answer === 'object' ? JSON.stringify(r.correct_answer) : String(r.correct_answer)}</p>
+            <p className="text-[rgb(var(--text-dim))]">Correct: {typeof r.correct_answer === 'object' ? JSON.stringify(r.correct_answer) : String(r.correct_answer)}</p>
           )}
-          {r.feedback && <p className="text-[#D4AF37] mt-1">Feedback: {r.feedback}</p>}
+          {r.feedback && <p className="text-[rgb(var(--gold))] mt-1">Feedback: {r.feedback}</p>}
         </div>
       ))}
     </div>
@@ -527,7 +527,7 @@ export function LessonQuiz({ courseId, lessonId, user, isInstructor }) {
   if (loading) {
     return (
       <div className="flex justify-center py-4">
-        <div className="w-5 h-5 border-2 border-[#D4AF37] border-t-transparent rounded-full animate-spin" />
+        <div className="w-5 h-5 border-2 border-[rgb(var(--gold))] border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
@@ -535,17 +535,17 @@ export function LessonQuiz({ courseId, lessonId, user, isInstructor }) {
   return (
     <div className="space-y-3" data-testid="lesson-quiz">
       <div className="flex items-center justify-between">
-        <span className="text-[10px] tracking-[0.15em] uppercase text-[#D4AF37] flex items-center gap-1">
+        <span className="text-[10px] tracking-[0.15em] uppercase text-[rgb(var(--gold))] flex items-center gap-1">
           <Exam size={12} weight="duotone" /> Quiz
         </span>
         {quiz && isInstructor && view !== 'build' && (
           <div className="flex gap-1">
             <Button size="sm" variant="ghost" onClick={() => setView('build')}
-              className="text-[#D4AF37] text-[10px] h-6">
+              className="text-[rgb(var(--gold))] text-[10px] h-6">
               <PencilSimple size={12} className="mr-1" /> Edit
             </Button>
             <Button size="sm" variant="ghost" onClick={loadAllAttempts}
-              className="text-[#94A3B8] text-[10px] h-6">
+              className="text-[rgb(var(--text-muted))] text-[10px] h-6">
               <Eye size={12} className="mr-1" /> All Attempts
             </Button>
           </div>
@@ -563,17 +563,17 @@ export function LessonQuiz({ courseId, lessonId, user, isInstructor }) {
 
       {/* No quiz */}
       {!quiz && !isInstructor && (
-        <p className="text-xs text-[#64748B] text-center py-4">No quiz for this lesson yet.</p>
+        <p className="text-xs text-[rgb(var(--text-dim))] text-center py-4">No quiz for this lesson yet.</p>
       )}
 
       {/* Quiz exists — student view */}
       {quiz && view === 'default' && !isInstructor && (
         <div className="space-y-3">
-          <Card className="bg-[#050814] border-[#1E293B]">
+          <Card className="bg-[rgb(var(--ink-deep))] border-[rgb(var(--ink-border))]">
             <CardContent className="p-3">
-              <h4 className="text-sm text-[#F8FAFC] font-medium">{quiz.title}</h4>
-              {quiz.description && <p className="text-xs text-[#94A3B8] mt-1">{quiz.description}</p>}
-              <div className="flex gap-3 mt-2 text-[10px] text-[#64748B]">
+              <h4 className="text-sm text-[rgb(var(--text-main))] font-medium">{quiz.title}</h4>
+              {quiz.description && <p className="text-xs text-[rgb(var(--text-muted))] mt-1">{quiz.description}</p>}
+              <div className="flex gap-3 mt-2 text-[10px] text-[rgb(var(--text-dim))]">
                 <span>{quiz.questions?.length || 0} questions</span>
                 <span>Pass: {quiz.pass_threshold || 70}%</span>
                 <span>Attempts: {attempts.length}/{maxAttempts}</span>
@@ -583,14 +583,14 @@ export function LessonQuiz({ courseId, lessonId, user, isInstructor }) {
 
           {attempts.length > 0 && (
             <div className="space-y-1.5">
-              <span className="text-[10px] text-[#64748B]">Your attempts:</span>
+              <span className="text-[10px] text-[rgb(var(--text-dim))]">Your attempts:</span>
               {attempts.map(att => (
                 <button key={att.id}
                   onClick={() => { setLastAttempt(att); setView('results'); }}
-                  className="w-full flex items-center justify-between p-2 rounded bg-[#050814] border border-[#1E293B] hover:border-[#D4AF37]/20 transition-colors text-xs">
-                  <span className="text-[#94A3B8]">Attempt {att.attempt_number}</span>
+                  className="w-full flex items-center justify-between p-2 rounded bg-[rgb(var(--ink-deep))] border border-[rgb(var(--ink-border))] hover:border-[rgb(var(--gold)/0.2)] transition-colors text-xs">
+                  <span className="text-[rgb(var(--text-muted))]">Attempt {att.attempt_number}</span>
                   <div className="flex items-center gap-2">
-                    <span className="text-[#F8FAFC]">{att.score_percentage}%</span>
+                    <span className="text-[rgb(var(--text-main))]">{att.score_percentage}%</span>
                     <Badge className={`text-[9px] ${
                       att.status === 'passed' ? 'bg-emerald-500/10 text-emerald-400' :
                       att.status === 'pending_review' ? 'bg-yellow-500/10 text-yellow-400' :
@@ -604,7 +604,7 @@ export function LessonQuiz({ courseId, lessonId, user, isInstructor }) {
 
           {attempts.length < maxAttempts && (
             <Button size="sm" onClick={() => setView('take')}
-              className="w-full bg-[#D4AF37] text-[#050814] hover:bg-[#F3E5AB] text-xs">
+              className="w-full bg-[rgb(var(--gold))] text-[rgb(var(--ink-deep))] hover:bg-[rgb(var(--gold-soft))] text-xs">
               <ArrowRight size={14} className="mr-1" />
               {attempts.length === 0 ? 'Start Quiz' : 'Retake Quiz'}
             </Button>
@@ -614,11 +614,11 @@ export function LessonQuiz({ courseId, lessonId, user, isInstructor }) {
 
       {/* Quiz exists — instructor summary */}
       {quiz && view === 'default' && isInstructor && (
-        <Card className="bg-[#050814] border-[#1E293B]">
+        <Card className="bg-[rgb(var(--ink-deep))] border-[rgb(var(--ink-border))]">
           <CardContent className="p-3">
-            <h4 className="text-sm text-[#F8FAFC] font-medium">{quiz.title}</h4>
-            {quiz.description && <p className="text-xs text-[#94A3B8] mt-1">{quiz.description}</p>}
-            <div className="flex gap-3 mt-2 text-[10px] text-[#64748B]">
+            <h4 className="text-sm text-[rgb(var(--text-main))] font-medium">{quiz.title}</h4>
+            {quiz.description && <p className="text-xs text-[rgb(var(--text-muted))] mt-1">{quiz.description}</p>}
+            <div className="flex gap-3 mt-2 text-[10px] text-[rgb(var(--text-dim))]">
               <span>{quiz.questions?.length || 0} questions</span>
               <span>Pass: {quiz.pass_threshold || 70}%</span>
               <span>Max attempts: {quiz.max_attempts || 3}</span>
@@ -631,9 +631,9 @@ export function LessonQuiz({ courseId, lessonId, user, isInstructor }) {
       {quiz && view === 'take' && (
         <div>
           <div className="flex items-center justify-between mb-2">
-            <h4 className="text-sm text-[#F8FAFC]">{quiz.title}</h4>
+            <h4 className="text-sm text-[rgb(var(--text-main))]">{quiz.title}</h4>
             <Button size="sm" variant="ghost" onClick={() => setView('default')}
-              className="text-[#94A3B8] text-[10px] h-6">
+              className="text-[rgb(var(--text-muted))] text-[10px] h-6">
               <X size={12} className="mr-1" /> Cancel
             </Button>
           </div>
@@ -645,7 +645,7 @@ export function LessonQuiz({ courseId, lessonId, user, isInstructor }) {
       {view === 'results' && lastAttempt && (
         <div>
           <Button size="sm" variant="ghost" onClick={() => { setView('default'); setLastAttempt(null); }}
-            className="text-[#94A3B8] text-[10px] h-6 mb-2">
+            className="text-[rgb(var(--text-muted))] text-[10px] h-6 mb-2">
             <X size={12} className="mr-1" /> Back
           </Button>
           <QuizResults attempt={lastAttempt} quiz={quiz} />
@@ -656,22 +656,22 @@ export function LessonQuiz({ courseId, lessonId, user, isInstructor }) {
       {showAllAttempts && (
         <div className="space-y-2">
           <div className="flex items-center justify-between">
-            <span className="text-[10px] text-[#64748B]">All student attempts:</span>
-            <button onClick={() => setShowAllAttempts(false)} className="text-[#64748B] hover:text-[#94A3B8]">
+            <span className="text-[10px] text-[rgb(var(--text-dim))]">All student attempts:</span>
+            <button onClick={() => setShowAllAttempts(false)} className="text-[rgb(var(--text-dim))] hover:text-[rgb(var(--text-muted))]">
               <X size={14} />
             </button>
           </div>
           {allAttempts.length === 0 ? (
-            <p className="text-xs text-[#64748B]">No attempts yet.</p>
+            <p className="text-xs text-[rgb(var(--text-dim))]">No attempts yet.</p>
           ) : (
             <div className="space-y-1">
               {allAttempts.map(att => (
                 <div key={att.id}
-                  className="flex items-center justify-between p-2 rounded bg-[#050814] border border-[#1E293B] text-xs">
-                  <span className="text-[#F8FAFC]">{att.user_name || 'Student'}</span>
+                  className="flex items-center justify-between p-2 rounded bg-[rgb(var(--ink-deep))] border border-[rgb(var(--ink-border))] text-xs">
+                  <span className="text-[rgb(var(--text-main))]">{att.user_name || 'Student'}</span>
                   <div className="flex items-center gap-2">
-                    <span className="text-[#94A3B8]">#{att.attempt_number}</span>
-                    <span className="text-[#F8FAFC]">{att.score_percentage}%</span>
+                    <span className="text-[rgb(var(--text-muted))]">#{att.attempt_number}</span>
+                    <span className="text-[rgb(var(--text-main))]">{att.score_percentage}%</span>
                     <Badge className={`text-[9px] ${
                       att.status === 'passed' ? 'bg-emerald-500/10 text-emerald-400' :
                       att.status === 'pending_review' ? 'bg-yellow-500/10 text-yellow-400' :

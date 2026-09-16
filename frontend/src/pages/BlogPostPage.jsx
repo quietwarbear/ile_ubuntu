@@ -75,7 +75,7 @@ export default function BlogPostPage({ user }) {
   if (loading) {
     return (
       <div className="flex justify-center py-20">
-        <div className="w-8 h-8 border-2 border-[#D4AF37] border-t-transparent rounded-full animate-spin" />
+        <div className="w-8 h-8 border-2 border-[rgb(var(--gold))] border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
@@ -83,8 +83,8 @@ export default function BlogPostPage({ user }) {
   if (!post) {
     return (
       <div className="text-center py-20">
-        <p className="text-[#94A3B8]">Post not found</p>
-        <Button onClick={() => navigate('/blog')} variant="ghost" className="mt-4 text-[#D4AF37]">Back to Blog</Button>
+        <p className="text-[rgb(var(--text-muted))]">Post not found</p>
+        <Button onClick={() => navigate('/blog')} variant="ghost" className="mt-4 text-[rgb(var(--gold))]">Back to Blog</Button>
       </div>
     );
   }
@@ -94,7 +94,7 @@ export default function BlogPostPage({ user }) {
       {/* Back */}
       <button
         onClick={() => navigate('/blog')}
-        className="flex items-center gap-2 text-sm text-[#94A3B8] hover:text-[#D4AF37] transition-colors"
+        className="flex items-center gap-2 text-sm text-[rgb(var(--text-muted))] hover:text-[rgb(var(--gold))] transition-colors"
         data-testid="back-to-blog"
       >
         <ArrowLeft size={16} /> Back to Blog
@@ -102,7 +102,7 @@ export default function BlogPostPage({ user }) {
 
       {/* Cover Image */}
       {post.cover_image && (
-        <div className="rounded-xl overflow-hidden border border-[#1E293B] h-64 sm:h-80">
+        <div className="rounded-xl overflow-hidden border border-[rgb(var(--ink-border))] h-64 sm:h-80">
           <img src={post.cover_image} alt="" className="w-full h-full object-cover" />
         </div>
       )}
@@ -111,7 +111,7 @@ export default function BlogPostPage({ user }) {
       <div>
         <div className="flex flex-wrap items-center gap-2 mb-3">
           {post.category && (
-            <Badge className="text-[10px] bg-[#D4AF37]/10 text-[#D4AF37] border-[#D4AF37]/20">{post.category}</Badge>
+            <Badge className="text-[10px] bg-[rgb(var(--gold)/0.1)] text-[rgb(var(--gold))] border-[rgb(var(--gold)/0.2)]">{post.category}</Badge>
           )}
           {post.visibility === 'members' && (
             <Badge className="text-[10px] bg-violet-500/10 text-violet-400 border-violet-500/20">
@@ -126,23 +126,23 @@ export default function BlogPostPage({ user }) {
         </div>
 
         <h1
-          className="text-3xl sm:text-4xl font-light text-[#F8FAFC] leading-tight mb-4"
+          className="text-3xl sm:text-4xl font-light text-[rgb(var(--text-main))] leading-tight mb-4"
           style={{ fontFamily: 'Cormorant Garamond, serif' }}
           data-testid="post-title"
         >
           {post.title}
         </h1>
 
-        <div className="flex items-center gap-4 text-xs text-[#94A3B8]">
+        <div className="flex items-center gap-4 text-xs text-[rgb(var(--text-muted))]">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-full bg-[#D4AF37]/10 border border-[#D4AF37]/20 flex items-center justify-center">
-              <span className="text-[10px] text-[#D4AF37] font-medium">
+            <div className="w-8 h-8 rounded-full bg-[rgb(var(--gold)/0.1)] border border-[rgb(var(--gold)/0.2)] flex items-center justify-center">
+              <span className="text-[10px] text-[rgb(var(--gold))] font-medium">
                 {post.author_name?.split(' ').map(n => n[0]).join('').slice(0, 2)}
               </span>
             </div>
             <div>
-              <p className="text-sm text-[#F8FAFC]">{post.author_name}</p>
-              <p className="text-[10px] text-[#64748B] capitalize">{post.author_role}</p>
+              <p className="text-sm text-[rgb(var(--text-main))]">{post.author_name}</p>
+              <p className="text-[10px] text-[rgb(var(--text-dim))] capitalize">{post.author_role}</p>
             </div>
           </div>
           <span className="flex items-center gap-1">
@@ -153,11 +153,11 @@ export default function BlogPostPage({ user }) {
         {(isAuthor || isAdmin) && (
           <div className="flex gap-2 mt-4">
             <Button size="sm" variant="outline" onClick={() => navigate(`/blog/edit/${post.id}`)}
-              className="border-[#1E293B] text-[#94A3B8] hover:text-[#D4AF37] text-xs" data-testid="edit-post-btn">
+              className="border-[rgb(var(--ink-border))] text-[rgb(var(--text-muted))] hover:text-[rgb(var(--gold))] text-xs" data-testid="edit-post-btn">
               <PencilSimple size={12} className="mr-1" /> Edit
             </Button>
             <Button size="sm" variant="outline" onClick={handleDeletePost}
-              className="border-[#1E293B] text-[#94A3B8] hover:text-red-400 hover:border-red-400/30 text-xs" data-testid="delete-post-btn">
+              className="border-[rgb(var(--ink-border))] text-[rgb(var(--text-muted))] hover:text-red-400 hover:border-red-400/30 text-xs" data-testid="delete-post-btn">
               <Trash size={12} className="mr-1" /> Delete
             </Button>
           </div>
@@ -165,7 +165,7 @@ export default function BlogPostPage({ user }) {
       </div>
 
       {/* Content */}
-      <Card className="bg-[#0F172A] border-[#1E293B]">
+      <Card className="bg-[rgb(var(--ink-card))] border-[rgb(var(--ink-border))]">
         <CardContent className="p-6">
           <LessonContentViewer content={post.content} />
         </CardContent>
@@ -175,7 +175,7 @@ export default function BlogPostPage({ user }) {
       {post.tags?.length > 0 && (
         <div className="flex flex-wrap gap-2">
           {post.tags.map(tag => (
-            <span key={tag} className="px-2.5 py-1 text-[10px] bg-[#050814] border border-[#1E293B] rounded-full text-[#94A3B8]">
+            <span key={tag} className="px-2.5 py-1 text-[10px] bg-[rgb(var(--ink-deep))] border border-[rgb(var(--ink-border))] rounded-full text-[rgb(var(--text-muted))]">
               #{tag}
             </span>
           ))}
@@ -184,18 +184,18 @@ export default function BlogPostPage({ user }) {
 
       {/* Comments Section */}
       <div data-testid="comments-section">
-        <h2 className="text-xs tracking-[0.15em] uppercase text-[#D4AF37] mb-4 flex items-center gap-2">
+        <h2 className="text-xs tracking-[0.15em] uppercase text-[rgb(var(--gold))] mb-4 flex items-center gap-2">
           <ChatDots size={14} /> Comments ({comments.length})
         </h2>
 
         {/* Comment Input */}
-        <Card className="bg-[#0F172A] border-[#1E293B] mb-4">
+        <Card className="bg-[rgb(var(--ink-card))] border-[rgb(var(--ink-border))] mb-4">
           <CardContent className="p-4">
             <Textarea
               placeholder="Share your thoughts..."
               value={newComment}
               onChange={(e) => setNewComment(e.target.value)}
-              className="bg-[#050814] border-[#1E293B] text-[#F8FAFC] min-h-[80px] text-sm mb-3"
+              className="bg-[rgb(var(--ink-deep))] border-[rgb(var(--ink-border))] text-[rgb(var(--text-main))] min-h-[80px] text-sm mb-3"
               data-testid="comment-input"
             />
             <div className="flex justify-end">
@@ -203,7 +203,7 @@ export default function BlogPostPage({ user }) {
                 onClick={handleComment}
                 disabled={!newComment.trim() || submitting}
                 size="sm"
-                className="bg-[#D4AF37] text-[#050814] hover:bg-[#F3E5AB] text-xs"
+                className="bg-[rgb(var(--gold))] text-[rgb(var(--ink-deep))] hover:bg-[rgb(var(--gold-soft))] text-xs"
                 data-testid="submit-comment-btn"
               >
                 {submitting ? 'Posting...' : <><PaperPlaneRight size={12} className="mr-1" /> Post Comment</>}
@@ -215,36 +215,36 @@ export default function BlogPostPage({ user }) {
         {/* Comments List */}
         <div className="space-y-3">
           {comments.map(comment => (
-            <Card key={comment.id} className="bg-[#0F172A] border-[#1E293B]" data-testid={`comment-${comment.id}`}>
+            <Card key={comment.id} className="bg-[rgb(var(--ink-card))] border-[rgb(var(--ink-border))]" data-testid={`comment-${comment.id}`}>
               <CardContent className="p-4">
                 <div className="flex items-start justify-between">
                   <div className="flex items-center gap-2 mb-2">
-                    <div className="w-6 h-6 rounded-full bg-[#D4AF37]/10 border border-[#D4AF37]/20 flex items-center justify-center">
-                      <span className="text-[8px] text-[#D4AF37] font-medium">
+                    <div className="w-6 h-6 rounded-full bg-[rgb(var(--gold)/0.1)] border border-[rgb(var(--gold)/0.2)] flex items-center justify-center">
+                      <span className="text-[8px] text-[rgb(var(--gold))] font-medium">
                         {comment.author_name?.split(' ').map(n => n[0]).join('').slice(0, 2)}
                       </span>
                     </div>
                     <div>
-                      <span className="text-xs text-[#F8FAFC]">{comment.author_name}</span>
-                      <span className="text-[10px] text-[#64748B] ml-2">{formatDate(comment.created_at)}</span>
+                      <span className="text-xs text-[rgb(var(--text-main))]">{comment.author_name}</span>
+                      <span className="text-[10px] text-[rgb(var(--text-dim))] ml-2">{formatDate(comment.created_at)}</span>
                     </div>
                   </div>
                   {(comment.author_id === user?.id || isAdmin) && (
                     <button
                       onClick={() => handleDeleteComment(comment.id)}
-                      className="text-[#94A3B8] hover:text-red-400 transition-colors p-1"
+                      className="text-[rgb(var(--text-muted))] hover:text-red-400 transition-colors p-1"
                       data-testid={`delete-comment-${comment.id}`}
                     >
                       <Trash size={12} />
                     </button>
                   )}
                 </div>
-                <p className="text-xs text-[#94A3B8] leading-relaxed">{comment.content}</p>
+                <p className="text-xs text-[rgb(var(--text-muted))] leading-relaxed">{comment.content}</p>
               </CardContent>
             </Card>
           ))}
           {comments.length === 0 && (
-            <p className="text-xs text-[#64748B] text-center py-4">No comments yet. Be the first to share your thoughts.</p>
+            <p className="text-xs text-[rgb(var(--text-dim))] text-center py-4">No comments yet. Be the first to share your thoughts.</p>
           )}
         </div>
       </div>

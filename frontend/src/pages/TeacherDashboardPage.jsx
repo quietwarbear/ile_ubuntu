@@ -117,7 +117,7 @@ export default function TeacherDashboardPage({ user }) {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="w-6 h-6 border-2 border-[#D4AF37] border-t-transparent rounded-full animate-spin" />
+        <div className="w-6 h-6 border-2 border-[rgb(var(--gold))] border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
@@ -129,38 +129,38 @@ export default function TeacherDashboardPage({ user }) {
       {/* Header */}
       <div>
         <div className="flex items-center gap-2 mb-1">
-          <Storefront size={20} weight="duotone" className="text-[#D4AF37]" />
-          <h1 className="text-xl text-[#F8FAFC]" style={{ fontFamily: 'Cormorant Garamond, serif' }}>
+          <Storefront size={20} weight="duotone" className="text-[rgb(var(--gold))]" />
+          <h1 className="text-xl text-[rgb(var(--text-main))]" style={{ fontFamily: 'Cormorant Garamond, serif' }}>
             Teacher Marketplace
           </h1>
         </div>
-        <p className="text-xs text-[#94A3B8]">Manage premium courses and view your earnings</p>
+        <p className="text-xs text-[rgb(var(--text-muted))]">Manage premium courses and view your earnings</p>
       </div>
 
       {/* How it works */}
-      <Card className="bg-[#0F172A] border-[#1E293B]">
+      <Card className="bg-[rgb(var(--ink-card))] border-[rgb(var(--ink-border))]">
         <CardContent className="p-5">
-          <p className="text-xs tracking-[0.15em] uppercase text-[#D4AF37] mb-3">How the marketplace works</p>
+          <p className="text-xs tracking-[0.15em] uppercase text-[rgb(var(--gold))] mb-3">How the marketplace works</p>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
-              <p className="text-sm text-[#F8FAFC] mb-1">1 · Connect your account</p>
-              <p className="text-xs text-[#94A3B8]">
+              <p className="text-sm text-[rgb(var(--text-main))] mb-1">1 · Connect your account</p>
+              <p className="text-xs text-[rgb(var(--text-muted))]">
                 Payments run through Stripe, the same processor used across the platform.
                 Onboarding takes a few minutes — Stripe asks for your details so they can
                 deposit your earnings directly to your bank.
               </p>
             </div>
             <div>
-              <p className="text-sm text-[#F8FAFC] mb-1">2 · Set a price on a course</p>
-              <p className="text-xs text-[#94A3B8]">
+              <p className="text-sm text-[rgb(var(--text-main))] mb-1">2 · Set a price on a course</p>
+              <p className="text-xs text-[rgb(var(--text-muted))]">
                 Any course you teach can become premium. Learners then purchase it once
                 for lifetime access instead of enrolling free. Set the price to $0 anytime
                 to make it free again.
               </p>
             </div>
             <div>
-              <p className="text-sm text-[#F8FAFC] mb-1">3 · You keep 85%</p>
-              <p className="text-xs text-[#94A3B8]">
+              <p className="text-sm text-[rgb(var(--text-main))] mb-1">3 · You keep 85%</p>
+              <p className="text-xs text-[rgb(var(--text-muted))]">
                 The platform keeps a 15% fee to sustain the commons; the rest lands in your
                 Stripe account and pays out to your bank on Stripe's schedule (typically
                 2 business days). Purchases happen on the website — app-store rules don't
@@ -183,12 +183,12 @@ export default function TeacherDashboardPage({ user }) {
       )}
 
       {/* Stripe Connect Status */}
-      <Card className="bg-[#0F172A] border-[#1E293B]">
+      <Card className="bg-[rgb(var(--ink-card))] border-[rgb(var(--ink-border))]">
         <CardContent className="p-5">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
-              <CreditCard size={18} weight="duotone" className="text-[#D4AF37]" />
-              <span className="text-sm text-[#F8FAFC]" style={{ fontFamily: 'Cormorant Garamond, serif' }}>
+              <CreditCard size={18} weight="duotone" className="text-[rgb(var(--gold))]" />
+              <span className="text-sm text-[rgb(var(--text-main))]" style={{ fontFamily: 'Cormorant Garamond, serif' }}>
                 Payment Account
               </span>
             </div>
@@ -202,17 +202,17 @@ export default function TeacherDashboardPage({ user }) {
 
           {!connectStatus?.connected ? (
             <div>
-              <p className="text-xs text-[#94A3B8] mb-3">
+              <p className="text-xs text-[rgb(var(--text-muted))] mb-3">
                 Connect your Stripe account to receive payments from premium courses.
                 The platform takes a 15% fee; you keep the rest.
               </p>
               <button
                 onClick={handleStartOnboarding}
                 disabled={onboardingLoading}
-                className="px-4 py-2 rounded-md text-xs font-medium bg-[#D4AF37]/20 text-[#D4AF37] border border-[#D4AF37]/30 hover:bg-[#D4AF37]/30 transition-all flex items-center gap-2"
+                className="px-4 py-2 rounded-md text-xs font-medium bg-[rgb(var(--gold)/0.2)] text-[rgb(var(--gold))] border border-[rgb(var(--gold)/0.3)] hover:bg-[rgb(var(--gold)/0.3)] transition-all flex items-center gap-2"
               >
                 {onboardingLoading ? (
-                  <div className="w-4 h-4 border-2 border-[#D4AF37] border-t-transparent rounded-full animate-spin" />
+                  <div className="w-4 h-4 border-2 border-[rgb(var(--gold))] border-t-transparent rounded-full animate-spin" />
                 ) : (
                   <Lightning size={14} weight="duotone" />
                 )}
@@ -221,7 +221,7 @@ export default function TeacherDashboardPage({ user }) {
             </div>
           ) : !isConnected ? (
             <div>
-              <p className="text-xs text-[#94A3B8] mb-3">
+              <p className="text-xs text-[rgb(var(--text-muted))] mb-3">
                 Your Stripe account is connected but onboarding isn't complete yet.
               </p>
               <button
@@ -241,7 +241,7 @@ export default function TeacherDashboardPage({ user }) {
               </div>
               <button
                 onClick={handleOpenStripeDashboard}
-                className="text-xs text-[#94A3B8] hover:text-[#D4AF37] transition-colors flex items-center gap-1"
+                className="text-xs text-[rgb(var(--text-muted))] hover:text-[rgb(var(--gold))] transition-colors flex items-center gap-1"
               >
                 <ArrowSquareOut size={12} />
                 Stripe Dashboard
@@ -260,11 +260,11 @@ export default function TeacherDashboardPage({ user }) {
             { label: 'Platform Fees', value: `$${earnings.summary.total_fees.toFixed(2)}`, icon: Storefront },
             { label: 'Your Earnings', value: `$${earnings.summary.total_net.toFixed(2)}`, icon: CurrencyDollar, highlight: true },
           ].map(({ label, value, icon: Icon, highlight }) => (
-            <Card key={label} className={`bg-[#0F172A] ${highlight ? 'border-[#D4AF37]/30' : 'border-[#1E293B]'}`}>
+            <Card key={label} className={`bg-[rgb(var(--ink-card))] ${highlight ? 'border-[rgb(var(--gold)/0.3)]' : 'border-[rgb(var(--ink-border))]'}`}>
               <CardContent className="p-4">
-                <Icon size={16} weight="duotone" className={highlight ? 'text-[#D4AF37]' : 'text-[#94A3B8]'} />
-                <p className={`text-lg font-bold mt-1 ${highlight ? 'text-[#D4AF37]' : 'text-[#F8FAFC]'}`}>{value}</p>
-                <p className="text-[9px] text-[#94A3B8] uppercase tracking-widest">{label}</p>
+                <Icon size={16} weight="duotone" className={highlight ? 'text-[rgb(var(--gold))]' : 'text-[rgb(var(--text-muted))]'} />
+                <p className={`text-lg font-bold mt-1 ${highlight ? 'text-[rgb(var(--gold))]' : 'text-[rgb(var(--text-main))]'}`}>{value}</p>
+                <p className="text-[9px] text-[rgb(var(--text-muted))] uppercase tracking-widest">{label}</p>
               </CardContent>
             </Card>
           ))}
@@ -274,16 +274,16 @@ export default function TeacherDashboardPage({ user }) {
       {/* My Courses with Pricing */}
       <div>
         <div className="flex items-center gap-2 mb-3">
-          <ChalkboardTeacher size={18} weight="duotone" className="text-[#D4AF37]" />
-          <h2 className="text-sm text-[#F8FAFC]" style={{ fontFamily: 'Cormorant Garamond, serif' }}>
+          <ChalkboardTeacher size={18} weight="duotone" className="text-[rgb(var(--gold))]" />
+          <h2 className="text-sm text-[rgb(var(--text-main))]" style={{ fontFamily: 'Cormorant Garamond, serif' }}>
             Your Courses
           </h2>
         </div>
 
         {myCourses.length === 0 ? (
-          <Card className="bg-[#0F172A] border-[#1E293B]">
+          <Card className="bg-[rgb(var(--ink-card))] border-[rgb(var(--ink-border))]">
             <CardContent className="p-5 text-center">
-              <p className="text-xs text-[#94A3B8]">No courses yet. Create a course first, then set premium pricing here.</p>
+              <p className="text-xs text-[rgb(var(--text-muted))]">No courses yet. Create a course first, then set premium pricing here.</p>
             </CardContent>
           </Card>
         ) : (
@@ -293,21 +293,21 @@ export default function TeacherDashboardPage({ user }) {
               const courseEarnings = earnings?.by_course?.find(c => c.course_id === course.id);
 
               return (
-                <Card key={course.id} className="bg-[#0F172A] border-[#1E293B]">
+                <Card key={course.id} className="bg-[rgb(var(--ink-card))] border-[rgb(var(--ink-border))]">
                   <CardContent className="p-4">
                     <div className="flex items-start justify-between">
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-0.5">
-                          <h3 className="text-sm text-[#F8FAFC] truncate">{course.title}</h3>
+                          <h3 className="text-sm text-[rgb(var(--text-main))] truncate">{course.title}</h3>
                           {isPremium && (
-                            <Badge className="bg-[#D4AF37]/10 text-[#D4AF37] border-[#D4AF37]/20 text-[8px] shrink-0">
+                            <Badge className="bg-[rgb(var(--gold)/0.1)] text-[rgb(var(--gold))] border-[rgb(var(--gold)/0.2)] text-[8px] shrink-0">
                               ${course.premium_price}
                             </Badge>
                           )}
                           <Badge className={`text-[8px] shrink-0 ${
                             course.status === 'active'
                               ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
-                              : 'bg-[#94A3B8]/10 text-[#94A3B8] border-[#94A3B8]/20'
+                              : 'bg-[rgb(var(--text-muted)/0.1)] text-[rgb(var(--text-muted))] border-[rgb(var(--text-muted)/0.2)]'
                           }`}>
                             {course.status}
                           </Badge>
@@ -317,7 +317,7 @@ export default function TeacherDashboardPage({ user }) {
                             className={`text-[8px] uppercase tracking-wider px-1.5 py-0.5 rounded border shrink-0 transition-colors ${
                               course.visibility !== 'unlisted'
                                 ? 'bg-sky-500/10 text-sky-400 border-sky-500/20 hover:bg-sky-500/20'
-                                : 'bg-[#D4AF37]/10 text-[#D4AF37] border-[#D4AF37]/20 hover:bg-[#D4AF37]/20'
+                                : 'bg-[rgb(var(--gold)/0.1)] text-[rgb(var(--gold))] border-[rgb(var(--gold)/0.2)] hover:bg-[rgb(var(--gold)/0.2)]'
                             }`}
                             data-testid={`visibility-${course.id}`}
                           >
@@ -325,7 +325,7 @@ export default function TeacherDashboardPage({ user }) {
                           </button>
                         </div>
                         {courseEarnings && (
-                          <p className="text-[10px] text-[#94A3B8]">
+                          <p className="text-[10px] text-[rgb(var(--text-muted))]">
                             {courseEarnings.total_sales} sale{courseEarnings.total_sales !== 1 ? 's' : ''} · ${courseEarnings.net_earnings.toFixed(2)} earned
                           </p>
                         )}
@@ -336,7 +336,7 @@ export default function TeacherDashboardPage({ user }) {
                           {pricingCourse === course.id ? (
                             <div className="flex items-center gap-2">
                               <div className="relative">
-                                <span className="absolute left-2 top-1/2 -translate-y-1/2 text-[#94A3B8] text-xs">$</span>
+                                <span className="absolute left-2 top-1/2 -translate-y-1/2 text-[rgb(var(--text-muted))] text-xs">$</span>
                                 <input
                                   type="number"
                                   min="0"
@@ -344,19 +344,19 @@ export default function TeacherDashboardPage({ user }) {
                                   value={priceInput}
                                   onChange={e => setPriceInput(e.target.value)}
                                   placeholder="0.00"
-                                  className="w-24 pl-5 pr-2 py-1.5 rounded bg-[#1E293B] border border-[#334155] text-xs text-[#F8FAFC] focus:outline-none focus:border-[#D4AF37]"
+                                  className="w-24 pl-5 pr-2 py-1.5 rounded bg-[rgb(var(--ink-border))] border border-[rgb(var(--ink-border-strong))] text-xs text-[rgb(var(--text-main))] focus:outline-none focus:border-[rgb(var(--gold))]"
                                 />
                               </div>
                               <button
                                 onClick={() => handleSetPremium(course.id)}
                                 disabled={pricingLoading}
-                                className="px-2 py-1.5 rounded text-[10px] font-medium bg-[#D4AF37]/20 text-[#D4AF37] border border-[#D4AF37]/30 hover:bg-[#D4AF37]/30"
+                                className="px-2 py-1.5 rounded text-[10px] font-medium bg-[rgb(var(--gold)/0.2)] text-[rgb(var(--gold))] border border-[rgb(var(--gold)/0.3)] hover:bg-[rgb(var(--gold)/0.3)]"
                               >
                                 {pricingLoading ? '...' : 'Set'}
                               </button>
                               <button
                                 onClick={() => { setPricingCourse(null); setPriceInput(''); }}
-                                className="px-2 py-1.5 rounded text-[10px] text-[#94A3B8] hover:text-[#F8FAFC]"
+                                className="px-2 py-1.5 rounded text-[10px] text-[rgb(var(--text-muted))] hover:text-[rgb(var(--text-main))]"
                               >
                                 ✕
                               </button>
@@ -367,7 +367,7 @@ export default function TeacherDashboardPage({ user }) {
                                 setPricingCourse(course.id);
                                 setPriceInput(course.premium_price ? String(course.premium_price) : '');
                               }}
-                              className="text-[10px] text-[#94A3B8] hover:text-[#D4AF37] transition-colors"
+                              className="text-[10px] text-[rgb(var(--text-muted))] hover:text-[rgb(var(--gold))] transition-colors"
                             >
                               {isPremium ? 'Edit Price' : 'Set Price'}
                             </button>
@@ -386,21 +386,21 @@ export default function TeacherDashboardPage({ user }) {
       {/* Recent Transactions */}
       {isConnected && earnings?.recent_transactions?.length > 0 && (
         <div>
-          <h2 className="text-sm text-[#F8FAFC] mb-3" style={{ fontFamily: 'Cormorant Garamond, serif' }}>
+          <h2 className="text-sm text-[rgb(var(--text-main))] mb-3" style={{ fontFamily: 'Cormorant Garamond, serif' }}>
             Recent Sales
           </h2>
           <div className="space-y-1">
             {earnings.recent_transactions.slice(0, 10).map(txn => (
-              <div key={txn.id} className="flex items-center justify-between py-2 px-3 rounded bg-[#0F172A] border border-[#1E293B]">
+              <div key={txn.id} className="flex items-center justify-between py-2 px-3 rounded bg-[rgb(var(--ink-card))] border border-[rgb(var(--ink-border))]">
                 <div className="flex-1 min-w-0">
-                  <p className="text-xs text-[#F8FAFC] truncate">{txn.course_title}</p>
-                  <p className="text-[9px] text-[#94A3B8]">
+                  <p className="text-xs text-[rgb(var(--text-main))] truncate">{txn.course_title}</p>
+                  <p className="text-[9px] text-[rgb(var(--text-muted))]">
                     {txn.user_email} · {new Date(txn.created_at).toLocaleDateString()}
                   </p>
                 </div>
                 <div className="text-right ml-3">
-                  <p className="text-xs text-[#D4AF37]">+${txn.teacher_earnings?.toFixed(2)}</p>
-                  <p className="text-[9px] text-[#94A3B8]">${txn.amount?.toFixed(2)} gross</p>
+                  <p className="text-xs text-[rgb(var(--gold))]">+${txn.teacher_earnings?.toFixed(2)}</p>
+                  <p className="text-[9px] text-[rgb(var(--text-muted))]">${txn.amount?.toFixed(2)} gross</p>
                 </div>
               </div>
             ))}

@@ -80,17 +80,17 @@ export default function CoursePlayerPage({ user }) {
     }
   }, [loading, lessonId, flat, courseId, navigate]);
 
-  if (loading) return <p className="text-sm text-[#94A3B8]">Opening the course…</p>;
+  if (loading) return <p className="text-sm text-[rgb(var(--text-muted))]">Opening the course…</p>;
   if (!course) return <Navigate to="/courses" replace />;
   // Players are for enrolled learners or the instructor.
   if (!enrollment?.enrolled && !isInstructor) return <Navigate to={`/courses/${courseId}`} replace />;
   if (!current) {
     return (
       <div className="max-w-2xl">
-        <button onClick={() => navigate(`/courses/${courseId}`)} className="flex items-center gap-2 text-sm text-[#94A3B8] hover:text-[#D4AF37] mb-4">
+        <button onClick={() => navigate(`/courses/${courseId}`)} className="flex items-center gap-2 text-sm text-[rgb(var(--text-muted))] hover:text-[rgb(var(--gold))] mb-4">
           <ArrowLeft size={16} /> Course overview
         </button>
-        <p className="text-sm text-[#94A3B8]">This course has no lessons yet.</p>
+        <p className="text-sm text-[rgb(var(--text-muted))]">This course has no lessons yet.</p>
       </div>
     );
   }
@@ -131,20 +131,20 @@ export default function CoursePlayerPage({ user }) {
 
   const SidebarInner = (
     <div className="flex flex-col h-full">
-      <div className="px-4 py-4 border-b border-[#1E293B]">
-        <button onClick={() => navigate(`/courses/${courseId}`)} className="flex items-center gap-1.5 text-[10px] tracking-[0.15em] uppercase text-[#94A3B8] hover:text-[#D4AF37] mb-2">
+      <div className="px-4 py-4 border-b border-[rgb(var(--ink-border))]">
+        <button onClick={() => navigate(`/courses/${courseId}`)} className="flex items-center gap-1.5 text-[10px] tracking-[0.15em] uppercase text-[rgb(var(--text-muted))] hover:text-[rgb(var(--gold))] mb-2">
           <ArrowLeft size={12} /> Overview
         </button>
-        <p className="text-sm text-[#F8FAFC]" style={{ fontFamily: 'Cormorant Garamond, serif' }}>{course.title}</p>
-        <div className="mt-2 h-1.5 rounded-full bg-[#050814] border border-[#1E293B] overflow-hidden">
-          <div className="h-full bg-[#D4AF37]/70 transition-all" style={{ width: `${pct}%` }} />
+        <p className="text-sm text-[rgb(var(--text-main))]" style={{ fontFamily: 'Cormorant Garamond, serif' }}>{course.title}</p>
+        <div className="mt-2 h-1.5 rounded-full bg-[rgb(var(--ink-deep))] border border-[rgb(var(--ink-border))] overflow-hidden">
+          <div className="h-full bg-[rgb(var(--gold)/0.7)] transition-all" style={{ width: `${pct}%` }} />
         </div>
-        <p className="text-[10px] text-[#94A3B8] mt-1">{pct}% complete</p>
+        <p className="text-[10px] text-[rgb(var(--text-muted))] mt-1">{pct}% complete</p>
       </div>
       <nav className="flex-1 overflow-y-auto py-2">
         {groups.map((g, gi) => (
           <div key={g.module?.id || `ungrouped-${gi}`} className="mb-1">
-            <p className="px-4 pt-3 pb-1 text-[9px] tracking-[0.2em] uppercase text-[#475569]">
+            <p className="px-4 pt-3 pb-1 text-[9px] tracking-[0.2em] uppercase text-[rgb(var(--text-faint))]">
               {g.module ? g.module.title : 'Lessons'}
             </p>
             {g.lessons.map((l, li) => {
@@ -156,13 +156,13 @@ export default function CoursePlayerPage({ user }) {
                   key={l.id}
                   onClick={() => { setSidebarOpen(false); navigate(`/courses/${courseId}/learn/${l.id}`); }}
                   className={`w-full flex items-center gap-2.5 px-4 py-2 text-left text-xs border-l-2 transition-colors ${
-                    active ? 'border-[#D4AF37] bg-[#D4AF37]/5 text-[#F8FAFC]' : 'border-transparent text-[#94A3B8] hover:bg-[#0F172A] hover:text-[#F8FAFC]'
+                    active ? 'border-[rgb(var(--gold))] bg-[rgb(var(--gold)/0.05)] text-[rgb(var(--text-main))]' : 'border-transparent text-[rgb(var(--text-muted))] hover:bg-[rgb(var(--ink-card))] hover:text-[rgb(var(--text-main))]'
                   }`}
                   data-testid={`player-nav-${l.id}`}
                 >
                   {done
                     ? <CheckCircle size={16} weight="fill" className="text-emerald-400 flex-shrink-0" />
-                    : <Circle size={16} className="text-[#475569] flex-shrink-0" />}
+                    : <Circle size={16} className="text-[rgb(var(--text-faint))] flex-shrink-0" />}
                   <span className="flex-1 min-w-0 truncate">{num}. {l.title}</span>
                 </button>
               );
@@ -176,29 +176,29 @@ export default function CoursePlayerPage({ user }) {
   return (
     <div className="flex gap-0 -mt-2" data-testid="course-player">
       {/* Desktop sidebar */}
-      <aside className="hidden lg:block w-72 flex-shrink-0 border-r border-[#1E293B] sticky top-0 h-[calc(100vh-1rem)]">
+      <aside className="hidden lg:block w-72 flex-shrink-0 border-r border-[rgb(var(--ink-border))] sticky top-0 h-[calc(100vh-1rem)]">
         {SidebarInner}
       </aside>
 
       {/* Mobile sidebar toggle + drawer */}
-      <button onClick={() => setSidebarOpen(true)} className="lg:hidden fixed bottom-4 right-4 z-40 flex items-center gap-1.5 px-3 py-2 rounded-full bg-[#D4AF37] text-[#050814] text-xs shadow-lg">
+      <button onClick={() => setSidebarOpen(true)} className="lg:hidden fixed bottom-4 right-4 z-40 flex items-center gap-1.5 px-3 py-2 rounded-full bg-[rgb(var(--gold))] text-[rgb(var(--ink-deep))] text-xs shadow-lg">
         <List size={16} /> Lessons
       </button>
       {sidebarOpen && (
         <div className="lg:hidden fixed inset-0 z-50 flex">
-          <div className="w-72 bg-[#050814] border-r border-[#1E293B] h-full">{SidebarInner}</div>
+          <div className="w-72 bg-[rgb(var(--ink-deep))] border-r border-[rgb(var(--ink-border))] h-full">{SidebarInner}</div>
           <div className="flex-1 bg-black/60" onClick={() => setSidebarOpen(false)} />
-          <button onClick={() => setSidebarOpen(false)} className="absolute top-4 right-4 text-[#94A3B8]"><X size={22} /></button>
+          <button onClick={() => setSidebarOpen(false)} className="absolute top-4 right-4 text-[rgb(var(--text-muted))]"><X size={22} /></button>
         </div>
       )}
 
       {/* Main lesson panel */}
       <main className="flex-1 min-w-0 px-0 lg:px-8 max-w-3xl mx-auto animate-fade-in-up">
-        <p className="text-[10px] tracking-[0.2em] uppercase text-[#D4AF37] mb-1">
+        <p className="text-[10px] tracking-[0.2em] uppercase text-[rgb(var(--gold))] mb-1">
           Lesson {currentIdx + 1} of {flat.length}
         </p>
-        <h1 className="text-2xl text-[#F8FAFC] mb-1" style={{ fontFamily: 'Cormorant Garamond, serif' }}>{current.title}</h1>
-        {current.description && <p className="text-sm text-[#94A3B8] mb-4">{current.description}</p>}
+        <h1 className="text-2xl text-[rgb(var(--text-main))] mb-1" style={{ fontFamily: 'Cormorant Garamond, serif' }}>{current.title}</h1>
+        {current.description && <p className="text-sm text-[rgb(var(--text-muted))] mb-4">{current.description}</p>}
 
         {/* Video first, like a course */}
         {(current.video_url || current.video_file_id || isInstructor) && (
@@ -215,7 +215,7 @@ export default function CoursePlayerPage({ user }) {
                 value={draft.banner_url}
                 onChange={e => setDraft(d => ({ ...d, banner_url: e.target.value }))}
                 placeholder="Banner image URL (optional)"
-                className="w-full px-3 py-2 rounded-md bg-[#050814] border border-[#1E293B] text-xs text-[#F8FAFC] placeholder-[#475569] focus:outline-none focus:border-[#D4AF37]/50"
+                className="w-full px-3 py-2 rounded-md bg-[rgb(var(--ink-deep))] border border-[rgb(var(--ink-border))] text-xs text-[rgb(var(--text-main))] placeholder-[rgb(var(--text-faint))] focus:outline-none focus:border-[rgb(var(--gold)/0.5)]"
               />
               <WysiwygEditor
                 value={draft.content}
@@ -226,10 +226,10 @@ export default function CoursePlayerPage({ user }) {
               />
               <div className="flex gap-2">
                 <button onClick={saveContent} disabled={savingContent}
-                  className="px-4 py-1.5 rounded-md bg-[#D4AF37] text-[#050814] text-xs font-medium hover:bg-[#F3E5AB] disabled:opacity-60">
+                  className="px-4 py-1.5 rounded-md bg-[rgb(var(--gold))] text-[rgb(var(--ink-deep))] text-xs font-medium hover:bg-[rgb(var(--gold-soft))] disabled:opacity-60">
                   {savingContent ? 'Saving…' : 'Save'}
                 </button>
-                <button onClick={() => setEditing(false)} className="px-4 py-1.5 rounded-md text-[#94A3B8] text-xs hover:text-[#F8FAFC]">Cancel</button>
+                <button onClick={() => setEditing(false)} className="px-4 py-1.5 rounded-md text-[rgb(var(--text-muted))] text-xs hover:text-[rgb(var(--text-main))]">Cancel</button>
               </div>
             </div>
           ) : (
@@ -237,10 +237,10 @@ export default function CoursePlayerPage({ user }) {
               {(current.content || current.banner_url) ? (
                 <LessonContentViewer content={current.content} banner={current.banner_url} />
               ) : (
-                isInstructor && <p className="text-xs text-[#475569] italic">No content yet.</p>
+                isInstructor && <p className="text-xs text-[rgb(var(--text-faint))] italic">No content yet.</p>
               )}
               {isInstructor && (
-                <button onClick={startEdit} className="mt-2 flex items-center gap-1.5 text-[11px] text-[#94A3B8] hover:text-[#D4AF37]" data-testid="edit-content">
+                <button onClick={startEdit} className="mt-2 flex items-center gap-1.5 text-[11px] text-[rgb(var(--text-muted))] hover:text-[rgb(var(--gold))]" data-testid="edit-content">
                   <PencilSimple size={13} /> {current.content || current.banner_url ? 'Edit content' : 'Add content'}
                 </button>
               )}
@@ -251,28 +251,28 @@ export default function CoursePlayerPage({ user }) {
         {/* Materials */}
         {files.length > 0 && (
           <div className="mb-5">
-            <p className="text-[10px] tracking-[0.15em] uppercase text-[#D4AF37] mb-2">Materials</p>
+            <p className="text-[10px] tracking-[0.15em] uppercase text-[rgb(var(--gold))] mb-2">Materials</p>
             <div className="space-y-1.5">
               {files.map(file => {
                 const isPdf = file.mime_type === 'application/pdf';
                 const open = viewingPdf === file.id;
                 return (
                   <div key={file.id}>
-                    <div className="flex items-center gap-3 p-2.5 bg-[#050814] border border-[#1E293B] rounded-md">
-                      {isPdf ? <FilePdf size={18} weight="duotone" className="text-[#D4AF37] flex-shrink-0" />
-                             : <FileIcon size={18} weight="duotone" className="text-[#D4AF37] flex-shrink-0" />}
-                      <span className="flex-1 min-w-0 text-xs text-[#F8FAFC] truncate">{file.original_filename}</span>
+                    <div className="flex items-center gap-3 p-2.5 bg-[rgb(var(--ink-deep))] border border-[rgb(var(--ink-border))] rounded-md">
+                      {isPdf ? <FilePdf size={18} weight="duotone" className="text-[rgb(var(--gold))] flex-shrink-0" />
+                             : <FileIcon size={18} weight="duotone" className="text-[rgb(var(--gold))] flex-shrink-0" />}
+                      <span className="flex-1 min-w-0 text-xs text-[rgb(var(--text-main))] truncate">{file.original_filename}</span>
                       {isPdf && (
-                        <button onClick={() => setViewingPdf(open ? null : file.id)} className={`p-1 ${open ? 'text-[#D4AF37]' : 'text-[#94A3B8] hover:text-[#D4AF37]'}`} title={open ? 'Close' : 'View'}>
+                        <button onClick={() => setViewingPdf(open ? null : file.id)} className={`p-1 ${open ? 'text-[rgb(var(--gold))]' : 'text-[rgb(var(--text-muted))] hover:text-[rgb(var(--gold))]'}`} title={open ? 'Close' : 'View'}>
                           {open ? <X size={14} /> : <Eye size={14} />}
                         </button>
                       )}
-                      <a href={`${BACKEND_URL}/api/files/${file.id}/download`} target="_blank" rel="noopener noreferrer" className="p-1 text-[#94A3B8] hover:text-[#D4AF37]" title="Download">
+                      <a href={`${BACKEND_URL}/api/files/${file.id}/download`} target="_blank" rel="noopener noreferrer" className="p-1 text-[rgb(var(--text-muted))] hover:text-[rgb(var(--gold))]" title="Download">
                         <DownloadSimple size={14} />
                       </a>
                     </div>
                     {isPdf && open && (
-                      <div className="mt-1 rounded-md overflow-hidden border border-[#1E293B]">
+                      <div className="mt-1 rounded-md overflow-hidden border border-[rgb(var(--ink-border))]">
                         <iframe src={`${BACKEND_URL}/api/files/${file.id}/download`} className="w-full h-[600px] bg-white" title={file.original_filename} />
                       </div>
                     )}
@@ -289,14 +289,14 @@ export default function CoursePlayerPage({ user }) {
         </div>
 
         {/* Complete & Continue */}
-        <div className="flex items-center justify-between gap-3 py-5 border-t border-[#1E293B]">
-          <span className="text-xs text-[#94A3B8]">
+        <div className="flex items-center justify-between gap-3 py-5 border-t border-[rgb(var(--ink-border))]">
+          <span className="text-xs text-[rgb(var(--text-muted))]">
             {isDone ? 'Completed' : enrollment?.enrolled ? 'Mark this lesson complete' : 'Preview mode'}
           </span>
           <button
             onClick={handleCompleteContinue}
             disabled={completing}
-            className="flex items-center gap-2 px-5 py-2.5 rounded-md bg-[#D4AF37] text-[#050814] text-sm font-medium hover:bg-[#F3E5AB] disabled:opacity-60"
+            className="flex items-center gap-2 px-5 py-2.5 rounded-md bg-[rgb(var(--gold))] text-[rgb(var(--ink-deep))] text-sm font-medium hover:bg-[rgb(var(--gold-soft))] disabled:opacity-60"
             data-testid="complete-continue"
           >
             {next ? (isDone ? 'Continue' : 'Complete & Continue') : (isDone ? 'Back to overview' : 'Complete & Finish')}

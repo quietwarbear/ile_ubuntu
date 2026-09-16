@@ -36,18 +36,18 @@ function CheckInCard({ onDone }) {
   };
 
   return (
-    <Card className="bg-[#0F172A] border-[#D4AF37]/25" style={{ order: 0 }} data-testid="checkin-card">
+    <Card className="bg-[rgb(var(--ink-card))] border-[rgb(var(--gold)/0.25)]" style={{ order: 0 }} data-testid="checkin-card">
       <CardContent className="p-5">
-        <p className="text-sm text-[#F8FAFC] mb-1" style={{ fontFamily: 'Cormorant Garamond, serif' }}>
+        <p className="text-sm text-[rgb(var(--text-main))] mb-1" style={{ fontFamily: 'Cormorant Garamond, serif' }}>
           How are you arriving today?
         </p>
-        <p className="text-[10px] text-[#94A3B8] mb-4">
+        <p className="text-[10px] text-[rgb(var(--text-muted))] mb-4">
           Your educators see how you're doing — never your words. Your note stays yours.
         </p>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-3">
           {CHECKIN_QUESTIONS.map(q => (
             <div key={q.key}>
-              <p className="text-[10px] text-[#94A3B8] mb-1.5">{q.label}</p>
+              <p className="text-[10px] text-[rgb(var(--text-muted))] mb-1.5">{q.label}</p>
               <div className="flex gap-1">
                 {FACES.map((face, i) => (
                   <button
@@ -55,8 +55,8 @@ function CheckInCard({ onDone }) {
                     onClick={() => setValues(v => ({ ...v, [q.key]: i + 1 }))}
                     className={`w-8 h-8 rounded text-sm flex items-center justify-center border transition-all ${
                       values[q.key] === i + 1
-                        ? 'bg-[#D4AF37]/20 border-[#D4AF37]/50 scale-110'
-                        : 'bg-[#050814] border-[#1E293B] opacity-60 hover:opacity-100'
+                        ? 'bg-[rgb(var(--gold)/0.2)] border-[rgb(var(--gold)/0.5)] scale-110'
+                        : 'bg-[rgb(var(--ink-deep))] border-[rgb(var(--ink-border))] opacity-60 hover:opacity-100'
                     }`}
                     data-testid={`checkin-${q.key}-${i + 1}`}
                   >
@@ -72,13 +72,13 @@ function CheckInCard({ onDone }) {
             value={note}
             onChange={e => setNote(e.target.value)}
             placeholder="Anything on your heart? (private, optional)"
-            className="flex-1 px-3 py-1.5 rounded bg-[#050814] border border-[#1E293B] text-xs text-[#F8FAFC] placeholder-[#475569] focus:outline-none focus:border-[#D4AF37]/50"
+            className="flex-1 px-3 py-1.5 rounded bg-[rgb(var(--ink-deep))] border border-[rgb(var(--ink-border))] text-xs text-[rgb(var(--text-main))] placeholder-[rgb(var(--text-faint))] focus:outline-none focus:border-[rgb(var(--gold)/0.5)]"
           />
           <button
             onClick={submit}
             disabled={!ready || saving}
             className={`px-4 py-1.5 rounded text-xs font-medium transition-all ${
-              ready ? 'bg-[#D4AF37] text-[#050814] hover:bg-[#F3E5AB]' : 'bg-[#1E293B] text-[#475569]'
+              ready ? 'bg-[rgb(var(--gold))] text-[rgb(var(--ink-deep))] hover:bg-[rgb(var(--gold-soft))]' : 'bg-[rgb(var(--ink-border))] text-[rgb(var(--text-faint))]'
             }`}
             data-testid="checkin-submit"
           >
@@ -94,14 +94,14 @@ const StatCard = ({ label, value, icon: Icon, color, to }) => {
   const navigate = useNavigate();
   return (
     <Card
-      className="bg-[#0F172A] border-[#1E293B] hover:border-[#D4AF37]/30 transition-all duration-300 cursor-pointer hover:-translate-y-0.5"
+      className="bg-[rgb(var(--ink-card))] border-[rgb(var(--ink-border))] hover:border-[rgb(var(--gold)/0.3)] transition-all duration-300 cursor-pointer hover:-translate-y-0.5"
       onClick={() => navigate(to)}
       data-testid={`stat-${label.toLowerCase()}`}
     >
       <CardContent className="p-5 flex items-center justify-between">
         <div>
-          <p className="text-xs tracking-[0.15em] uppercase text-[#94A3B8] mb-1">{label}</p>
-          <p className="text-2xl font-semibold text-[#F8FAFC]">{value}</p>
+          <p className="text-xs tracking-[0.15em] uppercase text-[rgb(var(--text-muted))] mb-1">{label}</p>
+          <p className="text-2xl font-semibold text-[rgb(var(--text-main))]">{value}</p>
         </div>
         <div className={`w-10 h-10 rounded-md flex items-center justify-center ${color}`}>
           <Icon size={22} weight="duotone" />
@@ -182,12 +182,12 @@ export default function DashboardPage({ user }) {
       {/* Welcome */}
       <div>
         <h1
-          className="text-3xl sm:text-4xl font-light text-[#F8FAFC] mb-1"
+          className="text-3xl sm:text-4xl font-light text-[rgb(var(--text-main))] mb-1"
           style={{ fontFamily: 'Cormorant Garamond, serif' }}
         >
           {greeting()}, {user?.name?.split(' ')[0]}
         </h1>
-        <p className="text-sm text-[#94A3B8]">
+        <p className="text-sm text-[rgb(var(--text-muted))]">
           Welcome to your Living Learning Commons
         </p>
       </div>
@@ -197,7 +197,7 @@ export default function DashboardPage({ user }) {
 
       {/* Stats Grid */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4" style={{ order: 1 }}>
-        <StatCard label="Courses" value={stats.courses} icon={BookOpenText} color="bg-[#D4AF37]/10 text-[#D4AF37]" to="/courses" />
+        <StatCard label="Courses" value={stats.courses} icon={BookOpenText} color="bg-[rgb(var(--gold)/0.1)] text-[rgb(var(--gold))]" to="/courses" />
         <StatCard label="Cohorts" value={stats.cohorts} icon={UsersThree} color="bg-blue-500/10 text-blue-400" to="/cohorts" />
         <StatCard label="Discussions" value={stats.posts} icon={Chats} color="bg-emerald-500/10 text-emerald-400" to="/community" />
         <StatCard label="Archives" value={stats.archives} icon={Archive} color="bg-purple-500/10 text-purple-400" to="/archives" />
@@ -205,16 +205,16 @@ export default function DashboardPage({ user }) {
 
       {/* Recent/Explore Courses */}
       {/* Faculty see their recent courses first; learners see their own learning first */}
-      <Card className="bg-[#0F172A] border-[#1E293B]" style={{ order: isFaculty ? 2 : 3 }}>
+      <Card className="bg-[rgb(var(--ink-card))] border-[rgb(var(--ink-border))]" style={{ order: isFaculty ? 2 : 3 }}>
         <CardHeader className="flex flex-row items-center justify-between pb-2">
           <CardTitle
-            className="text-lg text-[#F8FAFC]"
+            className="text-lg text-[rgb(var(--text-main))]"
             style={{ fontFamily: 'Cormorant Garamond, serif' }}
           >
             {isFaculty ? 'Recent Courses' : 'Explore Courses'}
           </CardTitle>
           <button
-            className="text-xs text-[#D4AF37] flex items-center gap-1 hover:underline"
+            className="text-xs text-[rgb(var(--gold))] flex items-center gap-1 hover:underline"
             onClick={() => navigate('/courses')}
             data-testid="view-all-courses"
           >
@@ -223,7 +223,7 @@ export default function DashboardPage({ user }) {
         </CardHeader>
         <CardContent className="space-y-3">
           {recentCourses.length === 0 ? (
-            <p className="text-sm text-[#94A3B8] py-4 text-center">
+            <p className="text-sm text-[rgb(var(--text-muted))] py-4 text-center">
               {isFaculty
                 ? 'No courses yet. Create your first course to get started.'
                 : 'No courses are open yet. Your community’s offerings will appear here.'}
@@ -232,18 +232,18 @@ export default function DashboardPage({ user }) {
             recentCourses.map((course) => (
               <div
                 key={course.id}
-                className="flex items-center justify-between p-3 rounded-md bg-[#050814] border border-[#1E293B] hover:border-[#D4AF37]/20 transition-colors cursor-pointer"
+                className="flex items-center justify-between p-3 rounded-md bg-[rgb(var(--ink-deep))] border border-[rgb(var(--ink-border))] hover:border-[rgb(var(--gold)/0.2)] transition-colors cursor-pointer"
                 onClick={() => navigate(`/courses`)}
                 data-testid={`recent-course-${course.id}`}
               >
                 <div className="flex items-center gap-3">
-                  <BookOpenText size={18} weight="duotone" className="text-[#D4AF37]" />
+                  <BookOpenText size={18} weight="duotone" className="text-[rgb(var(--gold))]" />
                   <div>
-                    <p className="text-sm text-[#F8FAFC]">{course.title}</p>
-                    <p className="text-xs text-[#94A3B8]">by {course.instructor_name}</p>
+                    <p className="text-sm text-[rgb(var(--text-main))]">{course.title}</p>
+                    <p className="text-xs text-[rgb(var(--text-muted))]">by {course.instructor_name}</p>
                   </div>
                 </div>
-                <span className="text-[10px] tracking-wider uppercase px-2 py-0.5 rounded border border-[#1E293B] text-[#94A3B8]">
+                <span className="text-[10px] tracking-wider uppercase px-2 py-0.5 rounded border border-[rgb(var(--ink-border))] text-[rgb(var(--text-muted))]">
                   {course.status}
                 </span>
               </div>
@@ -254,17 +254,17 @@ export default function DashboardPage({ user }) {
 
       {/* My Learning */}
       {myEnrollments.length > 0 && (
-        <Card className="bg-[#0F172A] border-[#1E293B]" style={{ order: isFaculty ? 3 : 2 }}>
+        <Card className="bg-[rgb(var(--ink-card))] border-[rgb(var(--ink-border))]" style={{ order: isFaculty ? 3 : 2 }}>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle
-              className="text-lg text-[#F8FAFC] flex items-center gap-2"
+              className="text-lg text-[rgb(var(--text-main))] flex items-center gap-2"
               style={{ fontFamily: 'Cormorant Garamond, serif' }}
             >
-              <GraduationCap size={20} weight="duotone" className="text-[#D4AF37]" />
+              <GraduationCap size={20} weight="duotone" className="text-[rgb(var(--gold))]" />
               My Learning
             </CardTitle>
             <button
-              className="text-xs text-[#D4AF37] flex items-center gap-1 hover:underline"
+              className="text-xs text-[rgb(var(--gold))] flex items-center gap-1 hover:underline"
               onClick={() => navigate('/courses')}
               data-testid="view-my-learning"
             >
@@ -275,27 +275,27 @@ export default function DashboardPage({ user }) {
             {myEnrollments.map(enrollment => (
               <div
                 key={enrollment.id}
-                className="flex items-center gap-3 p-3 rounded-md bg-[#050814] border border-[#1E293B] hover:border-[#D4AF37]/20 transition-colors cursor-pointer"
+                className="flex items-center gap-3 p-3 rounded-md bg-[rgb(var(--ink-deep))] border border-[rgb(var(--ink-border))] hover:border-[rgb(var(--gold)/0.2)] transition-colors cursor-pointer"
                 onClick={() => navigate(`/courses/${enrollment.course_id}`)}
                 data-testid={`dash-enrollment-${enrollment.course_id}`}
               >
                 <div className="relative w-10 h-10 flex-shrink-0">
                   <svg className="w-10 h-10 -rotate-90" viewBox="0 0 40 40">
-                    <circle cx="20" cy="20" r="16" fill="none" stroke="#1E293B" strokeWidth="2.5" />
-                    <circle cx="20" cy="20" r="16" fill="none" stroke="#D4AF37" strokeWidth="2.5"
+                    <circle cx="20" cy="20" r="16" fill="none" stroke="rgb(var(--ink-border))" strokeWidth="2.5" />
+                    <circle cx="20" cy="20" r="16" fill="none" stroke="rgb(var(--gold))" strokeWidth="2.5"
                       strokeDasharray={`${(enrollment.progress || 0) * 1.005} 100.5`} strokeLinecap="round" />
                   </svg>
                   <div className="absolute inset-0 flex items-center justify-center">
                     {enrollment.status === 'completed' ? (
-                      <Trophy size={12} weight="fill" className="text-[#D4AF37]" />
+                      <Trophy size={12} weight="fill" className="text-[rgb(var(--gold))]" />
                     ) : (
-                      <span className="text-[9px] font-semibold text-[#F8FAFC]">{Math.round(enrollment.progress || 0)}%</span>
+                      <span className="text-[9px] font-semibold text-[rgb(var(--text-main))]">{Math.round(enrollment.progress || 0)}%</span>
                     )}
                   </div>
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm text-[#F8FAFC] truncate">{enrollment.course_title}</p>
-                  <p className="text-[10px] text-[#94A3B8]">
+                  <p className="text-sm text-[rgb(var(--text-main))] truncate">{enrollment.course_title}</p>
+                  <p className="text-[10px] text-[rgb(var(--text-muted))]">
                     {enrollment.completed_lessons?.length || 0} / {enrollment.total_lessons} lessons
                   </p>
                 </div>
@@ -308,7 +308,7 @@ export default function DashboardPage({ user }) {
       {/* Quick Actions */}
       <div style={{ order: 4 }}>
         <h3
-          className="text-sm tracking-[0.15em] uppercase text-[#D4AF37] mb-3"
+          className="text-sm tracking-[0.15em] uppercase text-[rgb(var(--gold))] mb-3"
         >
           Quick Actions
         </h3>
@@ -317,7 +317,7 @@ export default function DashboardPage({ user }) {
             <button
               key={action.label}
               onClick={() => navigate(action.to)}
-              className="flex items-center gap-2 p-3 rounded-md bg-[#0F172A] border border-[#1E293B] text-sm text-[#94A3B8] hover:text-[#D4AF37] hover:border-[#D4AF37]/30 transition-all"
+              className="flex items-center gap-2 p-3 rounded-md bg-[rgb(var(--ink-card))] border border-[rgb(var(--ink-border))] text-sm text-[rgb(var(--text-muted))] hover:text-[rgb(var(--gold))] hover:border-[rgb(var(--gold)/0.3)] transition-all"
               data-testid={`quick-${action.label.toLowerCase().replace(' ', '-')}`}
             >
               <action.icon size={16} weight="duotone" />
@@ -330,16 +330,16 @@ export default function DashboardPage({ user }) {
       {certificates.length > 0 && (
         <div data-testid="my-certificates" style={{ order: 5 }}>
           <div className="flex items-center gap-2 mb-3">
-            <Certificate size={16} weight="duotone" className="text-[#D4AF37]" />
-            <h2 className="text-xs tracking-[0.15em] uppercase text-[#D4AF37]">My Certificates</h2>
+            <Certificate size={16} weight="duotone" className="text-[rgb(var(--gold))]" />
+            <h2 className="text-xs tracking-[0.15em] uppercase text-[rgb(var(--gold))]">My Certificates</h2>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {certificates.map(cert => (
-              <Card key={cert.course_id} className="bg-[#0F172A] border-[#D4AF37]/20">
+              <Card key={cert.course_id} className="bg-[rgb(var(--ink-card))] border-[rgb(var(--gold)/0.2)]">
                 <CardContent className="p-4 flex items-center justify-between">
                   <div className="flex-1 min-w-0">
-                    <p className="text-xs text-[#F8FAFC] truncate">{cert.course_title}</p>
-                    <p className="text-[9px] text-[#94A3B8] mt-0.5">
+                    <p className="text-xs text-[rgb(var(--text-main))] truncate">{cert.course_title}</p>
+                    <p className="text-[9px] text-[rgb(var(--text-muted))] mt-0.5">
                       Completed {cert.completed_at ? new Date(cert.completed_at).toLocaleDateString() : ''}
                     </p>
                   </div>
@@ -347,7 +347,7 @@ export default function DashboardPage({ user }) {
                     href={`${BACKEND_URL}/api/certificates/download/${cert.course_id}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="ml-3 px-3 py-1.5 bg-[#D4AF37]/10 border border-[#D4AF37]/30 text-[#D4AF37] rounded text-[10px] hover:bg-[#D4AF37]/20 transition-all flex-shrink-0"
+                    className="ml-3 px-3 py-1.5 bg-[rgb(var(--gold)/0.1)] border border-[rgb(var(--gold)/0.3)] text-[rgb(var(--gold))] rounded text-[10px] hover:bg-[rgb(var(--gold)/0.2)] transition-all flex-shrink-0"
                     data-testid={`cert-download-${cert.course_id}`}
                   >
                     Download

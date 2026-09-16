@@ -57,12 +57,12 @@ const TermsPage = lazy(() => import('./pages/TermsPage'));
 // Route-chunk loading state — same brand treatment as the app boot screen.
 function PageLoader() {
   return (
-    <div className="min-h-screen bg-[#050814] flex items-center justify-center">
+    <div className="min-h-screen bg-[rgb(var(--ink-deep))] flex items-center justify-center">
       <div className="text-center">
-        <div className="w-12 h-12 mx-auto rounded-lg bg-[#D4AF37]/10 border border-[#D4AF37]/20 flex items-center justify-center mb-4 animate-pulse">
+        <div className="w-12 h-12 mx-auto rounded-lg bg-[rgb(var(--gold)/0.1)] border border-[rgb(var(--gold)/0.2)] flex items-center justify-center mb-4 animate-pulse">
           <BrandMark className="w-8 h-8 object-contain" />
         </div>
-        <p className="text-xs tracking-[0.2em] uppercase text-[#94A3B8]">Loading...</p>
+        <p className="text-xs tracking-[0.2em] uppercase text-[rgb(var(--text-muted))]">Loading...</p>
       </div>
     </div>
   );
@@ -90,7 +90,7 @@ function SSOHandoffPage() {
     })();
   }, []);
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#94A3B8', padding: 24, textAlign: 'center', background: '#050814' }}>
+    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'rgb(var(--text-muted))', padding: 24, textAlign: 'center', background: 'rgb(var(--ink-deep))' }}>
       <p data-testid="ile-sso-status">{error || 'Signing you in to Ile Ubuntu…'}</p>
     </div>
   );
@@ -301,12 +301,12 @@ function App() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#050814] flex items-center justify-center">
+      <div className="min-h-screen bg-[rgb(var(--ink-deep))] flex items-center justify-center">
         <div className="text-center">
-          <div className="w-12 h-12 mx-auto rounded-lg bg-[#D4AF37]/10 border border-[#D4AF37]/20 flex items-center justify-center mb-4 animate-pulse">
+          <div className="w-12 h-12 mx-auto rounded-lg bg-[rgb(var(--gold)/0.1)] border border-[rgb(var(--gold)/0.2)] flex items-center justify-center mb-4 animate-pulse">
             <BrandMark className="w-8 h-8 object-contain" />
           </div>
-          <p className="text-xs tracking-[0.2em] uppercase text-[#94A3B8]">Loading...</p>
+          <p className="text-xs tracking-[0.2em] uppercase text-[rgb(var(--text-muted))]">Loading...</p>
         </div>
       </div>
     );

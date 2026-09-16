@@ -4,16 +4,74 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Theme tokens as RGB triplets so Tailwind opacity works: rgb(var(--gold)/0.1).
+   :root is the canonical midnight/gold theme — values identical to the hexes
+   they replaced, so dark mode renders exactly as it always has. */
 :root {
-  --bg-primary: #050814;
-  --bg-secondary: #0A1128;
-  --bg-card: #0F172A;
-  --gold: #D4AF37;
-  --gold-hover: #F3E5AB;
-  --text-main: #F8FAFC;
-  --text-muted: #94A3B8;
-  --border: #1E293B;
-  --border-highlight: rgba(212, 175, 55, 0.3);
+  color-scheme: dark;
+  --ink-deep: 5 8 20;            /* #050814 page ground */
+  --ink-secondary: 10 17 40;     /* #0A1128 */
+  --ink-card: 15 23 42;          /* #0F172A cards, panels */
+  --ink-card-alt: 15 22 41;      /* #0F1629 */
+  --ink-border: 30 41 59;        /* #1E293B */
+  --ink-border-strong: 51 65 85; /* #334155 */
+  --gold: 212 175 55;            /* #D4AF37 */
+  --gold-soft: 243 229 171;      /* #F3E5AB pale gold / gold hover */
+  --text-main: 248 250 252;      /* #F8FAFC */
+  --text-soft: 226 232 240;      /* #E2E8F0 */
+  --text-softer: 203 213 225;    /* #CBD5E1 */
+  --text-muted: 148 163 184;     /* #94A3B8 */
+  --text-dim: 100 116 139;       /* #64748B */
+  --text-faint: 71 85 105;       /* #475569 */
+
+  /* Legacy full-color aliases (older styles reference these directly). */
+  --bg-primary: rgb(var(--ink-deep));
+  --bg-secondary: rgb(var(--ink-secondary));
+  --bg-card: rgb(var(--ink-card));
+  --gold-hover: rgb(var(--gold-soft));
+  --border: rgb(var(--ink-border));
+  --border-highlight: rgb(var(--gold) / 0.3);
+}
+
+/* Daylight theme — warm parchment ground, midnight ink, antique gold.
+   Opt-in via the sidebar toggle; the gold deepens so text and accents
+   keep AA contrast on the light ground. */
+/* Marketing pages are art-directed around dark photography; they keep the
+   midnight palette even when the app is in daylight mode. */
+.theme-midnight {
+  color-scheme: dark;
+  --ink-deep: 5 8 20;
+  --ink-secondary: 10 17 40;
+  --ink-card: 15 23 42;
+  --ink-card-alt: 15 22 41;
+  --ink-border: 30 41 59;
+  --ink-border-strong: 51 65 85;
+  --gold: 212 175 55;
+  --gold-soft: 243 229 171;
+  --text-main: 248 250 252;
+  --text-soft: 226 232 240;
+  --text-softer: 203 213 225;
+  --text-muted: 148 163 184;
+  --text-dim: 100 116 139;
+  --text-faint: 71 85 105;
+}
+
+[data-theme="light"] {
+  color-scheme: light;
+  --ink-deep: 250 246 236;       /* warm ivory page ground */
+  --ink-secondary: 244 238 223;
+  --ink-card: 255 255 255;
+  --ink-card-alt: 253 250 242;
+  --ink-border: 229 222 200;
+  --ink-border-strong: 209 200 172;
+  --gold: 161 126 28;            /* antique gold, readable on ivory */
+  --gold-soft: 143 111 20;
+  --text-main: 19 28 49;         /* midnight ink */
+  --text-soft: 42 52 71;
+  --text-softer: 61 72 94;
+  --text-muted: 91 100 120;
+  --text-dim: 115 124 144;
+  --text-faint: 142 150 168;
 }
 
 * {
@@ -24,8 +82,8 @@
 
 body {
   font-family: 'Outfit', sans-serif;
-  background-color: var(--bg-primary);
-  color: var(--text-main);
+  background-color: rgb(var(--ink-deep));
+  color: rgb(var(--text-main));
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -39,14 +97,14 @@ h1, h2, h3, h4, h5, h6 {
   width: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: var(--bg-primary);
+  background: rgb(var(--ink-deep));
 }
 ::-webkit-scrollbar-thumb {
-  background: var(--border);
+  background: rgb(var(--ink-border));
   border-radius: 3px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--gold);
+  background: rgb(var(--gold));
 }
 
 /* Animations */

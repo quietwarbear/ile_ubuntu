@@ -54,37 +54,37 @@ export default function JoinCoursePage({ user }) {
   };
 
   return (
-    <div className={user ? 'max-w-lg mx-auto py-10' : 'min-h-screen flex items-center justify-center bg-[#050814] px-8'}>
+    <div className={user ? 'max-w-lg mx-auto py-10' : 'min-h-screen flex items-center justify-center bg-[rgb(var(--ink-deep))] px-8'}>
       <div className="w-full max-w-lg space-y-6 text-center">
         {!user && (
-          <div className="w-16 h-16 mx-auto rounded-lg bg-[#D4AF37]/10 border border-[#D4AF37]/20 flex items-center justify-center">
+          <div className="w-16 h-16 mx-auto rounded-lg bg-[rgb(var(--gold)/0.1)] border border-[rgb(var(--gold)/0.2)] flex items-center justify-center">
             <BrandMark className="w-10 h-10 object-contain" />
           </div>
         )}
-        <p className="text-xs tracking-[0.25em] uppercase text-[#D4AF37]">You're invited</p>
+        <p className="text-xs tracking-[0.25em] uppercase text-[rgb(var(--gold))]">You're invited</p>
 
         {error ? (
           <p className="text-sm text-red-400 bg-red-400/10 rounded-md px-4 py-3">{error}</p>
         ) : !invite ? (
-          <p className="text-sm text-[#94A3B8]">Loading invite…</p>
+          <p className="text-sm text-[rgb(var(--text-muted))]">Loading invite…</p>
         ) : (
           <>
-            <h1 className="text-3xl font-light text-[#F8FAFC]" style={{ fontFamily: 'Cormorant Garamond, serif' }}>
+            <h1 className="text-3xl font-light text-[rgb(var(--text-main))]" style={{ fontFamily: 'Cormorant Garamond, serif' }}>
               {invite.title}
             </h1>
-            <p className="text-sm text-[#94A3B8]">
-              {invite.instructor_name && <>Taught by <span className="text-[#F8FAFC]">{invite.instructor_name}</span>. </>}
+            <p className="text-sm text-[rgb(var(--text-muted))]">
+              {invite.instructor_name && <>Taught by <span className="text-[rgb(var(--text-main))]">{invite.instructor_name}</span>. </>}
               {invite.description}
             </p>
             {invite.is_premium && (
-              <p className="text-sm text-[#D4AF37]">
+              <p className="text-sm text-[rgb(var(--gold))]">
                 Premium course — ${invite.premium_price} one-time, lifetime access.
               </p>
             )}
             <Button
               onClick={handleJoin}
               disabled={joining}
-              className="w-full bg-[#D4AF37] text-[#050814] hover:bg-[#F3E5AB] font-medium py-3"
+              className="w-full bg-[rgb(var(--gold))] text-[rgb(var(--ink-deep))] hover:bg-[rgb(var(--gold-soft))] font-medium py-3"
               data-testid="join-course-btn"
             >
               {user ? (
@@ -95,7 +95,7 @@ export default function JoinCoursePage({ user }) {
               )}
             </Button>
             {!user && (
-              <p className="text-xs text-[#94A3B8]">
+              <p className="text-xs text-[rgb(var(--text-muted))]">
                 New here? Signing in will bring you right back to this invitation.
               </p>
             )}

@@ -105,7 +105,7 @@ export function LessonCard({
 
   return (
     <Card
-      className={`bg-[#0F172A] border-[#1E293B] transition-all ${
+      className={`bg-[rgb(var(--ink-card))] border-[rgb(var(--ink-border))] transition-all ${
         isLessonCompleted ? 'border-l-2 border-l-emerald-500' : ''
       }`}
       data-testid={`lesson-card-${lesson.id}`}
@@ -119,7 +119,7 @@ export function LessonCard({
               ) : (
                 <button
                   onClick={() => onComplete(lesson.id)}
-                  className="text-[#94A3B8] hover:text-[#D4AF37] transition-colors"
+                  className="text-[rgb(var(--text-muted))] hover:text-[rgb(var(--gold))] transition-colors"
                   data-testid={`complete-lesson-${lesson.id}`}
                   title="Mark as complete"
                 >
@@ -127,24 +127,24 @@ export function LessonCard({
                 </button>
               )
             ) : (
-              <div className="w-6 h-6 rounded-full bg-[#050814] border border-[#1E293B] flex items-center justify-center">
-                <span className="text-[10px] text-[#94A3B8]">{idx + 1}</span>
+              <div className="w-6 h-6 rounded-full bg-[rgb(var(--ink-deep))] border border-[rgb(var(--ink-border))] flex items-center justify-center">
+                <span className="text-[10px] text-[rgb(var(--text-muted))]">{idx + 1}</span>
               </div>
             )}
           </div>
 
           <div className="flex-1 min-w-0 cursor-pointer" onClick={() => onToggleExpand(lesson.id)}>
             <div className="flex items-center gap-2">
-              <h3 className={`text-sm font-medium ${isLessonCompleted ? 'text-emerald-400' : 'text-[#F8FAFC]'}`}>
+              <h3 className={`text-sm font-medium ${isLessonCompleted ? 'text-emerald-400' : 'text-[rgb(var(--text-main))]'}`}>
                 {lesson.title}
               </h3>
               {lesson.hidden ? (
-                <span className="rounded-full bg-[#334155] px-2 py-0.5 text-[10px] font-medium text-[#CBD5E1]"
+                <span className="rounded-full bg-[rgb(var(--ink-border-strong))] px-2 py-0.5 text-[10px] font-medium text-[rgb(var(--text-softer))]"
                   data-testid={`lesson-hidden-${lesson.id}`}>
                   Hidden
                 </span>
               ) : lesson.locked && lesson.available_at ? (
-                <span className="rounded-full bg-[#D4AF37]/15 px-2 py-0.5 text-[10px] font-medium text-[#D4AF37]"
+                <span className="rounded-full bg-[rgb(var(--gold)/0.15)] px-2 py-0.5 text-[10px] font-medium text-[rgb(var(--gold))]"
                   data-testid={`lesson-scheduled-${lesson.id}`}>
                   Opens {new Date(lesson.available_at).toLocaleString(undefined, {
                     month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit',
@@ -152,13 +152,13 @@ export function LessonCard({
                 </span>
               ) : null}
               {lessonFiles.length > 0 && (
-                <span className="flex items-center gap-0.5 text-[10px] text-[#94A3B8]">
+                <span className="flex items-center gap-0.5 text-[10px] text-[rgb(var(--text-muted))]">
                   <Paperclip size={10} /> {lessonFiles.length}
                 </span>
               )}
             </div>
             {lesson.description && (
-              <p className="text-xs text-[#94A3B8] mt-0.5 truncate">{lesson.description}</p>
+              <p className="text-xs text-[rgb(var(--text-muted))] mt-0.5 truncate">{lesson.description}</p>
             )}
           </div>
 
@@ -168,7 +168,7 @@ export function LessonCard({
             )}
             <button
               onClick={() => onToggleExpand(lesson.id)}
-              className="text-[#94A3B8] hover:text-[#F8FAFC] p-1"
+              className="text-[rgb(var(--text-muted))] hover:text-[rgb(var(--text-main))] p-1"
               data-testid={`expand-lesson-${lesson.id}`}
             >
               {isExpanded ? <CaretUp size={16} /> : <CaretDown size={16} />}
@@ -177,13 +177,13 @@ export function LessonCard({
         </div>
 
         {isExpanded && (
-          <div className="mt-4 pt-4 border-t border-[#1E293B] space-y-4">
+          <div className="mt-4 pt-4 border-t border-[rgb(var(--ink-border))] space-y-4">
             {isInstructor && !editing && (
               <div className="flex justify-end gap-1">
                 <Button
                   size="sm" variant="ghost"
                   onClick={startEdit}
-                  className="text-[#D4AF37] hover:text-[#F3E5AB] text-[10px] h-7"
+                  className="text-[rgb(var(--gold))] hover:text-[rgb(var(--gold-soft))] text-[10px] h-7"
                   data-testid={`edit-lesson-${lesson.id}`}
                 >
                   <PencilSimple size={12} className="mr-1" /> Edit lesson
@@ -201,52 +201,52 @@ export function LessonCard({
             )}
 
             {editing ? (
-              <div className="p-3 bg-[#050814] rounded-md border border-[#D4AF37]/30 space-y-3" data-testid={`edit-lesson-form-${lesson.id}`}>
+              <div className="p-3 bg-[rgb(var(--ink-deep))] rounded-md border border-[rgb(var(--gold)/0.3)] space-y-3" data-testid={`edit-lesson-form-${lesson.id}`}>
                 <div>
-                  <span className="text-[10px] tracking-[0.15em] uppercase text-[#D4AF37]">Lesson title</span>
+                  <span className="text-[10px] tracking-[0.15em] uppercase text-[rgb(var(--gold))]">Lesson title</span>
                   <Input
                     value={editForm.title}
                     onChange={e => setEditForm({ ...editForm, title: e.target.value })}
-                    className="mt-1 bg-[#0F172A] border-[#1E293B] text-[#F8FAFC] text-sm"
+                    className="mt-1 bg-[rgb(var(--ink-card))] border-[rgb(var(--ink-border))] text-[rgb(var(--text-main))] text-sm"
                     data-testid={`edit-lesson-title-${lesson.id}`}
                   />
                 </div>
                 <div>
-                  <span className="text-[10px] tracking-[0.15em] uppercase text-[#D4AF37]">Short description</span>
+                  <span className="text-[10px] tracking-[0.15em] uppercase text-[rgb(var(--gold))]">Short description</span>
                   <Input
                     value={editForm.description}
                     onChange={e => setEditForm({ ...editForm, description: e.target.value })}
-                    className="mt-1 bg-[#0F172A] border-[#1E293B] text-[#F8FAFC] text-sm"
+                    className="mt-1 bg-[rgb(var(--ink-card))] border-[rgb(var(--ink-border))] text-[rgb(var(--text-main))] text-sm"
                     data-testid={`edit-lesson-desc-${lesson.id}`}
                   />
                 </div>
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
                   <div className="flex-1">
-                    <span className="text-[10px] tracking-[0.15em] uppercase text-[#D4AF37]">Opens at (optional)</span>
+                    <span className="text-[10px] tracking-[0.15em] uppercase text-[rgb(var(--gold))]">Opens at (optional)</span>
                     <Input
                       type="datetime-local"
                       value={editForm.available_at}
                       onChange={e => setEditForm({ ...editForm, available_at: e.target.value })}
-                      className="mt-1 bg-[#0F172A] border-[#1E293B] text-[#F8FAFC] text-sm"
+                      className="mt-1 bg-[rgb(var(--ink-card))] border-[rgb(var(--ink-border))] text-[rgb(var(--text-main))] text-sm"
                       data-testid={`edit-lesson-available-${lesson.id}`}
                     />
-                    <p className="mt-1 text-[10px] text-[#475569]">
+                    <p className="mt-1 text-[10px] text-[rgb(var(--text-faint))]">
                       Students see the lesson as locked until this time. Leave blank to open it immediately.
                     </p>
                   </div>
-                  <label className="flex items-center gap-2 pb-5 text-xs text-[#94A3B8] cursor-pointer">
+                  <label className="flex items-center gap-2 pb-5 text-xs text-[rgb(var(--text-muted))] cursor-pointer">
                     <input
                       type="checkbox"
                       checked={editForm.hidden}
                       onChange={e => setEditForm({ ...editForm, hidden: e.target.checked })}
-                      className="accent-[#D4AF37]"
+                      className="accent-[rgb(var(--gold))]"
                       data-testid={`edit-lesson-hidden-${lesson.id}`}
                     />
                     Hidden from students
                   </label>
                 </div>
                 <div>
-                  <span className="text-[10px] tracking-[0.15em] uppercase text-[#D4AF37]">Lesson text</span>
+                  <span className="text-[10px] tracking-[0.15em] uppercase text-[rgb(var(--gold))]">Lesson text</span>
                   <div className="mt-1">
                     <WysiwygEditor
                       value={editForm.content}
@@ -259,14 +259,14 @@ export function LessonCard({
                 <div className="flex gap-2">
                   <Button
                     size="sm" onClick={saveEdit} disabled={saving}
-                    className="bg-[#D4AF37] text-[#050814] hover:bg-[#F3E5AB] text-xs"
+                    className="bg-[rgb(var(--gold))] text-[rgb(var(--ink-deep))] hover:bg-[rgb(var(--gold-soft))] text-xs"
                     data-testid={`save-lesson-${lesson.id}`}
                   >
                     {saving ? 'Saving…' : 'Save changes'}
                   </Button>
                   <Button
                     size="sm" variant="ghost" onClick={() => setEditing(false)} disabled={saving}
-                    className="text-[#94A3B8] text-xs"
+                    className="text-[rgb(var(--text-muted))] text-xs"
                     data-testid={`cancel-edit-lesson-${lesson.id}`}
                   >
                     Cancel
@@ -275,7 +275,7 @@ export function LessonCard({
               </div>
             ) : (
               lesson.content && (
-                <div className="p-3 bg-[#050814] rounded-md border border-[#1E293B]">
+                <div className="p-3 bg-[rgb(var(--ink-deep))] rounded-md border border-[rgb(var(--ink-border))]">
                   <LessonContentViewer content={lesson.content} />
                 </div>
               )
@@ -283,7 +283,7 @@ export function LessonCard({
 
             <div>
               <div className="flex items-center justify-between mb-2">
-                <span className="text-[10px] tracking-[0.15em] uppercase text-[#D4AF37] flex items-center gap-1">
+                <span className="text-[10px] tracking-[0.15em] uppercase text-[rgb(var(--gold))] flex items-center gap-1">
                   <Paperclip size={12} /> Materials ({lessonFiles.length})
                 </span>
                 {isInstructor && (
@@ -291,13 +291,13 @@ export function LessonCard({
                     <Button
                       size="sm" variant="ghost"
                       onClick={() => onUploadClick(lesson.id)}
-                      className="text-[#D4AF37] hover:text-[#F3E5AB] text-[10px] h-7"
+                      className="text-[rgb(var(--gold))] hover:text-[rgb(var(--gold-soft))] text-[10px] h-7"
                       disabled={uploading}
                       data-testid={`upload-file-${lesson.id}`}
                     >
                       {uploading && uploadingFor === lesson.id ? (
                         <span className="flex items-center gap-1">
-                          <span className="w-3 h-3 border border-[#D4AF37] border-t-transparent rounded-full animate-spin" />
+                          <span className="w-3 h-3 border border-[rgb(var(--gold))] border-t-transparent rounded-full animate-spin" />
                           Uploading...
                         </span>
                       ) : (
@@ -308,7 +308,7 @@ export function LessonCard({
                       <Button
                         size="sm" variant="ghost"
                         onClick={() => onOpenImport(lesson.id)}
-                        className="text-[#94A3B8] hover:text-[#F3E5AB] text-[10px] h-7"
+                        className="text-[rgb(var(--text-muted))] hover:text-[rgb(var(--gold-soft))] text-[10px] h-7"
                         data-testid={`import-google-${lesson.id}`}
                       >
                         <GoogleLogo size={12} className="mr-1" /> Import
@@ -327,18 +327,18 @@ export function LessonCard({
                     return (
                       <div key={file.id} data-testid={`file-${file.id}`}>
                         <div
-                          className="flex items-center gap-3 p-2.5 bg-[#050814] border border-[#1E293B] rounded-md hover:border-[#D4AF37]/20 transition-colors group"
+                          className="flex items-center gap-3 p-2.5 bg-[rgb(var(--ink-deep))] border border-[rgb(var(--ink-border))] rounded-md hover:border-[rgb(var(--gold)/0.2)] transition-colors group"
                         >
-                          <Icon size={18} weight="duotone" className="text-[#D4AF37] flex-shrink-0" />
+                          <Icon size={18} weight="duotone" className="text-[rgb(var(--gold))] flex-shrink-0" />
                           <div className="flex-1 min-w-0">
-                            <p className="text-xs text-[#F8FAFC] truncate">{file.original_filename}</p>
-                            <p className="text-[10px] text-[#94A3B8]">{formatFileSize(file.file_size)}</p>
+                            <p className="text-xs text-[rgb(var(--text-main))] truncate">{file.original_filename}</p>
+                            <p className="text-[10px] text-[rgb(var(--text-muted))]">{formatFileSize(file.file_size)}</p>
                           </div>
                           <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                             {isPdf && (
                               <button
                                 onClick={() => setViewingPdf(isPdfOpen ? null : file.id)}
-                                className={`p-1 transition-colors ${isPdfOpen ? 'text-[#D4AF37]' : 'text-[#94A3B8] hover:text-[#D4AF37]'}`}
+                                className={`p-1 transition-colors ${isPdfOpen ? 'text-[rgb(var(--gold))]' : 'text-[rgb(var(--text-muted))] hover:text-[rgb(var(--gold))]'}`}
                                 title={isPdfOpen ? 'Close PDF' : 'View PDF'}
                               >
                                 {isPdfOpen ? <X size={14} /> : <Eye size={14} />}
@@ -347,7 +347,7 @@ export function LessonCard({
                             <a
                               href={`${BACKEND_URL}/api/files/${file.id}/download`}
                               target="_blank" rel="noopener noreferrer"
-                              className="p-1 text-[#94A3B8] hover:text-[#D4AF37] transition-colors"
+                              className="p-1 text-[rgb(var(--text-muted))] hover:text-[rgb(var(--gold))] transition-colors"
                               title="Download"
                               data-testid={`download-file-${file.id}`}
                               onClick={e => e.stopPropagation()}
@@ -357,7 +357,7 @@ export function LessonCard({
                             {isInstructor && (
                               <button
                                 onClick={() => onDeleteFile(file.id)}
-                                className="p-1 text-[#94A3B8] hover:text-red-400 transition-colors"
+                                className="p-1 text-[rgb(var(--text-muted))] hover:text-red-400 transition-colors"
                                 title="Delete"
                                 data-testid={`delete-file-${file.id}`}
                               >
@@ -367,7 +367,7 @@ export function LessonCard({
                           </div>
                         </div>
                         {isPdf && isPdfOpen && (
-                          <div className="mt-1 rounded-md overflow-hidden border border-[#1E293B]">
+                          <div className="mt-1 rounded-md overflow-hidden border border-[rgb(var(--ink-border))]">
                             <iframe
                               src={`${BACKEND_URL}/api/files/${file.id}/download`}
                               className="w-full h-[600px] bg-white"
@@ -380,7 +380,7 @@ export function LessonCard({
                   })}
                 </div>
               ) : (
-                <p className="text-[10px] text-[#94A3B8]">
+                <p className="text-[10px] text-[rgb(var(--text-muted))]">
                   {isInstructor ? 'No files attached. Click "Attach File" to add materials.' : 'No materials attached to this lesson.'}
                 </p>
               )}
@@ -388,7 +388,7 @@ export function LessonCard({
 
             {lesson.google_resources?.length > 0 && (
               <div>
-                <span className="text-[10px] tracking-[0.15em] uppercase text-[#D4AF37] flex items-center gap-1 mb-2">
+                <span className="text-[10px] tracking-[0.15em] uppercase text-[rgb(var(--gold))] flex items-center gap-1 mb-2">
                   <GoogleLogo size={12} /> Imported from Google
                 </span>
                 <div className="space-y-1.5">
@@ -397,21 +397,21 @@ export function LessonCard({
                       key={res.google_id || res.view_url}
                       href={res.view_url || res.embed_url}
                       target="_blank" rel="noopener noreferrer"
-                      className="flex items-center gap-3 p-2.5 bg-[#050814] border border-[#1E293B] rounded-md hover:border-[#D4AF37]/20 transition-colors group"
+                      className="flex items-center gap-3 p-2.5 bg-[rgb(var(--ink-deep))] border border-[rgb(var(--ink-border))] rounded-md hover:border-[rgb(var(--gold)/0.2)] transition-colors group"
                       data-testid={`google-resource-${res.google_id}`}
                     >
                       {res.type === 'google_slide' ? (
-                        <Presentation size={18} weight="duotone" className="text-[#D4AF37] flex-shrink-0" />
+                        <Presentation size={18} weight="duotone" className="text-[rgb(var(--gold))] flex-shrink-0" />
                       ) : (
-                        <Article size={18} weight="duotone" className="text-[#D4AF37] flex-shrink-0" />
+                        <Article size={18} weight="duotone" className="text-[rgb(var(--gold))] flex-shrink-0" />
                       )}
                       <div className="flex-1 min-w-0">
-                        <p className="text-xs text-[#F8FAFC] truncate">{res.title}</p>
-                        <p className="text-[10px] text-[#94A3B8]">
+                        <p className="text-xs text-[rgb(var(--text-main))] truncate">{res.title}</p>
+                        <p className="text-[10px] text-[rgb(var(--text-muted))]">
                           {res.type === 'google_slide' ? `${res.slide_count} slides` : 'Google Doc'}
                         </p>
                       </div>
-                      <ArrowSquareOut size={14} className="text-[#94A3B8] opacity-0 group-hover:opacity-100 transition-opacity" />
+                      <ArrowSquareOut size={14} className="text-[rgb(var(--text-muted))] opacity-0 group-hover:opacity-100 transition-opacity" />
                     </a>
                   ))}
                 </div>

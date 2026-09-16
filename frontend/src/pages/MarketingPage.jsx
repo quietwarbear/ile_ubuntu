@@ -10,13 +10,13 @@ import { useNavigate } from 'react-router-dom';
 import BrandMark from '../components/brand/BrandMark';
 
 const BRAND = {
-  primary: '#D4AF37',
-  dark: '#050814',
-  navy: '#0A1128',
-  card: '#0F172A',
-  light: '#F8FAFC',
-  muted: '#94A3B8',
-  border: '#1E293B',
+  primary: 'rgb(var(--gold))',
+  dark: 'rgb(var(--ink-deep))',
+  navy: 'rgb(var(--ink-secondary))',
+  card: 'rgb(var(--ink-card))',
+  light: 'rgb(var(--text-main))',
+  muted: 'rgb(var(--text-muted))',
+  border: 'rgb(var(--ink-border))',
 };
 
 const ALL_FEATURES = [
@@ -187,17 +187,17 @@ export default function MarketingPage() {
       {/* Header */}
       <div className="flex items-center justify-between print:hidden">
         <div>
-          <button onClick={() => navigate('/dashboard')} className="text-xs text-[#94A3B8] hover:text-[#D4AF37] flex items-center gap-1 mb-2">
+          <button onClick={() => navigate('/dashboard')} className="text-xs text-[rgb(var(--text-muted))] hover:text-[rgb(var(--gold))] flex items-center gap-1 mb-2">
             <ArrowLeft size={12} /> Back to Dashboard
           </button>
-          <h1 className="text-3xl font-light text-[#F8FAFC]" style={{ fontFamily: 'Cormorant Garamond, serif' }}>
+          <h1 className="text-3xl font-light text-[rgb(var(--text-main))]" style={{ fontFamily: 'Cormorant Garamond, serif' }}>
             Marketing & Branding
           </h1>
-          <p className="text-sm text-[#94A3B8]">Strategy, copy, and feature summary for The Ile Ubuntu</p>
+          <p className="text-sm text-[rgb(var(--text-muted))]">Strategy, copy, and feature summary for The Ile Ubuntu</p>
         </div>
         <button
           onClick={handlePrint}
-          className="px-4 py-2 bg-[#D4AF37]/10 border border-[#D4AF37]/30 text-[#D4AF37] rounded-md text-xs hover:bg-[#D4AF37]/20 transition-all flex items-center gap-2"
+          className="px-4 py-2 bg-[rgb(var(--gold)/0.1)] border border-[rgb(var(--gold)/0.3)] text-[rgb(var(--gold))] rounded-md text-xs hover:bg-[rgb(var(--gold)/0.2)] transition-all flex items-center gap-2"
           data-testid="print-marketing-btn"
         >
           <DownloadSimple size={14} /> Print / Save PDF
@@ -207,46 +207,46 @@ export default function MarketingPage() {
       {/* ==================== ONE-PAGER ==================== */}
       <div data-testid="one-pager-section">
         <div className="flex items-center gap-2 mb-4">
-          <Rocket size={16} weight="duotone" className="text-[#D4AF37]" />
-          <h2 className="text-xs tracking-[0.15em] uppercase text-[#D4AF37]">Platform One-Pager</h2>
+          <Rocket size={16} weight="duotone" className="text-[rgb(var(--gold))]" />
+          <h2 className="text-xs tracking-[0.15em] uppercase text-[rgb(var(--gold))]">Platform One-Pager</h2>
         </div>
 
         {/* Brand Identity */}
-        <Card className="bg-[#0F172A] border-[#1E293B] mb-4">
+        <Card className="bg-[rgb(var(--ink-card))] border-[rgb(var(--ink-border))] mb-4">
           <CardContent className="p-5">
             <div className="flex items-center gap-4 mb-4">
-              <div className="w-14 h-14 rounded-full bg-[#D4AF37]/10 border border-[#D4AF37]/30 flex items-center justify-center flex-shrink-0">
+              <div className="w-14 h-14 rounded-full bg-[rgb(var(--gold)/0.1)] border border-[rgb(var(--gold)/0.3)] flex items-center justify-center flex-shrink-0">
                 <BrandMark className="w-10 h-10 object-contain" />
               </div>
               <div>
-                <h3 className="text-lg text-[#F8FAFC]" style={{ fontFamily: 'Cormorant Garamond, serif' }}>The Ile Ubuntu</h3>
-                <p className="text-xs text-[#D4AF37]">A Living Learning Commons</p>
-                <p className="text-[10px] text-[#94A3B8] mt-1">
+                <h3 className="text-lg text-[rgb(var(--text-main))]" style={{ fontFamily: 'Cormorant Garamond, serif' }}>The Ile Ubuntu</h3>
+                <p className="text-xs text-[rgb(var(--gold))]">A Living Learning Commons</p>
+                <p className="text-[10px] text-[rgb(var(--text-muted))] mt-1">
                   "I am because we are" — a platform where elders preserve wisdom, faculty shape minds, and students carry it forward.
                 </p>
               </div>
             </div>
             <div className="grid grid-cols-3 gap-3 text-center">
-              <div className="p-2 rounded bg-[#050814] border border-[#1E293B]">
+              <div className="p-2 rounded bg-[rgb(var(--ink-deep))] border border-[rgb(var(--ink-border))]">
                 <div className="w-6 h-6 rounded mx-auto mb-1" style={{ background: BRAND.primary }} />
-                <p className="text-[9px] text-[#94A3B8]">Gold {BRAND.primary}</p>
+                <p className="text-[9px] text-[rgb(var(--text-muted))]">Gold {BRAND.primary}</p>
               </div>
-              <div className="p-2 rounded bg-[#050814] border border-[#1E293B]">
+              <div className="p-2 rounded bg-[rgb(var(--ink-deep))] border border-[rgb(var(--ink-border))]">
                 <div className="w-6 h-6 rounded mx-auto mb-1" style={{ background: BRAND.navy }} />
-                <p className="text-[9px] text-[#94A3B8]">Navy {BRAND.navy}</p>
+                <p className="text-[9px] text-[rgb(var(--text-muted))]">Navy {BRAND.navy}</p>
               </div>
-              <div className="p-2 rounded bg-[#050814] border border-[#1E293B]">
+              <div className="p-2 rounded bg-[rgb(var(--ink-deep))] border border-[rgb(var(--ink-border))]">
                 <div className="w-6 h-6 rounded mx-auto mb-1" style={{ background: BRAND.dark }} />
-                <p className="text-[9px] text-[#94A3B8]">Dark {BRAND.dark}</p>
+                <p className="text-[9px] text-[rgb(var(--text-muted))]">Dark {BRAND.dark}</p>
               </div>
             </div>
           </CardContent>
         </Card>
 
         {/* All Features List */}
-        <Card className="bg-[#0F172A] border-[#1E293B] mb-4">
+        <Card className="bg-[rgb(var(--ink-card))] border-[rgb(var(--ink-border))] mb-4">
           <CardHeader className="pb-2">
-            <CardTitle className="text-base text-[#F8FAFC]" style={{ fontFamily: 'Cormorant Garamond, serif' }}>
+            <CardTitle className="text-base text-[rgb(var(--text-main))]" style={{ fontFamily: 'Cormorant Garamond, serif' }}>
               16 Platform Features
             </CardTitle>
           </CardHeader>
@@ -255,11 +255,11 @@ export default function MarketingPage() {
               {ALL_FEATURES.map((f) => {
                 const Icon = f.icon;
                 return (
-                  <div key={f.name} className="flex items-start gap-2 p-2 rounded bg-[#050814] border border-[#1E293B]" data-testid={`onepager-feature-${f.name.toLowerCase().replace(/\s+/g, '-')}`}>
-                    <Icon size={14} weight="duotone" className="text-[#D4AF37] mt-0.5 flex-shrink-0" />
+                  <div key={f.name} className="flex items-start gap-2 p-2 rounded bg-[rgb(var(--ink-deep))] border border-[rgb(var(--ink-border))]" data-testid={`onepager-feature-${f.name.toLowerCase().replace(/\s+/g, '-')}`}>
+                    <Icon size={14} weight="duotone" className="text-[rgb(var(--gold))] mt-0.5 flex-shrink-0" />
                     <div className="min-w-0">
-                      <p className="text-[11px] text-[#F8FAFC] font-medium">{f.name}</p>
-                      <p className="text-[9px] text-[#94A3B8] leading-relaxed">{f.detail}</p>
+                      <p className="text-[11px] text-[rgb(var(--text-main))] font-medium">{f.name}</p>
+                      <p className="text-[9px] text-[rgb(var(--text-muted))] leading-relaxed">{f.detail}</p>
                     </div>
                   </div>
                 );
@@ -276,19 +276,19 @@ export default function MarketingPage() {
             { label: 'Tiers', value: '3' },
             { label: 'Languages', value: '3' },
           ].map((s) => (
-            <Card key={s.label} className="bg-[#0F172A] border-[#1E293B]">
+            <Card key={s.label} className="bg-[rgb(var(--ink-card))] border-[rgb(var(--ink-border))]">
               <CardContent className="p-3 text-center">
-                <p className="text-xl font-bold text-[#D4AF37]">{s.value}</p>
-                <p className="text-[9px] text-[#94A3B8] uppercase tracking-wider">{s.label}</p>
+                <p className="text-xl font-bold text-[rgb(var(--gold))]">{s.value}</p>
+                <p className="text-[9px] text-[rgb(var(--text-muted))] uppercase tracking-wider">{s.label}</p>
               </CardContent>
             </Card>
           ))}
         </div>
 
         {/* Membership Tiers Summary */}
-        <Card className="bg-[#0F172A] border-[#1E293B] mb-4">
+        <Card className="bg-[rgb(var(--ink-card))] border-[rgb(var(--ink-border))] mb-4">
           <CardHeader className="pb-2">
-            <CardTitle className="text-base text-[#F8FAFC]" style={{ fontFamily: 'Cormorant Garamond, serif' }}>
+            <CardTitle className="text-base text-[rgb(var(--text-main))]" style={{ fontFamily: 'Cormorant Garamond, serif' }}>
               Membership Tiers
             </CardTitle>
           </CardHeader>
@@ -299,13 +299,13 @@ export default function MarketingPage() {
                 { name: 'Scholar', price: '$19.99/mo', highlights: ['Unlimited courses', 'Cohorts', 'Knowledge spaces'] },
                 { name: 'Elder Circle', price: '$49.99/mo', highlights: ['Live teaching', 'Protected archives', 'Governance'] },
               ].map((t) => (
-                <div key={t.name} className="p-3 rounded bg-[#050814] border border-[#1E293B] text-center">
-                  <p className="text-sm text-[#D4AF37] font-medium">{t.name}</p>
-                  <p className="text-base font-bold text-[#F8FAFC]">{t.price}</p>
+                <div key={t.name} className="p-3 rounded bg-[rgb(var(--ink-deep))] border border-[rgb(var(--ink-border))] text-center">
+                  <p className="text-sm text-[rgb(var(--gold))] font-medium">{t.name}</p>
+                  <p className="text-base font-bold text-[rgb(var(--text-main))]">{t.price}</p>
                   <div className="mt-2 space-y-1">
                     {t.highlights.map((h, i) => (
-                      <p key={i} className="text-[9px] text-[#94A3B8] flex items-center gap-1 justify-center">
-                        <Check size={8} className="text-[#D4AF37]" /> {h}
+                      <p key={i} className="text-[9px] text-[rgb(var(--text-muted))] flex items-center gap-1 justify-center">
+                        <Check size={8} className="text-[rgb(var(--gold))]" /> {h}
                       </p>
                     ))}
                   </div>
@@ -316,16 +316,16 @@ export default function MarketingPage() {
         </Card>
 
         {/* Tech Stack */}
-        <Card className="bg-[#0F172A] border-[#1E293B]">
+        <Card className="bg-[rgb(var(--ink-card))] border-[rgb(var(--ink-border))]">
           <CardHeader className="pb-2">
-            <CardTitle className="text-base text-[#F8FAFC]" style={{ fontFamily: 'Cormorant Garamond, serif' }}>
+            <CardTitle className="text-base text-[rgb(var(--text-main))]" style={{ fontFamily: 'Cormorant Garamond, serif' }}>
               Technology Stack
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex flex-wrap gap-2">
               {['React', 'FastAPI', 'MongoDB', 'Tailwind CSS', 'Jitsi Meet', 'Stripe', 'Resend', 'Google APIs', 'PWA', 'Service Workers', 'i18n'].map(tech => (
-                <span key={tech} className="px-3 py-1 text-[10px] bg-[#050814] border border-[#1E293B] rounded-full text-[#94A3B8]">{tech}</span>
+                <span key={tech} className="px-3 py-1 text-[10px] bg-[rgb(var(--ink-deep))] border border-[rgb(var(--ink-border))] rounded-full text-[rgb(var(--text-muted))]">{tech}</span>
               ))}
             </div>
           </CardContent>
@@ -335,33 +335,33 @@ export default function MarketingPage() {
       {/* ==================== SOCIAL MEDIA STRATEGY ==================== */}
       <div data-testid="social-strategy-section">
         <div className="flex items-center gap-2 mb-4">
-          <Lightning size={16} weight="duotone" className="text-[#D4AF37]" />
-          <h2 className="text-xs tracking-[0.15em] uppercase text-[#D4AF37]">Social Media Branding Strategy</h2>
+          <Lightning size={16} weight="duotone" className="text-[rgb(var(--gold))]" />
+          <h2 className="text-xs tracking-[0.15em] uppercase text-[rgb(var(--gold))]">Social Media Branding Strategy</h2>
         </div>
 
         {/* Brand Voice */}
-        <Card className="bg-[#0F172A] border-[#1E293B] mb-4">
+        <Card className="bg-[rgb(var(--ink-card))] border-[rgb(var(--ink-border))] mb-4">
           <CardHeader className="pb-2">
-            <CardTitle className="text-base text-[#F8FAFC]" style={{ fontFamily: 'Cormorant Garamond, serif' }}>
+            <CardTitle className="text-base text-[rgb(var(--text-main))]" style={{ fontFamily: 'Cormorant Garamond, serif' }}>
               Brand Voice & Guidelines
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              <div className="p-3 rounded bg-[#050814] border border-[#1E293B]">
-                <p className="text-[10px] text-[#D4AF37] uppercase tracking-wider mb-1">Tone</p>
-                <p className="text-xs text-[#F8FAFC]">Wise, warm, dignified</p>
-                <p className="text-[9px] text-[#94A3B8] mt-1">Speak as an elder sharing knowledge — authoritative yet inviting.</p>
+              <div className="p-3 rounded bg-[rgb(var(--ink-deep))] border border-[rgb(var(--ink-border))]">
+                <p className="text-[10px] text-[rgb(var(--gold))] uppercase tracking-wider mb-1">Tone</p>
+                <p className="text-xs text-[rgb(var(--text-main))]">Wise, warm, dignified</p>
+                <p className="text-[9px] text-[rgb(var(--text-muted))] mt-1">Speak as an elder sharing knowledge — authoritative yet inviting.</p>
               </div>
-              <div className="p-3 rounded bg-[#050814] border border-[#1E293B]">
-                <p className="text-[10px] text-[#D4AF37] uppercase tracking-wider mb-1">Visual Identity</p>
-                <p className="text-xs text-[#F8FAFC]">Midnight blue, black & gold</p>
-                <p className="text-[9px] text-[#94A3B8] mt-1">Ankh symbol. Serif headings. Clean, reverent aesthetic.</p>
+              <div className="p-3 rounded bg-[rgb(var(--ink-deep))] border border-[rgb(var(--ink-border))]">
+                <p className="text-[10px] text-[rgb(var(--gold))] uppercase tracking-wider mb-1">Visual Identity</p>
+                <p className="text-xs text-[rgb(var(--text-main))]">Midnight blue, black & gold</p>
+                <p className="text-[9px] text-[rgb(var(--text-muted))] mt-1">Ankh symbol. Serif headings. Clean, reverent aesthetic.</p>
               </div>
-              <div className="p-3 rounded bg-[#050814] border border-[#1E293B]">
-                <p className="text-[10px] text-[#D4AF37] uppercase tracking-wider mb-1">Core Message</p>
-                <p className="text-xs text-[#F8FAFC]">"I am because we are"</p>
-                <p className="text-[9px] text-[#94A3B8] mt-1">Learning is communal. Knowledge flows between generations.</p>
+              <div className="p-3 rounded bg-[rgb(var(--ink-deep))] border border-[rgb(var(--ink-border))]">
+                <p className="text-[10px] text-[rgb(var(--gold))] uppercase tracking-wider mb-1">Core Message</p>
+                <p className="text-xs text-[rgb(var(--text-main))]">"I am because we are"</p>
+                <p className="text-[9px] text-[rgb(var(--text-muted))] mt-1">Learning is communal. Knowledge flows between generations.</p>
               </div>
             </div>
           </CardContent>
@@ -371,27 +371,27 @@ export default function MarketingPage() {
         {Object.entries(SOCIAL_POSTS).map(([key, platform]) => {
           const Icon = platform.icon;
           return (
-            <Card key={key} className="bg-[#0F172A] border-[#1E293B] mb-4" data-testid={`social-${key}`}>
+            <Card key={key} className="bg-[rgb(var(--ink-card))] border-[rgb(var(--ink-border))] mb-4" data-testid={`social-${key}`}>
               <CardHeader className="pb-2">
-                <CardTitle className="text-base text-[#F8FAFC] flex items-center gap-2" style={{ fontFamily: 'Cormorant Garamond, serif' }}>
+                <CardTitle className="text-base text-[rgb(var(--text-main))] flex items-center gap-2" style={{ fontFamily: 'Cormorant Garamond, serif' }}>
                   <Icon size={20} weight="duotone" className={platform.color} />
                   {platform.platform}
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
                 {platform.posts.map((post, i) => (
-                  <div key={i} className="p-3 rounded bg-[#050814] border border-[#1E293B]">
+                  <div key={i} className="p-3 rounded bg-[rgb(var(--ink-deep))] border border-[rgb(var(--ink-border))]">
                     <div className="flex items-center justify-between mb-2">
-                      <span className="text-[10px] text-[#D4AF37] uppercase tracking-wider">{post.type}</span>
+                      <span className="text-[10px] text-[rgb(var(--gold))] uppercase tracking-wider">{post.type}</span>
                       <button
                         onClick={() => navigator.clipboard.writeText(post.caption)}
-                        className="text-[9px] text-[#94A3B8] hover:text-[#D4AF37] transition-colors"
+                        className="text-[9px] text-[rgb(var(--text-muted))] hover:text-[rgb(var(--gold))] transition-colors"
                         data-testid={`copy-${key}-${i}`}
                       >
                         Copy
                       </button>
                     </div>
-                    <p className="text-xs text-[#F8FAFC] whitespace-pre-line leading-relaxed">{post.caption}</p>
+                    <p className="text-xs text-[rgb(var(--text-main))] whitespace-pre-line leading-relaxed">{post.caption}</p>
                   </div>
                 ))}
               </CardContent>
@@ -400,9 +400,9 @@ export default function MarketingPage() {
         })}
 
         {/* Hashtag Bank */}
-        <Card className="bg-[#0F172A] border-[#1E293B] mb-4">
+        <Card className="bg-[rgb(var(--ink-card))] border-[rgb(var(--ink-border))] mb-4">
           <CardHeader className="pb-2">
-            <CardTitle className="text-base text-[#F8FAFC]" style={{ fontFamily: 'Cormorant Garamond, serif' }}>
+            <CardTitle className="text-base text-[rgb(var(--text-main))]" style={{ fontFamily: 'Cormorant Garamond, serif' }}>
               Hashtag Bank
             </CardTitle>
           </CardHeader>
@@ -412,7 +412,7 @@ export default function MarketingPage() {
                 <button
                   key={tag}
                   onClick={() => navigator.clipboard.writeText(tag)}
-                  className="px-2.5 py-1 text-[10px] bg-[#050814] border border-[#D4AF37]/20 text-[#D4AF37] rounded-full hover:bg-[#D4AF37]/10 transition-all cursor-pointer"
+                  className="px-2.5 py-1 text-[10px] bg-[rgb(var(--ink-deep))] border border-[rgb(var(--gold)/0.2)] text-[rgb(var(--gold))] rounded-full hover:bg-[rgb(var(--gold)/0.1)] transition-all cursor-pointer"
                 >
                   {tag}
                 </button>
@@ -420,7 +420,7 @@ export default function MarketingPage() {
             </div>
             <button
               onClick={() => navigator.clipboard.writeText(HASHTAG_BANK.join(' '))}
-              className="mt-3 text-[10px] text-[#94A3B8] hover:text-[#D4AF37] transition-colors"
+              className="mt-3 text-[10px] text-[rgb(var(--text-muted))] hover:text-[rgb(var(--gold))] transition-colors"
               data-testid="copy-all-hashtags"
             >
               Copy all hashtags
@@ -429,9 +429,9 @@ export default function MarketingPage() {
         </Card>
 
         {/* Content Calendar Suggestions */}
-        <Card className="bg-[#0F172A] border-[#1E293B]">
+        <Card className="bg-[rgb(var(--ink-card))] border-[rgb(var(--ink-border))]">
           <CardHeader className="pb-2">
-            <CardTitle className="text-base text-[#F8FAFC]" style={{ fontFamily: 'Cormorant Garamond, serif' }}>
+            <CardTitle className="text-base text-[rgb(var(--text-main))]" style={{ fontFamily: 'Cormorant Garamond, serif' }}>
               Content Calendar Themes
             </CardTitle>
           </CardHeader>
@@ -443,10 +443,10 @@ export default function MarketingPage() {
                 { week: 'Week 3', theme: 'Community Stories', desc: 'Share user testimonials, cohort success stories, and elder wisdom quotes.' },
                 { week: 'Week 4', theme: 'Behind the Build', desc: 'Tech stack breakdown, design decisions, cultural inspirations behind the platform.' },
               ].map((w) => (
-                <div key={w.week} className="p-3 rounded bg-[#050814] border border-[#1E293B]">
-                  <p className="text-[10px] text-[#D4AF37] uppercase tracking-wider">{w.week}</p>
-                  <p className="text-xs text-[#F8FAFC] font-medium mt-1">{w.theme}</p>
-                  <p className="text-[9px] text-[#94A3B8] mt-0.5">{w.desc}</p>
+                <div key={w.week} className="p-3 rounded bg-[rgb(var(--ink-deep))] border border-[rgb(var(--ink-border))]">
+                  <p className="text-[10px] text-[rgb(var(--gold))] uppercase tracking-wider">{w.week}</p>
+                  <p className="text-xs text-[rgb(var(--text-main))] font-medium mt-1">{w.theme}</p>
+                  <p className="text-[9px] text-[rgb(var(--text-muted))] mt-0.5">{w.desc}</p>
                 </div>
               ))}
             </div>

@@ -22,13 +22,13 @@ const TIER_ICONS = {
 
 const TIER_COLORS = {
   explorer: 'border-blue-500/20 bg-blue-500/5',
-  scholar: 'border-[#D4AF37]/30 bg-[#D4AF37]/5',
+  scholar: 'border-[rgb(var(--gold)/0.3)] bg-[rgb(var(--gold)/0.05)]',
   elder_circle: 'border-violet-500/30 bg-violet-500/5',
 };
 
 const TIER_ACCENT = {
   explorer: 'text-blue-400',
-  scholar: 'text-[#D4AF37]',
+  scholar: 'text-[rgb(var(--gold))]',
   elder_circle: 'text-violet-400',
 };
 
@@ -201,7 +201,7 @@ export default function SubscriptionsPage({ user }) {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64" data-testid="subscriptions-loading">
-        <div className="w-6 h-6 border-2 border-[#D4AF37] border-t-transparent rounded-full animate-spin" />
+        <div className="w-6 h-6 border-2 border-[rgb(var(--gold))] border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
@@ -214,20 +214,20 @@ export default function SubscriptionsPage({ user }) {
       {/* Header */}
       <div>
         <div className="flex items-center gap-2 mb-1">
-          <Sparkle size={20} weight="duotone" className="text-[#D4AF37]" />
-          <h1 className="text-xl text-[#F8FAFC]" style={{ fontFamily: 'Cormorant Garamond, serif' }}>
+          <Sparkle size={20} weight="duotone" className="text-[rgb(var(--gold))]" />
+          <h1 className="text-xl text-[rgb(var(--text-main))]" style={{ fontFamily: 'Cormorant Garamond, serif' }}>
             Membership
           </h1>
         </div>
-        <p className="text-xs text-[#94A3B8]">Choose your path within The Ile Ubuntu</p>
+        <p className="text-xs text-[rgb(var(--text-muted))]">Choose your path within The Ile Ubuntu</p>
       </div>
 
       {/* Payment status banner */}
       {checkingPayment && (
-        <div className="p-3 bg-[#D4AF37]/10 border border-[#D4AF37]/30 rounded-md text-center" data-testid="payment-checking">
+        <div className="p-3 bg-[rgb(var(--gold)/0.1)] border border-[rgb(var(--gold)/0.3)] rounded-md text-center" data-testid="payment-checking">
           <div className="flex items-center justify-center gap-2">
-            <div className="w-4 h-4 border-2 border-[#D4AF37] border-t-transparent rounded-full animate-spin" />
-            <span className="text-sm text-[#D4AF37]">Verifying your payment...</span>
+            <div className="w-4 h-4 border-2 border-[rgb(var(--gold))] border-t-transparent rounded-full animate-spin" />
+            <span className="text-sm text-[rgb(var(--gold))]">Verifying your payment...</span>
           </div>
         </div>
       )}
@@ -245,26 +245,26 @@ export default function SubscriptionsPage({ user }) {
       )}
 
       {/* Current Plan */}
-      <Card className="bg-[#0F172A] border-[#D4AF37]/20">
+      <Card className="bg-[rgb(var(--ink-card))] border-[rgb(var(--gold)/0.2)]">
         <CardContent className="p-4">
-          <p className="text-[9px] text-[#94A3B8] uppercase tracking-widest mb-1">Current Plan</p>
+          <p className="text-[9px] text-[rgb(var(--text-muted))] uppercase tracking-widest mb-1">Current Plan</p>
           <div className="flex items-center gap-2">
-            <Badge className="bg-[#D4AF37]/10 text-[#D4AF37] border-[#D4AF37]/20">
+            <Badge className="bg-[rgb(var(--gold)/0.1)] text-[rgb(var(--gold))] border-[rgb(var(--gold)/0.2)]">
               {currentTier === 'elder_circle' ? 'Elder Circle' : currentTier.charAt(0).toUpperCase() + currentTier.slice(1)}
             </Badge>
-            <span className="text-[10px] text-[#94A3B8]">{mySub?.subscription_status || 'active'}</span>
+            <span className="text-[10px] text-[rgb(var(--text-muted))]">{mySub?.subscription_status || 'active'}</span>
           </div>
         </CardContent>
       </Card>
 
       {/* Billing Period Toggle */}
-      <div className="flex items-center justify-center gap-1 bg-[#0F172A] rounded-lg p-1 border border-[#1E293B]">
+      <div className="flex items-center justify-center gap-1 bg-[rgb(var(--ink-card))] rounded-lg p-1 border border-[rgb(var(--ink-border))]">
         <button
           onClick={() => setBillingPeriod('monthly')}
           className={`flex-1 py-2 px-4 rounded-md text-xs font-medium transition-all ${
             billingPeriod === 'monthly'
-              ? 'bg-[#D4AF37]/20 text-[#D4AF37] border border-[#D4AF37]/30'
-              : 'text-[#94A3B8] hover:text-[#F8FAFC]'
+              ? 'bg-[rgb(var(--gold)/0.2)] text-[rgb(var(--gold))] border border-[rgb(var(--gold)/0.3)]'
+              : 'text-[rgb(var(--text-muted))] hover:text-[rgb(var(--text-main))]'
           }`}
         >
           Monthly
@@ -273,8 +273,8 @@ export default function SubscriptionsPage({ user }) {
           onClick={() => setBillingPeriod('annual')}
           className={`flex-1 py-2 px-4 rounded-md text-xs font-medium transition-all ${
             billingPeriod === 'annual'
-              ? 'bg-[#D4AF37]/20 text-[#D4AF37] border border-[#D4AF37]/30'
-              : 'text-[#94A3B8] hover:text-[#F8FAFC]'
+              ? 'bg-[rgb(var(--gold)/0.2)] text-[rgb(var(--gold))] border border-[rgb(var(--gold)/0.3)]'
+              : 'text-[rgb(var(--text-muted))] hover:text-[rgb(var(--text-main))]'
           }`}
         >
           Annual
@@ -299,23 +299,23 @@ export default function SubscriptionsPage({ user }) {
             : null;
 
           return (
-            <Card key={tierId} className={`bg-[#0F172A] ${isActive ? 'border-[#D4AF37] ring-1 ring-[#D4AF37]/20' : 'border-[#1E293B]'} ${TIER_COLORS[tierId]} relative overflow-hidden`} data-testid={`tier-${tierId}`}>
+            <Card key={tierId} className={`bg-[rgb(var(--ink-card))] ${isActive ? 'border-[rgb(var(--gold))] ring-1 ring-[rgb(var(--gold)/0.2)]' : 'border-[rgb(var(--ink-border))]'} ${TIER_COLORS[tierId]} relative overflow-hidden`} data-testid={`tier-${tierId}`}>
               {isActive && (
                 <div className="absolute top-2 right-2">
-                  <Badge className="bg-[#D4AF37]/20 text-[#D4AF37] border-[#D4AF37]/30 text-[8px]">Current</Badge>
+                  <Badge className="bg-[rgb(var(--gold)/0.2)] text-[rgb(var(--gold))] border-[rgb(var(--gold)/0.3)] text-[8px]">Current</Badge>
                 </div>
               )}
               <CardContent className="p-5">
                 <Icon size={28} weight="duotone" className={accent} />
-                <h3 className="text-base text-[#F8FAFC] mt-2" style={{ fontFamily: 'Cormorant Garamond, serif' }}>
+                <h3 className="text-base text-[rgb(var(--text-main))] mt-2" style={{ fontFamily: 'Cormorant Garamond, serif' }}>
                   {tier.name}
                 </h3>
                 <div className="flex items-baseline gap-1 mt-1 mb-1">
-                  <span className="text-2xl font-bold text-[#F8FAFC]">
+                  <span className="text-2xl font-bold text-[rgb(var(--text-main))]">
                     {price === 0 ? 'Free' : `$${price}`}
                   </span>
                   {price > 0 && (
-                    <span className="text-[10px] text-[#94A3B8]">
+                    <span className="text-[10px] text-[rgb(var(--text-muted))]">
                       /{billingPeriod === 'annual' ? 'year' : 'month'}
                     </span>
                   )}
@@ -326,10 +326,10 @@ export default function SubscriptionsPage({ user }) {
                   </p>
                 )}
                 {!monthlyEquivalent && <div className="mb-2" />}
-                <p className="text-xs text-[#94A3B8] mb-3">{tier.description}</p>
+                <p className="text-xs text-[rgb(var(--text-muted))] mb-3">{tier.description}</p>
                 <ul className="space-y-1.5 mb-4">
                   {tier.features.map((f) => (
-                    <li key={f} className="flex items-start gap-2 text-[11px] text-[#94A3B8]">
+                    <li key={f} className="flex items-start gap-2 text-[11px] text-[rgb(var(--text-muted))]">
                       <Check size={12} weight="bold" className={accent} />
                       <span>{f}</span>
                     </li>
@@ -344,7 +344,7 @@ export default function SubscriptionsPage({ user }) {
                     <button
                       onClick={handleCancelWeb}
                       disabled={cancelingWeb}
-                      className="w-full py-2 rounded-md text-xs font-medium border border-[#334155] text-[#94A3B8] hover:text-[#F8FAFC] hover:border-[#94A3B8] transition-all"
+                      className="w-full py-2 rounded-md text-xs font-medium border border-[rgb(var(--ink-border-strong))] text-[rgb(var(--text-muted))] hover:text-[rgb(var(--text-main))] hover:border-[rgb(var(--text-muted))] transition-all"
                       data-testid="cancel-web-renewal"
                     >
                       {cancelingWeb ? 'Working…' : 'Cancel auto-renewal'}
@@ -352,7 +352,7 @@ export default function SubscriptionsPage({ user }) {
                   ) : null
                 )}
                 {!isActive && mySub?.web_recurring && !onNativePlatform && price > 0 && (
-                  <p className="text-[10px] text-[#94A3B8] mb-2 text-center">
+                  <p className="text-[10px] text-[rgb(var(--text-muted))] mb-2 text-center">
                     Auto-renews {billingPeriod === 'annual' ? 'yearly' : 'monthly'} · cancel anytime
                   </p>
                 )}
@@ -364,7 +364,7 @@ export default function SubscriptionsPage({ user }) {
                       tierId === 'elder_circle'
                         ? 'bg-violet-500/20 text-violet-300 border border-violet-500/30 hover:bg-violet-500/30'
                         : tierId === 'scholar'
-                        ? 'bg-[#D4AF37]/20 text-[#D4AF37] border border-[#D4AF37]/30 hover:bg-[#D4AF37]/30'
+                        ? 'bg-[rgb(var(--gold)/0.2)] text-[rgb(var(--gold))] border border-[rgb(var(--gold)/0.3)] hover:bg-[rgb(var(--gold)/0.3)]'
                         : 'bg-blue-500/20 text-blue-300 border border-blue-500/30 hover:bg-blue-500/30'
                     }`}
                     data-testid={`subscribe-${tierId}`}
@@ -395,7 +395,7 @@ export default function SubscriptionsPage({ user }) {
           <button
             onClick={handleRestorePurchases}
             disabled={restoringPurchases}
-            className="text-xs text-[#94A3B8] hover:text-[#D4AF37] transition-colors flex items-center justify-center gap-1 mx-auto"
+            className="text-xs text-[rgb(var(--text-muted))] hover:text-[rgb(var(--gold))] transition-colors flex items-center justify-center gap-1 mx-auto"
           >
             <ArrowsClockwise size={12} weight={restoringPurchases ? 'bold' : 'regular'} className={restoringPurchases ? 'animate-spin' : ''} />
             {restoringPurchases ? 'Restoring...' : 'Restore Purchases'}
@@ -409,10 +409,10 @@ export default function SubscriptionsPage({ user }) {
         be visible on any screen that offers an auto-renewable subscription.
       */}
       <div
-        className="mt-6 pt-5 border-t border-[#1E293B] text-center"
+        className="mt-6 pt-5 border-t border-[rgb(var(--ink-border))] text-center"
         data-testid="subscription-legal"
       >
-        <p className="text-[11px] text-[#94A3B8] leading-relaxed mb-3 px-2">
+        <p className="text-[11px] text-[rgb(var(--text-muted))] leading-relaxed mb-3 px-2">
           Subscriptions auto-renew monthly (Elder Circle $49.99/mo) or annually
           (Elder Circle $499.99/yr) until cancelled. Payment is charged to your
           Apple ID at confirmation of purchase. Your account will be charged for
@@ -421,11 +421,11 @@ export default function SubscriptionsPage({ user }) {
           off auto-renewal anytime from your Apple ID Account Settings after
           purchase.
         </p>
-        <p className="text-[11px] text-[#94A3B8]">
+        <p className="text-[11px] text-[rgb(var(--text-muted))]">
           By subscribing you agree to our{' '}
           <Link
             to="/terms"
-            className="text-[#D4AF37] underline underline-offset-2 hover:text-[#F8FAFC] transition-colors"
+            className="text-[rgb(var(--gold))] underline underline-offset-2 hover:text-[rgb(var(--text-main))] transition-colors"
             data-testid="paywall-terms-link"
           >
             Terms of Use (EULA)
@@ -433,7 +433,7 @@ export default function SubscriptionsPage({ user }) {
           and{' '}
           <Link
             to="/privacy-policy"
-            className="text-[#D4AF37] underline underline-offset-2 hover:text-[#F8FAFC] transition-colors"
+            className="text-[rgb(var(--gold))] underline underline-offset-2 hover:text-[rgb(var(--text-main))] transition-colors"
             data-testid="paywall-privacy-link"
           >
             Privacy Policy

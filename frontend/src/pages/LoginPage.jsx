@@ -213,19 +213,19 @@ export default function LoginPage({ onLogin, onPasswordLogin }) {
           backgroundPosition: 'center',
         }}
       >
-        <div className="absolute inset-0 bg-[#050814]/75" />
+        <div className="absolute inset-0 bg-[rgb(var(--ink-deep)/0.75)]" />
         <div className="relative z-10 max-w-md">
-          <p className="text-xs tracking-[0.25em] uppercase text-[#D4AF37] mb-4">
+          <p className="text-xs tracking-[0.25em] uppercase text-[rgb(var(--gold))] mb-4">
             A Living Learning Commons
           </p>
           <h2
-            className="text-4xl font-light text-[#F8FAFC] leading-tight mb-4"
+            className="text-4xl font-light text-[rgb(var(--text-main))] leading-tight mb-4"
             style={{ fontFamily: 'Cormorant Garamond, serif' }}
           >
             Where Knowledge Lives, <br />
             Community Grows
           </h2>
-          <p className="text-sm text-[#94A3B8] leading-relaxed">
+          <p className="text-sm text-[rgb(var(--text-muted))] leading-relaxed">
             Courses, cohorts, community, and archives — woven into one coherent
             environment for learning that honors tradition and embraces the future.
           </p>
@@ -233,20 +233,20 @@ export default function LoginPage({ onLogin, onPasswordLogin }) {
       </div>
 
       {/* Right login panel */}
-      <div className="flex-1 flex items-center justify-center bg-[#050814] px-8">
+      <div className="flex-1 flex items-center justify-center bg-[rgb(var(--ink-deep))] px-8">
         <div className="w-full max-w-sm space-y-8">
           {/* Logo */}
           <div className="text-center">
-            <div className="w-16 h-16 mx-auto rounded-lg bg-[#D4AF37]/10 border border-[#D4AF37]/20 flex items-center justify-center mb-6">
+            <div className="w-16 h-16 mx-auto rounded-lg bg-[rgb(var(--gold)/0.1)] border border-[rgb(var(--gold)/0.2)] flex items-center justify-center mb-6">
               <BrandMark className="w-10 h-10 object-contain" />
             </div>
             <h1
-              className="text-3xl font-light text-[#F8FAFC] mb-1"
+              className="text-3xl font-light text-[rgb(var(--text-main))] mb-1"
               style={{ fontFamily: 'Cormorant Garamond, serif' }}
             >
               The Ile Ubuntu
             </h1>
-            <p className="text-xs tracking-[0.2em] uppercase text-[#D4AF37]">
+            <p className="text-xs tracking-[0.2em] uppercase text-[rgb(var(--gold))]">
               Living Learning Commons
             </p>
           </div>
@@ -255,35 +255,35 @@ export default function LoginPage({ onLogin, onPasswordLogin }) {
           <form onSubmit={handleSubmit} className="space-y-4">
             {mode === 'register' && (
               <div>
-                <label className="block text-xs text-[#94A3B8] mb-1.5 uppercase tracking-wider">Name</label>
+                <label className="block text-xs text-[rgb(var(--text-muted))] mb-1.5 uppercase tracking-wider">Name</label>
                 <input
                   type="text"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder="Your full name"
-                  className="w-full px-4 py-2.5 rounded-md bg-[#0F1629] border border-[#1E293B] text-[#F8FAFC] placeholder-[#475569] focus:outline-none focus:border-[#D4AF37]/50 text-sm transition-colors"
+                  className="w-full px-4 py-2.5 rounded-md bg-[rgb(var(--ink-card-alt))] border border-[rgb(var(--ink-border))] text-[rgb(var(--text-main))] placeholder-[rgb(var(--text-faint))] focus:outline-none focus:border-[rgb(var(--gold)/0.5)] text-sm transition-colors"
                 />
               </div>
             )}
 
             <div>
-              <label className="block text-xs text-[#94A3B8] mb-1.5 uppercase tracking-wider">Email</label>
+              <label className="block text-xs text-[rgb(var(--text-muted))] mb-1.5 uppercase tracking-wider">Email</label>
               <div className="relative">
-                <EnvelopeSimple size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#475569]" />
+                <EnvelopeSimple size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-[rgb(var(--text-faint))]" />
                 <input
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="you@example.com"
                   required
-                  className="w-full pl-10 pr-4 py-2.5 rounded-md bg-[#0F1629] border border-[#1E293B] text-[#F8FAFC] placeholder-[#475569] focus:outline-none focus:border-[#D4AF37]/50 text-sm transition-colors"
+                  className="w-full pl-10 pr-4 py-2.5 rounded-md bg-[rgb(var(--ink-card-alt))] border border-[rgb(var(--ink-border))] text-[rgb(var(--text-main))] placeholder-[rgb(var(--text-faint))] focus:outline-none focus:border-[rgb(var(--gold)/0.5)] text-sm transition-colors"
                 />
               </div>
             </div>
 
             {mode !== 'forgot' && (
               <div>
-                <label className="block text-xs text-[#94A3B8] mb-1.5 uppercase tracking-wider">Password</label>
+                <label className="block text-xs text-[rgb(var(--text-muted))] mb-1.5 uppercase tracking-wider">Password</label>
                 <div className="relative">
                   <input
                     type={showPassword ? 'text' : 'password'}
@@ -291,12 +291,12 @@ export default function LoginPage({ onLogin, onPasswordLogin }) {
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder={mode === 'register' ? 'Min 6 characters' : 'Your password'}
                     required
-                    className="w-full px-4 py-2.5 rounded-md bg-[#0F1629] border border-[#1E293B] text-[#F8FAFC] placeholder-[#475569] focus:outline-none focus:border-[#D4AF37]/50 text-sm pr-10 transition-colors"
+                    className="w-full px-4 py-2.5 rounded-md bg-[rgb(var(--ink-card-alt))] border border-[rgb(var(--ink-border))] text-[rgb(var(--text-main))] placeholder-[rgb(var(--text-faint))] focus:outline-none focus:border-[rgb(var(--gold)/0.5)] text-sm pr-10 transition-colors"
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-[#475569] hover:text-[#94A3B8]"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-[rgb(var(--text-faint))] hover:text-[rgb(var(--text-muted))]"
                   >
                     {showPassword ? <EyeSlash size={16} /> : <Eye size={16} />}
                   </button>
@@ -306,7 +306,7 @@ export default function LoginPage({ onLogin, onPasswordLogin }) {
                     <button
                       type="button"
                       onClick={() => { setMode('forgot'); setError(''); setInfo(''); }}
-                      className="text-xs text-[#D4AF37] hover:underline"
+                      className="text-xs text-[rgb(var(--gold))] hover:underline"
                     >
                       Forgot password?
                     </button>
@@ -325,7 +325,7 @@ export default function LoginPage({ onLogin, onPasswordLogin }) {
             <Button
               type="submit"
               disabled={loading}
-              className="w-full bg-[#D4AF37] text-[#050814] hover:bg-[#F3E5AB] font-medium py-3 transition-all duration-200"
+              className="w-full bg-[rgb(var(--gold))] text-[rgb(var(--ink-deep))] hover:bg-[rgb(var(--gold-soft))] font-medium py-3 transition-all duration-200"
               data-testid="login-button"
             >
               {mode === 'register' ? (
@@ -340,9 +340,9 @@ export default function LoginPage({ onLogin, onPasswordLogin }) {
 
           {/* Divider */}
           <div className="flex items-center gap-3">
-            <div className="flex-1 border-t border-[#1E293B]" />
-            <span className="text-xs text-[#475569] uppercase tracking-wider">or</span>
-            <div className="flex-1 border-t border-[#1E293B]" />
+            <div className="flex-1 border-t border-[rgb(var(--ink-border))]" />
+            <span className="text-xs text-[rgb(var(--text-faint))] uppercase tracking-wider">or</span>
+            <div className="flex-1 border-t border-[rgb(var(--ink-border))]" />
           </div>
 
           {/* Google OAuth */}
@@ -364,7 +364,7 @@ export default function LoginPage({ onLogin, onPasswordLogin }) {
               onLogin();
             }}
             variant="outline"
-            className="w-full border-[#1E293B] text-[#94A3B8] hover:bg-[#0F1629] hover:text-[#F8FAFC] py-3 transition-all duration-200"
+            className="w-full border-[rgb(var(--ink-border))] text-[rgb(var(--text-muted))] hover:bg-[rgb(var(--ink-card-alt))] hover:text-[rgb(var(--text-main))] py-3 transition-all duration-200"
           >
             <GoogleLogo size={18} weight="bold" className="mr-2" />
             Continue with Google
@@ -381,16 +381,16 @@ export default function LoginPage({ onLogin, onPasswordLogin }) {
           </Button>
 
           {/* Toggle mode */}
-          <p className="text-center text-xs text-[#94A3B8]">
+          <p className="text-center text-xs text-[rgb(var(--text-muted))]">
             {mode === 'login' ? (
               <>Don't have an account?{' '}
-                <button onClick={() => { setMode('register'); setError(''); setInfo(''); }} className="text-[#D4AF37] hover:underline">
+                <button onClick={() => { setMode('register'); setError(''); setInfo(''); }} className="text-[rgb(var(--gold))] hover:underline">
                   Create one
                 </button>
               </>
             ) : (
               <>Already have an account?{' '}
-                <button onClick={() => { setMode('login'); setError(''); setInfo(''); }} className="text-[#D4AF37] hover:underline">
+                <button onClick={() => { setMode('login'); setError(''); setInfo(''); }} className="text-[rgb(var(--gold))] hover:underline">
                   Sign in
                 </button>
               </>
@@ -399,7 +399,7 @@ export default function LoginPage({ onLogin, onPasswordLogin }) {
 
           {/* Mobile-only tagline */}
           <div className="lg:hidden text-center">
-            <p className="text-sm text-[#94A3B8] leading-relaxed">
+            <p className="text-sm text-[rgb(var(--text-muted))] leading-relaxed">
               Courses, cohorts, community, and archives — woven into one coherent
               environment for transformative learning.
             </p>

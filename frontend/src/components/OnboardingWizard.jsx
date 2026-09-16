@@ -79,10 +79,10 @@ export default function OnboardingWizard({ user, onComplete }) {
   const currentStep = STEPS[step];
 
   return (
-    <div className="fixed inset-0 z-50 bg-[#050814] flex items-center justify-center" data-testid="onboarding-wizard">
+    <div className="fixed inset-0 z-50 bg-[rgb(var(--ink-deep))] flex items-center justify-center" data-testid="onboarding-wizard">
       {/* Background pattern */}
       <div className="absolute inset-0 opacity-[0.03]" style={{
-        backgroundImage: 'radial-gradient(circle at 25% 50%, #D4AF37 1px, transparent 1px), radial-gradient(circle at 75% 50%, #D4AF37 1px, transparent 1px)',
+        backgroundImage: 'radial-gradient(circle at 25% 50%, rgb(var(--gold)) 1px, transparent 1px), radial-gradient(circle at 75% 50%, rgb(var(--gold)) 1px, transparent 1px)',
         backgroundSize: '80px 80px',
       }} />
 
@@ -91,7 +91,7 @@ export default function OnboardingWizard({ user, onComplete }) {
         {step < STEPS.length - 1 && (
           <button
             onClick={handleSkip}
-            className="absolute -top-10 right-0 text-xs text-[#475569] hover:text-[#94A3B8] transition-colors flex items-center gap-1"
+            className="absolute -top-10 right-0 text-xs text-[rgb(var(--text-faint))] hover:text-[rgb(var(--text-muted))] transition-colors flex items-center gap-1"
             data-testid="onboarding-skip"
           >
             <X size={12} /> {t('onboard_skip')}
@@ -104,26 +104,26 @@ export default function OnboardingWizard({ user, onComplete }) {
             <div
               key={i}
               className={`h-1.5 rounded-full transition-all duration-500 ${
-                i === step ? 'w-8 bg-[#D4AF37]' : i < step ? 'w-4 bg-[#D4AF37]/40' : 'w-4 bg-[#1E293B]'
+                i === step ? 'w-8 bg-[rgb(var(--gold))]' : i < step ? 'w-4 bg-[rgb(var(--gold)/0.4)]' : 'w-4 bg-[rgb(var(--ink-border))]'
               }`}
             />
           ))}
         </div>
 
         {/* Step content */}
-        <div className="bg-[#0F172A] border border-[#1E293B] rounded-xl p-8 min-h-[400px] flex flex-col">
+        <div className="bg-[rgb(var(--ink-card))] border border-[rgb(var(--ink-border))] rounded-xl p-8 min-h-[400px] flex flex-col">
           {/* Step 1: Welcome */}
           {currentStep === 'welcome' && (
             <div className="flex-1 flex flex-col items-center justify-center text-center animate-fade-in" data-testid="onboarding-step-welcome">
-              <div className="w-16 h-16 rounded-full bg-[#D4AF37]/10 border border-[#D4AF37]/30 flex items-center justify-center mb-4">
+              <div className="w-16 h-16 rounded-full bg-[rgb(var(--gold)/0.1)] border border-[rgb(var(--gold)/0.3)] flex items-center justify-center mb-4">
                 <BrandMark className="w-10 h-10 object-contain" />
               </div>
-              <h1 className="text-2xl text-[#F8FAFC] mb-2" style={{ fontFamily: 'Cormorant Garamond, serif' }}>
+              <h1 className="text-2xl text-[rgb(var(--text-main))] mb-2" style={{ fontFamily: 'Cormorant Garamond, serif' }}>
                 {t('onboard_welcome')}
               </h1>
-              <p className="text-sm text-[#94A3B8] max-w-sm">{t('onboard_subtitle')}</p>
+              <p className="text-sm text-[rgb(var(--text-muted))] max-w-sm">{t('onboard_subtitle')}</p>
               {user?.name && (
-                <p className="text-xs text-[#D4AF37] mt-3">
+                <p className="text-xs text-[rgb(var(--gold))] mt-3">
                   {t('welcome_back')}, {user.name.split(' ')[0]}
                 </p>
               )}
@@ -134,10 +134,10 @@ export default function OnboardingWizard({ user, onComplete }) {
           {currentStep === 'path' && (
             <div className="flex-1 animate-fade-in" data-testid="onboarding-step-path">
               <div className="text-center mb-5">
-                <h2 className="text-lg text-[#F8FAFC]" style={{ fontFamily: 'Cormorant Garamond, serif' }}>
+                <h2 className="text-lg text-[rgb(var(--text-main))]" style={{ fontFamily: 'Cormorant Garamond, serif' }}>
                   {t('onboard_path')}
                 </h2>
-                <p className="text-xs text-[#94A3B8] mt-1">{t('onboard_path_sub')}</p>
+                <p className="text-xs text-[rgb(var(--text-muted))] mt-1">{t('onboard_path_sub')}</p>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                 {PATHS.map(p => (
@@ -146,16 +146,16 @@ export default function OnboardingWizard({ user, onComplete }) {
                     onClick={() => setIntent(p.id)}
                     className={`text-left p-3.5 rounded-md border transition-all ${
                       intent === p.id
-                        ? 'bg-[#D4AF37]/10 border-[#D4AF37]/50'
-                        : 'bg-[#050814] border-[#1E293B] hover:border-[#D4AF37]/25'
+                        ? 'bg-[rgb(var(--gold)/0.1)] border-[rgb(var(--gold)/0.5)]'
+                        : 'bg-[rgb(var(--ink-deep))] border-[rgb(var(--ink-border))] hover:border-[rgb(var(--gold)/0.25)]'
                     }`}
                     data-testid={`path-${p.id}`}
                   >
-                    <p.icon size={20} weight="duotone" className={intent === p.id ? 'text-[#D4AF37]' : 'text-[#94A3B8]'} />
-                    <p className={`text-sm mt-1.5 ${intent === p.id ? 'text-[#F8FAFC]' : 'text-[#94A3B8]'}`}>
+                    <p.icon size={20} weight="duotone" className={intent === p.id ? 'text-[rgb(var(--gold))]' : 'text-[rgb(var(--text-muted))]'} />
+                    <p className={`text-sm mt-1.5 ${intent === p.id ? 'text-[rgb(var(--text-main))]' : 'text-[rgb(var(--text-muted))]'}`}>
                       {t(p.labelKey)}
                     </p>
-                    <p className="text-[10px] text-[#475569] mt-0.5 leading-snug">{t(p.descKey)}</p>
+                    <p className="text-[10px] text-[rgb(var(--text-faint))] mt-0.5 leading-snug">{t(p.descKey)}</p>
                   </button>
                 ))}
               </div>
@@ -166,15 +166,15 @@ export default function OnboardingWizard({ user, onComplete }) {
           {currentStep === 'about' && (
             <div className="flex-1 flex flex-col items-center justify-center animate-fade-in" data-testid="onboarding-step-about">
               <div className="text-center mb-5 max-w-sm">
-                <h2 className="text-lg text-[#F8FAFC]" style={{ fontFamily: 'Cormorant Garamond, serif' }}>
+                <h2 className="text-lg text-[rgb(var(--text-main))]" style={{ fontFamily: 'Cormorant Garamond, serif' }}>
                   {t('onboard_about')}
                 </h2>
-                <p className="text-xs text-[#94A3B8] mt-1">{t('onboard_about_sub')}</p>
+                <p className="text-xs text-[rgb(var(--text-muted))] mt-1">{t('onboard_about_sub')}</p>
               </div>
               <select
                 value={birthYear}
                 onChange={(e) => setBirthYear(e.target.value)}
-                className="w-48 px-3 py-2.5 rounded-md bg-[#050814] border border-[#1E293B] text-sm text-[#F8FAFC] focus:outline-none focus:border-[#D4AF37]/50"
+                className="w-48 px-3 py-2.5 rounded-md bg-[rgb(var(--ink-deep))] border border-[rgb(var(--ink-border))] text-sm text-[rgb(var(--text-main))] focus:outline-none focus:border-[rgb(var(--gold)/0.5)]"
                 data-testid="onboarding-birth-year"
               >
                 <option value="">{t('onboard_birth_skip')}</option>
@@ -189,11 +189,11 @@ export default function OnboardingWizard({ user, onComplete }) {
           {currentStep === 'interests' && (
             <div className="flex-1 animate-fade-in" data-testid="onboarding-step-interests">
               <div className="text-center mb-6">
-                <Sparkle size={24} weight="duotone" className="text-[#D4AF37] mx-auto mb-2" />
-                <h2 className="text-lg text-[#F8FAFC]" style={{ fontFamily: 'Cormorant Garamond, serif' }}>
+                <Sparkle size={24} weight="duotone" className="text-[rgb(var(--gold))] mx-auto mb-2" />
+                <h2 className="text-lg text-[rgb(var(--text-main))]" style={{ fontFamily: 'Cormorant Garamond, serif' }}>
                   {t('onboard_interests')}
                 </h2>
-                <p className="text-xs text-[#94A3B8] mt-1">{t('onboard_interests_sub')}</p>
+                <p className="text-xs text-[rgb(var(--text-muted))] mt-1">{t('onboard_interests_sub')}</p>
               </div>
               <div className="flex flex-wrap gap-2 justify-center">
                 {INTEREST_TAGS.map(tag => (
@@ -202,8 +202,8 @@ export default function OnboardingWizard({ user, onComplete }) {
                     onClick={() => toggleInterest(tag)}
                     className={`px-3 py-1.5 rounded-full text-xs border transition-all ${
                       interests.includes(tag)
-                        ? 'bg-[#D4AF37]/15 border-[#D4AF37]/40 text-[#D4AF37]'
-                        : 'bg-[#050814] border-[#1E293B] text-[#94A3B8] hover:border-[#D4AF37]/20'
+                        ? 'bg-[rgb(var(--gold)/0.15)] border-[rgb(var(--gold)/0.4)] text-[rgb(var(--gold))]'
+                        : 'bg-[rgb(var(--ink-deep))] border-[rgb(var(--ink-border))] text-[rgb(var(--text-muted))] hover:border-[rgb(var(--gold)/0.2)]'
                     }`}
                     data-testid={`interest-${tag.toLowerCase().replace(/\s+/g, '-')}`}
                   >
@@ -219,24 +219,24 @@ export default function OnboardingWizard({ user, onComplete }) {
           {currentStep === 'courses' && (
             <div className="flex-1 animate-fade-in" data-testid="onboarding-step-courses">
               <div className="text-center mb-4">
-                <BookOpenText size={24} weight="duotone" className="text-[#D4AF37] mx-auto mb-2" />
-                <h2 className="text-lg text-[#F8FAFC]" style={{ fontFamily: 'Cormorant Garamond, serif' }}>
+                <BookOpenText size={24} weight="duotone" className="text-[rgb(var(--gold))] mx-auto mb-2" />
+                <h2 className="text-lg text-[rgb(var(--text-main))]" style={{ fontFamily: 'Cormorant Garamond, serif' }}>
                   {t('onboard_courses')}
                 </h2>
-                <p className="text-xs text-[#94A3B8] mt-1">{t('onboard_courses_sub')}</p>
+                <p className="text-xs text-[rgb(var(--text-muted))] mt-1">{t('onboard_courses_sub')}</p>
               </div>
               <div className="space-y-2 max-h-[220px] overflow-y-auto">
                 {filteredCourses.length === 0 ? (
-                  <p className="text-xs text-[#475569] text-center py-4">No courses available yet. You can explore them later!</p>
+                  <p className="text-xs text-[rgb(var(--text-faint))] text-center py-4">No courses available yet. You can explore them later!</p>
                 ) : (
                   filteredCourses.map(c => (
-                    <div key={c.id} className="flex items-center gap-3 p-3 bg-[#050814] border border-[#1E293B] rounded-md hover:border-[#D4AF37]/20 transition-all">
-                      <BookOpenText size={16} weight="duotone" className="text-[#D4AF37] flex-shrink-0" />
+                    <div key={c.id} className="flex items-center gap-3 p-3 bg-[rgb(var(--ink-deep))] border border-[rgb(var(--ink-border))] rounded-md hover:border-[rgb(var(--gold)/0.2)] transition-all">
+                      <BookOpenText size={16} weight="duotone" className="text-[rgb(var(--gold))] flex-shrink-0" />
                       <div className="flex-1 min-w-0">
-                        <p className="text-xs text-[#F8FAFC] truncate">{c.title}</p>
-                        <p className="text-[9px] text-[#94A3B8] truncate">{c.description}</p>
+                        <p className="text-xs text-[rgb(var(--text-main))] truncate">{c.title}</p>
+                        <p className="text-[9px] text-[rgb(var(--text-muted))] truncate">{c.description}</p>
                       </div>
-                      <span className="text-[9px] text-[#D4AF37]">{c.enrolled_count || 0} enrolled</span>
+                      <span className="text-[9px] text-[rgb(var(--gold))]">{c.enrolled_count || 0} enrolled</span>
                     </div>
                   ))
                 )}
@@ -248,22 +248,22 @@ export default function OnboardingWizard({ user, onComplete }) {
           {currentStep === 'cohort' && (
             <div className="flex-1 animate-fade-in" data-testid="onboarding-step-cohort">
               <div className="text-center mb-4">
-                <UsersThree size={24} weight="duotone" className="text-[#D4AF37] mx-auto mb-2" />
-                <h2 className="text-lg text-[#F8FAFC]" style={{ fontFamily: 'Cormorant Garamond, serif' }}>
+                <UsersThree size={24} weight="duotone" className="text-[rgb(var(--gold))] mx-auto mb-2" />
+                <h2 className="text-lg text-[rgb(var(--text-main))]" style={{ fontFamily: 'Cormorant Garamond, serif' }}>
                   {t('onboard_cohort')}
                 </h2>
-                <p className="text-xs text-[#94A3B8] mt-1">{t('onboard_cohort_sub')}</p>
+                <p className="text-xs text-[rgb(var(--text-muted))] mt-1">{t('onboard_cohort_sub')}</p>
               </div>
               <div className="space-y-2 max-h-[220px] overflow-y-auto">
                 {cohorts.length === 0 ? (
-                  <p className="text-xs text-[#475569] text-center py-4">No cohorts yet — check back later!</p>
+                  <p className="text-xs text-[rgb(var(--text-faint))] text-center py-4">No cohorts yet — check back later!</p>
                 ) : (
                   cohorts.slice(0, 4).map(ch => (
-                    <div key={ch.id} className="flex items-center gap-3 p-3 bg-[#050814] border border-[#1E293B] rounded-md hover:border-[#D4AF37]/20 transition-all">
-                      <UsersThree size={16} weight="duotone" className="text-[#D4AF37] flex-shrink-0" />
+                    <div key={ch.id} className="flex items-center gap-3 p-3 bg-[rgb(var(--ink-deep))] border border-[rgb(var(--ink-border))] rounded-md hover:border-[rgb(var(--gold)/0.2)] transition-all">
+                      <UsersThree size={16} weight="duotone" className="text-[rgb(var(--gold))] flex-shrink-0" />
                       <div className="flex-1 min-w-0">
-                        <p className="text-xs text-[#F8FAFC] truncate">{ch.name}</p>
-                        <p className="text-[9px] text-[#94A3B8]">{(ch.members || []).length} members</p>
+                        <p className="text-xs text-[rgb(var(--text-main))] truncate">{ch.name}</p>
+                        <p className="text-[9px] text-[rgb(var(--text-muted))]">{(ch.members || []).length} members</p>
                       </div>
                     </div>
                   ))
@@ -278,16 +278,16 @@ export default function OnboardingWizard({ user, onComplete }) {
               <div className="w-16 h-16 rounded-full bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center mb-4">
                 <Check size={28} weight="bold" className="text-emerald-400" />
               </div>
-              <h1 className="text-2xl text-[#F8FAFC] mb-2" style={{ fontFamily: 'Cormorant Garamond, serif' }}>
+              <h1 className="text-2xl text-[rgb(var(--text-main))] mb-2" style={{ fontFamily: 'Cormorant Garamond, serif' }}>
                 {t('onboard_complete')}
               </h1>
-              <p className="text-sm text-[#94A3B8] max-w-sm">
+              <p className="text-sm text-[rgb(var(--text-muted))] max-w-sm">
                 {intent === 'learner' ? t('onboard_complete_sub') : t(`onboard_complete_${intent}`)}
               </p>
               {interests.length > 0 && (
                 <div className="flex flex-wrap gap-1 justify-center mt-3">
                   {interests.map(i => (
-                    <span key={i} className="px-2 py-0.5 rounded-full text-[9px] bg-[#D4AF37]/10 text-[#D4AF37] border border-[#D4AF37]/20">
+                    <span key={i} className="px-2 py-0.5 rounded-full text-[9px] bg-[rgb(var(--gold)/0.1)] text-[rgb(var(--gold))] border border-[rgb(var(--gold)/0.2)]">
                       {i}
                     </span>
                   ))}
@@ -297,15 +297,15 @@ export default function OnboardingWizard({ user, onComplete }) {
           )}
 
           {/* Navigation */}
-          <div className="flex items-center justify-between mt-6 pt-4 border-t border-[#1E293B]">
-            <div className="text-[10px] text-[#475569]">
+          <div className="flex items-center justify-between mt-6 pt-4 border-t border-[rgb(var(--ink-border))]">
+            <div className="text-[10px] text-[rgb(var(--text-faint))]">
               {t('onboard_step')} {step + 1} {t('onboard_of')} {STEPS.length}
             </div>
             <div className="flex gap-2">
               {step > 0 && step < STEPS.length - 1 && (
                 <button
                   onClick={() => setStep(s => s - 1)}
-                  className="flex items-center gap-1 px-3 py-1.5 text-xs text-[#94A3B8] border border-[#1E293B] rounded-md hover:bg-[#1E293B]/50 transition-all"
+                  className="flex items-center gap-1 px-3 py-1.5 text-xs text-[rgb(var(--text-muted))] border border-[rgb(var(--ink-border))] rounded-md hover:bg-[rgb(var(--ink-border)/0.5)] transition-all"
                   data-testid="onboarding-back"
                 >
                   <ArrowLeft size={12} /> {t('onboard_back')}
@@ -314,7 +314,7 @@ export default function OnboardingWizard({ user, onComplete }) {
               {step < STEPS.length - 1 ? (
                 <button
                   onClick={() => setStep(s => s + 1)}
-                  className="flex items-center gap-1 px-4 py-1.5 text-xs text-[#050814] bg-[#D4AF37] rounded-md hover:bg-[#D4AF37]/90 transition-all font-medium"
+                  className="flex items-center gap-1 px-4 py-1.5 text-xs text-[rgb(var(--ink-deep))] bg-[rgb(var(--gold))] rounded-md hover:bg-[rgb(var(--gold)/0.9)] transition-all font-medium"
                   data-testid="onboarding-next"
                 >
                   {t('onboard_next')} <ArrowRight size={12} />
@@ -322,7 +322,7 @@ export default function OnboardingWizard({ user, onComplete }) {
               ) : (
                 <button
                   onClick={handleFinish}
-                  className="flex items-center gap-1 px-4 py-1.5 text-xs text-[#050814] bg-[#D4AF37] rounded-md hover:bg-[#D4AF37]/90 transition-all font-medium"
+                  className="flex items-center gap-1 px-4 py-1.5 text-xs text-[rgb(var(--ink-deep))] bg-[rgb(var(--gold))] rounded-md hover:bg-[rgb(var(--gold)/0.9)] transition-all font-medium"
                   data-testid="onboarding-finish"
                 >
                   {t('onboard_finish')} <ArrowRight size={12} />

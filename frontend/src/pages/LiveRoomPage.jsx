@@ -103,7 +103,7 @@ export default function LiveRoomPage({ user }) {
         TOOLBAR_ALWAYS_VISIBLE: true,
         HIDE_INVITE_MORE_HEADER: true,
         MOBILE_APP_PROMO: false,
-        DEFAULT_BACKGROUND: '#050814',
+        DEFAULT_BACKGROUND: 'rgb(var(--ink-deep))',
       },
       userInfo: {
         displayName: user?.name || 'Participant',
@@ -171,8 +171,8 @@ export default function LiveRoomPage({ user }) {
     return (
       <div className="flex items-center justify-center h-[60vh]">
         <div className="text-center">
-          <div className="w-12 h-12 border-2 border-[#D4AF37] border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-sm text-[#94A3B8]">Connecting to session...</p>
+          <div className="w-12 h-12 border-2 border-[rgb(var(--gold))] border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+          <p className="text-sm text-[rgb(var(--text-muted))]">Connecting to session...</p>
         </div>
       </div>
     );
@@ -181,8 +181,8 @@ export default function LiveRoomPage({ user }) {
   if (!session) {
     return (
       <div className="text-center py-20">
-        <p className="text-[#94A3B8]">Session not found</p>
-        <Button onClick={() => navigate('/live')} variant="ghost" className="mt-4 text-[#D4AF37]">
+        <p className="text-[rgb(var(--text-muted))]">Session not found</p>
+        <Button onClick={() => navigate('/live')} variant="ghost" className="mt-4 text-[rgb(var(--gold))]">
           Back to Sessions
         </Button>
       </div>
@@ -192,26 +192,26 @@ export default function LiveRoomPage({ user }) {
   // Pre-join screen with background picker
   if (showPreJoin) {
     return (
-      <div className="min-h-screen bg-[#050814] flex items-center justify-center p-6" data-testid="pre-join-screen">
+      <div className="min-h-screen bg-[rgb(var(--ink-deep))] flex items-center justify-center p-6" data-testid="pre-join-screen">
         <div className="max-w-lg w-full space-y-6">
           {/* Session info */}
           <div className="text-center">
-            <div className="w-14 h-14 mx-auto rounded-lg bg-[#D4AF37]/10 border border-[#D4AF37]/20 flex items-center justify-center mb-4">
-              <VideoCamera size={24} weight="duotone" className="text-[#D4AF37]" />
+            <div className="w-14 h-14 mx-auto rounded-lg bg-[rgb(var(--gold)/0.1)] border border-[rgb(var(--gold)/0.2)] flex items-center justify-center mb-4">
+              <VideoCamera size={24} weight="duotone" className="text-[rgb(var(--gold))]" />
             </div>
             <h1
-              className="text-2xl text-[#F8FAFC] mb-1"
+              className="text-2xl text-[rgb(var(--text-main))] mb-1"
               style={{ fontFamily: 'Cormorant Garamond, serif' }}
               data-testid="prejoin-title"
             >
               {session.title}
             </h1>
-            <p className="text-xs text-[#94A3B8]">Host: {session.host_name}</p>
+            <p className="text-xs text-[rgb(var(--text-muted))]">Host: {session.host_name}</p>
           </div>
 
           {/* Background picker */}
           <div>
-            <h3 className="text-xs tracking-[0.15em] uppercase text-[#D4AF37] mb-3 text-center">
+            <h3 className="text-xs tracking-[0.15em] uppercase text-[rgb(var(--gold))] mb-3 text-center">
               Choose Your Background
             </h3>
 
@@ -221,25 +221,25 @@ export default function LiveRoomPage({ user }) {
                 onClick={() => { setBgType('none'); setSelectedBg(null); }}
                 className={`flex flex-col items-center gap-1.5 p-3 rounded-md border transition-all w-20 ${
                   bgType === 'none'
-                    ? 'border-[#D4AF37] bg-[#D4AF37]/10'
-                    : 'border-[#1E293B] bg-[#0F172A] hover:border-[#D4AF37]/30'
+                    ? 'border-[rgb(var(--gold))] bg-[rgb(var(--gold)/0.1)]'
+                    : 'border-[rgb(var(--ink-border))] bg-[rgb(var(--ink-card))] hover:border-[rgb(var(--gold)/0.3)]'
                 }`}
                 data-testid="bg-none"
               >
-                <Prohibit size={20} className={bgType === 'none' ? 'text-[#D4AF37]' : 'text-[#94A3B8]'} />
-                <span className="text-[10px] text-[#94A3B8]">None</span>
+                <Prohibit size={20} className={bgType === 'none' ? 'text-[rgb(var(--gold))]' : 'text-[rgb(var(--text-muted))]'} />
+                <span className="text-[10px] text-[rgb(var(--text-muted))]">None</span>
               </button>
               <button
                 onClick={() => { setBgType('blur'); setSelectedBg(null); }}
                 className={`flex flex-col items-center gap-1.5 p-3 rounded-md border transition-all w-20 ${
                   bgType === 'blur'
-                    ? 'border-[#D4AF37] bg-[#D4AF37]/10'
-                    : 'border-[#1E293B] bg-[#0F172A] hover:border-[#D4AF37]/30'
+                    ? 'border-[rgb(var(--gold))] bg-[rgb(var(--gold)/0.1)]'
+                    : 'border-[rgb(var(--ink-border))] bg-[rgb(var(--ink-card))] hover:border-[rgb(var(--gold)/0.3)]'
                 }`}
                 data-testid="bg-blur"
               >
-                <Drop size={20} className={bgType === 'blur' ? 'text-[#D4AF37]' : 'text-[#94A3B8]'} />
-                <span className="text-[10px] text-[#94A3B8]">Blur</span>
+                <Drop size={20} className={bgType === 'blur' ? 'text-[rgb(var(--gold))]' : 'text-[rgb(var(--text-muted))]'} />
+                <span className="text-[10px] text-[rgb(var(--text-muted))]">Blur</span>
               </button>
             </div>
 
@@ -251,8 +251,8 @@ export default function LiveRoomPage({ user }) {
                   onClick={() => { setBgType('image'); setSelectedBg(bg); }}
                   className={`relative aspect-video rounded-md overflow-hidden border-2 transition-all ${
                     bgType === 'image' && selectedBg?.id === bg.id
-                      ? 'border-[#D4AF37] ring-1 ring-[#D4AF37]/30'
-                      : 'border-[#1E293B] hover:border-[#D4AF37]/40'
+                      ? 'border-[rgb(var(--gold))] ring-1 ring-[rgb(var(--gold)/0.3)]'
+                      : 'border-[rgb(var(--ink-border))] hover:border-[rgb(var(--gold)/0.4)]'
                   }`}
                   data-testid={`bg-${bg.id}`}
                 >
@@ -263,8 +263,8 @@ export default function LiveRoomPage({ user }) {
                     loading="lazy"
                   />
                   {bgType === 'image' && selectedBg?.id === bg.id && (
-                    <div className="absolute inset-0 bg-[#D4AF37]/20 flex items-center justify-center">
-                      <Check size={20} weight="bold" className="text-[#D4AF37]" />
+                    <div className="absolute inset-0 bg-[rgb(var(--gold)/0.2)] flex items-center justify-center">
+                      <Check size={20} weight="bold" className="text-[rgb(var(--gold))]" />
                     </div>
                   )}
                   <div className="absolute bottom-0 inset-x-0 px-1.5 py-1 bg-gradient-to-t from-black/70">
@@ -280,14 +280,14 @@ export default function LiveRoomPage({ user }) {
             <Button
               variant="outline"
               onClick={() => navigate('/live')}
-              className="flex-1 border-[#1E293B] text-[#94A3B8] hover:text-[#F8FAFC]"
+              className="flex-1 border-[rgb(var(--ink-border))] text-[rgb(var(--text-muted))] hover:text-[rgb(var(--text-main))]"
               data-testid="prejoin-back-btn"
             >
               <ArrowLeft size={16} className="mr-2" /> Back
             </Button>
             <Button
               onClick={handleJoinRoom}
-              className="flex-1 bg-[#D4AF37] text-[#050814] hover:bg-[#F3E5AB] font-medium"
+              className="flex-1 bg-[rgb(var(--gold))] text-[rgb(var(--ink-deep))] hover:bg-[rgb(var(--gold-soft))] font-medium"
               data-testid="prejoin-join-btn"
             >
               <VideoCamera size={16} className="mr-2" /> Join Session
@@ -302,11 +302,11 @@ export default function LiveRoomPage({ user }) {
   return (
     <div className="h-[calc(100vh-0rem)] flex flex-col" data-testid="live-room-page">
       {/* Top Bar */}
-      <div className="flex items-center justify-between px-4 py-3 bg-[#0A1128] border-b border-[#1E293B]">
+      <div className="flex items-center justify-between px-4 py-3 bg-[rgb(var(--ink-secondary))] border-b border-[rgb(var(--ink-border))]">
         <div className="flex items-center gap-3">
           <button
             onClick={handleLeave}
-            className="text-[#94A3B8] hover:text-[#F8FAFC] transition-colors"
+            className="text-[rgb(var(--text-muted))] hover:text-[rgb(var(--text-main))] transition-colors"
             data-testid="leave-room-btn"
           >
             <ArrowLeft size={20} />
@@ -315,7 +315,7 @@ export default function LiveRoomPage({ user }) {
             <div className="flex items-center gap-2">
               <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
               <h2
-                className="text-sm font-medium text-[#F8FAFC]"
+                className="text-sm font-medium text-[rgb(var(--text-main))]"
                 style={{ fontFamily: 'Cormorant Garamond, serif' }}
                 data-testid="room-title"
               >
@@ -323,11 +323,11 @@ export default function LiveRoomPage({ user }) {
               </h2>
             </div>
             <div className="flex items-center gap-3 mt-0.5">
-              <span className="text-[10px] text-[#94A3B8]">Host: {session.host_name}</span>
+              <span className="text-[10px] text-[rgb(var(--text-muted))]">Host: {session.host_name}</span>
               {session.course_title && (
-                <span className="text-[10px] text-[#D4AF37]">{session.course_title}</span>
+                <span className="text-[10px] text-[rgb(var(--gold))]">{session.course_title}</span>
               )}
-              <span className="text-[10px] text-[#94A3B8] flex items-center gap-1">
+              <span className="text-[10px] text-[rgb(var(--text-muted))] flex items-center gap-1">
                 <Users size={10} /> {participantCount} in room
               </span>
             </div>
@@ -350,7 +350,7 @@ export default function LiveRoomPage({ user }) {
               size="sm"
               variant="outline"
               onClick={handleLeave}
-              className="border-[#1E293B] text-[#94A3B8] hover:text-red-400 text-xs"
+              className="border-[rgb(var(--ink-border))] text-[rgb(var(--text-muted))] hover:text-red-400 text-xs"
               data-testid="leave-session-btn"
             >
               Leave
@@ -360,15 +360,15 @@ export default function LiveRoomPage({ user }) {
       </div>
 
       {/* Jitsi Container */}
-      <div className="flex-1 relative bg-[#050814]">
+      <div className="flex-1 relative bg-[rgb(var(--ink-deep))]">
         {!jitsiLoaded && (
-          <div className="absolute inset-0 flex items-center justify-center z-10 bg-[#050814]">
+          <div className="absolute inset-0 flex items-center justify-center z-10 bg-[rgb(var(--ink-deep))]">
             <div className="text-center">
-              <div className="w-16 h-16 mx-auto rounded-lg bg-[#D4AF37]/10 border border-[#D4AF37]/20 flex items-center justify-center mb-4">
-                <VideoCamera size={28} weight="duotone" className="text-[#D4AF37]" />
+              <div className="w-16 h-16 mx-auto rounded-lg bg-[rgb(var(--gold)/0.1)] border border-[rgb(var(--gold)/0.2)] flex items-center justify-center mb-4">
+                <VideoCamera size={28} weight="duotone" className="text-[rgb(var(--gold))]" />
               </div>
-              <p className="text-sm text-[#94A3B8] mb-1">Setting up your classroom...</p>
-              <p className="text-[10px] text-[#94A3B8]">Camera and microphone access may be required</p>
+              <p className="text-sm text-[rgb(var(--text-muted))] mb-1">Setting up your classroom...</p>
+              <p className="text-[10px] text-[rgb(var(--text-muted))]">Camera and microphone access may be required</p>
             </div>
           </div>
         )}

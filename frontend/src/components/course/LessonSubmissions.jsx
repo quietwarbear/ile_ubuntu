@@ -91,14 +91,14 @@ export function LessonSubmissions({ courseId, lessonId, user, isInstructor }) {
     <>
       {(submission.files || []).map(f => (
         <button key={f.id} onClick={() => download(submission.id, f)}
-          className="mr-2 mt-1 inline-flex items-center gap-1 rounded border border-[#1E293B] bg-[#0F172A] px-2 py-1 text-[11px] text-[#CBD5E1] hover:border-[#D4AF37]/40"
+          className="mr-2 mt-1 inline-flex items-center gap-1 rounded border border-[rgb(var(--ink-border))] bg-[rgb(var(--ink-card))] px-2 py-1 text-[11px] text-[rgb(var(--text-softer))] hover:border-[rgb(var(--gold)/0.4)]"
           data-testid={`download-${f.id}`}>
-          {f.original_filename} <span className="text-[#64748B]">{kb(f.file_size)}</span>
+          {f.original_filename} <span className="text-[rgb(var(--text-dim))]">{kb(f.file_size)}</span>
         </button>
       ))}
       {(submission.links || []).map((url, i) => (
         <a key={i} href={url} target="_blank" rel="noopener noreferrer"
-          className="mr-2 mt-1 inline-block max-w-full truncate rounded border border-[#1E293B] bg-[#0F172A] px-2 py-1 text-[11px] text-[#D4AF37] hover:underline">
+          className="mr-2 mt-1 inline-block max-w-full truncate rounded border border-[rgb(var(--ink-border))] bg-[rgb(var(--ink-card))] px-2 py-1 text-[11px] text-[rgb(var(--gold))] hover:underline">
           {url}
         </a>
       ))}
@@ -106,51 +106,51 @@ export function LessonSubmissions({ courseId, lessonId, user, isInstructor }) {
   );
 
   return (
-    <div className="mt-4 rounded border border-[#1E293B] bg-[#050814] p-3" data-testid="lesson-submissions">
+    <div className="mt-4 rounded border border-[rgb(var(--ink-border))] bg-[rgb(var(--ink-deep))] p-3" data-testid="lesson-submissions">
       <button onClick={() => setOpen(v => !v)}
         className="flex w-full items-center justify-between text-left"
         data-testid="toggle-submissions">
-        <span className="text-xs font-medium tracking-wide text-[#D4AF37]">
+        <span className="text-xs font-medium tracking-wide text-[rgb(var(--gold))]">
           {isInstructor ? 'Submitted Work' : 'Your Work'}
         </span>
-        <span className="text-[10px] text-[#94A3B8]">{open ? 'Hide' : 'Show'}</span>
+        <span className="text-[10px] text-[rgb(var(--text-muted))]">{open ? 'Hide' : 'Show'}</span>
       </button>
 
       {open && (
         <div className="mt-3 space-y-3">
           {isInstructor ? (
             all.length === 0 ? (
-              <p className="text-xs text-[#94A3B8]">Nothing handed in yet.</p>
+              <p className="text-xs text-[rgb(var(--text-muted))]">Nothing handed in yet.</p>
             ) : all.map(s => (
-              <div key={s.id} className="rounded border border-[#1E293B] bg-[#0F172A] p-3"
+              <div key={s.id} className="rounded border border-[rgb(var(--ink-border))] bg-[rgb(var(--ink-card))] p-3"
                 data-testid={`submission-${s.id}`}>
                 <div className="flex flex-wrap items-baseline justify-between gap-2">
-                  <span className="text-sm text-[#F8FAFC]">{s.student_name}</span>
-                  <span className="text-[10px] text-[#94A3B8]">
+                  <span className="text-sm text-[rgb(var(--text-main))]">{s.student_name}</span>
+                  <span className="text-[10px] text-[rgb(var(--text-muted))]">
                     {when(s.updated_at || s.submitted_at)}
                   </span>
                 </div>
                 {s.student_email && (
-                  <p className="text-[10px] text-[#64748B] break-all">{s.student_email}</p>
+                  <p className="text-[10px] text-[rgb(var(--text-dim))] break-all">{s.student_email}</p>
                 )}
-                {s.note && <p className="mt-2 whitespace-pre-wrap text-xs text-[#CBD5E1]">{s.note}</p>}
+                {s.note && <p className="mt-2 whitespace-pre-wrap text-xs text-[rgb(var(--text-softer))]">{s.note}</p>}
                 <div className="mt-1"><Attachments submission={s} /></div>
               </div>
             ))
           ) : (
             <>
               {mine && (
-                <div className="rounded border border-[#1E293B] bg-[#0F172A] p-3" data-testid="my-submission">
+                <div className="rounded border border-[rgb(var(--ink-border))] bg-[rgb(var(--ink-card))] p-3" data-testid="my-submission">
                   <div className="flex flex-wrap items-baseline justify-between gap-2">
                     <span className="text-xs text-emerald-400">Handed in</span>
-                    <span className="text-[10px] text-[#94A3B8]">
+                    <span className="text-[10px] text-[rgb(var(--text-muted))]">
                       {when(mine.updated_at || mine.submitted_at)}
                     </span>
                   </div>
-                  {mine.note && <p className="mt-2 whitespace-pre-wrap text-xs text-[#CBD5E1]">{mine.note}</p>}
+                  {mine.note && <p className="mt-2 whitespace-pre-wrap text-xs text-[rgb(var(--text-softer))]">{mine.note}</p>}
                   <div className="mt-1"><Attachments submission={mine} /></div>
                   <Button onClick={() => withdraw(mine)} disabled={busy} size="sm" variant="ghost"
-                    className="mt-2 text-[#94A3B8] hover:text-red-400 text-[11px]"
+                    className="mt-2 text-[rgb(var(--text-muted))] hover:text-red-400 text-[11px]"
                     data-testid="withdraw-submission">
                     Withdraw
                   </Button>
@@ -160,24 +160,24 @@ export function LessonSubmissions({ courseId, lessonId, user, isInstructor }) {
               <div className="space-y-2">
                 <input ref={fileRef} type="file" multiple
                   onChange={e => setPicked(Array.from(e.target.files || []))}
-                  className="block w-full text-[11px] text-[#94A3B8] file:mr-2 file:rounded file:border-0 file:bg-[#D4AF37] file:px-3 file:py-1 file:text-[11px] file:text-[#050814]"
+                  className="block w-full text-[11px] text-[rgb(var(--text-muted))] file:mr-2 file:rounded file:border-0 file:bg-[rgb(var(--gold))] file:px-3 file:py-1 file:text-[11px] file:text-[rgb(var(--ink-deep))]"
                   data-testid="submission-files" />
                 <textarea value={links} onChange={e => setLinks(e.target.value)} rows={2}
                   placeholder="Links, one per line — a Google Doc, a Drive file…"
-                  className="w-full rounded-md border border-[#1E293B] bg-[#0F172A] p-2 text-xs text-[#F8FAFC] focus:border-[#D4AF37]/50 focus:outline-none"
+                  className="w-full rounded-md border border-[rgb(var(--ink-border))] bg-[rgb(var(--ink-card))] p-2 text-xs text-[rgb(var(--text-main))] focus:border-[rgb(var(--gold)/0.5)] focus:outline-none"
                   data-testid="submission-links" />
                 <textarea value={note} onChange={e => setNote(e.target.value)} rows={2}
                   placeholder="Anything you want your teacher to know (optional)"
-                  className="w-full rounded-md border border-[#1E293B] bg-[#0F172A] p-2 text-xs text-[#F8FAFC] focus:border-[#D4AF37]/50 focus:outline-none"
+                  className="w-full rounded-md border border-[rgb(var(--ink-border))] bg-[rgb(var(--ink-card))] p-2 text-xs text-[rgb(var(--text-main))] focus:border-[rgb(var(--gold)/0.5)] focus:outline-none"
                   data-testid="submission-note" />
                 <Button onClick={submit} size="sm"
                   disabled={busy || (!picked.length && !links.trim() && !note.trim())}
-                  className="bg-[#D4AF37] text-[#050814] hover:bg-[#F3E5AB] text-xs"
+                  className="bg-[rgb(var(--gold))] text-[rgb(var(--ink-deep))] hover:bg-[rgb(var(--gold-soft))] text-xs"
                   data-testid="submit-work">
                   {busy ? 'Sending…' : mine ? 'Add to my work' : 'Hand in work'}
                 </Button>
                 {mine && (
-                  <p className="text-[10px] text-[#64748B]">
+                  <p className="text-[10px] text-[rgb(var(--text-dim))]">
                     Adding keeps what you already handed in. To replace a file, withdraw first.
                   </p>
                 )}

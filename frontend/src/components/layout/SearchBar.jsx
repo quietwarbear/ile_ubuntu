@@ -81,36 +81,36 @@ export default function SearchBar() {
 
   return (
     <div ref={wrapperRef} className="relative w-full max-w-md" data-testid="search-bar">
-      <div className="flex items-center gap-2 bg-[#0F172A] border border-[#1E293B] rounded-md px-3 py-1.5 focus-within:border-[#D4AF37]/40 transition-colors">
-        <MagnifyingGlass size={14} weight="bold" className="text-[#94A3B8] flex-shrink-0" />
+      <div className="flex items-center gap-2 bg-[rgb(var(--ink-card))] border border-[rgb(var(--ink-border))] rounded-md px-3 py-1.5 focus-within:border-[rgb(var(--gold)/0.4)] transition-colors">
+        <MagnifyingGlass size={14} weight="bold" className="text-[rgb(var(--text-muted))] flex-shrink-0" />
         <input
           type="text"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           onFocus={() => results && setOpen(true)}
           placeholder="Search courses, posts, archives..."
-          className="bg-transparent text-xs text-[#F8FAFC] placeholder:text-[#475569] outline-none flex-1"
+          className="bg-transparent text-xs text-[rgb(var(--text-main))] placeholder:text-[rgb(var(--text-faint))] outline-none flex-1"
           data-testid="search-input"
         />
         {query && (
-          <button onClick={() => { setQuery(''); setOpen(false); }} className="text-[#94A3B8] hover:text-[#F8FAFC]">
+          <button onClick={() => { setQuery(''); setOpen(false); }} className="text-[rgb(var(--text-muted))] hover:text-[rgb(var(--text-main))]">
             <X size={12} />
           </button>
         )}
-        {loading && <div className="w-3 h-3 border border-[#D4AF37] border-t-transparent rounded-full animate-spin" />}
+        {loading && <div className="w-3 h-3 border border-[rgb(var(--gold))] border-t-transparent rounded-full animate-spin" />}
       </div>
 
       {/* Dropdown */}
       {open && results && (
-        <div className="absolute top-full left-0 right-0 mt-1 bg-[#0F172A] border border-[#1E293B] rounded-md shadow-xl max-h-80 overflow-y-auto z-50" data-testid="search-results">
+        <div className="absolute top-full left-0 right-0 mt-1 bg-[rgb(var(--ink-card))] border border-[rgb(var(--ink-border))] rounded-md shadow-xl max-h-80 overflow-y-auto z-50" data-testid="search-results">
           {totalResults === 0 ? (
             <div className="p-4 text-center">
-              <p className="text-xs text-[#94A3B8]">No results for "{query}"</p>
+              <p className="text-xs text-[rgb(var(--text-muted))]">No results for "{query}"</p>
             </div>
           ) : (<>
             <button
               onClick={() => { navigate(`/search?q=${encodeURIComponent(query)}`); setOpen(false); setQuery(''); }}
-              className="w-full text-left px-3 py-2 text-[10px] text-[#D4AF37] hover:bg-[#1E293B]/50 transition-colors border-b border-[#1E293B]"
+              className="w-full text-left px-3 py-2 text-[10px] text-[rgb(var(--gold))] hover:bg-[rgb(var(--ink-border)/0.5)] transition-colors border-b border-[rgb(var(--ink-border))]"
               data-testid="view-all-results"
             >
               View all {totalResults} results with filters &rarr;
@@ -120,23 +120,23 @@ export default function SearchBar() {
               const Icon = SECTION_ICONS[section] || BookOpenText;
               return (
                 <div key={section}>
-                  <div className="px-3 py-1.5 bg-[#050814] border-b border-[#1E293B]">
+                  <div className="px-3 py-1.5 bg-[rgb(var(--ink-deep))] border-b border-[rgb(var(--ink-border))]">
                     <div className="flex items-center gap-1.5">
-                      <Icon size={11} weight="duotone" className="text-[#D4AF37]" />
-                      <span className="text-[9px] uppercase tracking-widest text-[#D4AF37]">{section}</span>
-                      <span className="text-[9px] text-[#475569]">({items.length})</span>
+                      <Icon size={11} weight="duotone" className="text-[rgb(var(--gold))]" />
+                      <span className="text-[9px] uppercase tracking-widest text-[rgb(var(--gold))]">{section}</span>
+                      <span className="text-[9px] text-[rgb(var(--text-faint))]">({items.length})</span>
                     </div>
                   </div>
                   {items.map((item, i) => (
                     <button
                       key={item.id || i}
                       onClick={() => handleSelect(section, item)}
-                      className="w-full text-left px-3 py-2 hover:bg-[#1E293B]/50 transition-colors border-b border-[#1E293B]/50 last:border-0"
+                      className="w-full text-left px-3 py-2 hover:bg-[rgb(var(--ink-border)/0.5)] transition-colors border-b border-[rgb(var(--ink-border)/0.5)] last:border-0"
                       data-testid={`search-result-${section}-${i}`}
                     >
-                      <p className="text-xs text-[#F8FAFC] truncate">{item.title || item.name}</p>
+                      <p className="text-xs text-[rgb(var(--text-main))] truncate">{item.title || item.name}</p>
                       {item.description && (
-                        <p className="text-[9px] text-[#94A3B8] truncate mt-0.5">{item.description}</p>
+                        <p className="text-[9px] text-[rgb(var(--text-muted))] truncate mt-0.5">{item.description}</p>
                       )}
                     </button>
                   ))}
