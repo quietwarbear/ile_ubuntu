@@ -46,7 +46,10 @@ export default function GuideWidget({ user }) {
     setQuestion('');
     setBusy(true);
     try {
-      const res = await apiPost('/api/guide/ask', { question: q, page: location.pathname });
+      // Prior visible turns ride along so follow-up questions resolve;
+      // the server caps and validates this.
+      const history = thread.map(m => ({ role: m.who === 'me' ? 'user' : 'assistant', text: m.text })).slice(-8);
+      const res = await apiPost('/api/guide/ask', { question: q, page: location.pathname, history });
       setThread(t => [...t, { who: 'guide', text: res.answer, route: res.route }]);
     } catch (e) {
       setThread(t => [...t, { who: 'guide', text: e.message || 'I couldn\'t answer just now — please try again.' }]);

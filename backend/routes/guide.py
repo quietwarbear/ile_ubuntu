@@ -77,8 +77,25 @@ async def ask_guide(request: Request, current_user: dict = Depends(get_current_u
     if len(question) < 2:
         raise HTTPException(status_code=400, detail="Ask me something!")
 
+    # Conversation memory: the client sends its visible thread so follow-ups
+    # ("and how do I share it?") resolve. Same privacy contract — this is
+    # only the asker's own guide Q&A, which the model already saw turn by
+    # turn. Capped hard: the last 8 turns, each truncated, roles validated.
+    history = []
+    for turn in (data.get("history") or [])[-8:]:
+        if not isinstance(turn, dict):
+            continue
+        role = turn.get("role")
+        text = (turn.get("text") or "").strip()[:1000]
+        if role in ("user", "assistant") and text:
+            history.append({"role": role, "content": text})
+    while history and history[0]["role"] != "user":
+        history.pop(0)  # the API requires the transcript to open with the user
+
+    # First name only — the full name made replies read like a summons.
+    first_name = (current_user.get("name") or "a member").split(" ")[0]
     persona = (
-        f"The person asking is {current_user.get('name', 'a member')} "
+        f"The person asking is {first_name} "
         f"(role: {current_user.get('role', 'student')}, "
         f"joined as: {current_user.get('intent') or 'learner'})."
     )
@@ -97,7 +114,7 @@ async def ask_guide(request: Request, current_user: dict = Depends(get_current_u
                 {"type": "text", "text": KNOWLEDGE, "cache_control": {"type": "ephemeral"}},
                 {"type": "text", "text": persona + " " + FORMAT_RULES},
             ],
-            messages=[{"role": "user", "content": question}],
+            messages=history + [{"role": "user", "content": question}],
         )
     except anthropic.RateLimitError:
         raise HTTPException(status_code=503, detail="The guide is catching their breath — try again in a minute.")
