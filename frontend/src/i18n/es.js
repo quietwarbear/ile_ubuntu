@@ -32,7 +32,7 @@ const es = {
   nav_help: 'Ayuda',
   theme_dark: 'Noche',
   theme_light: 'Día',
-  village_guide: 'Guía del Pueblo',
+  village_guide: 'Pregúntale a Ìmọ̀',
   teacher_dashboard: 'Panel del Docente',
   dashboard: 'Panel',
   courses: 'Cursos',

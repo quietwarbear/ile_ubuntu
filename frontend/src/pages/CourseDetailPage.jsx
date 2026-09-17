@@ -462,7 +462,7 @@ export default function CourseDetailPage({ user }) {
                           draggable
                           onDragStart={(e) => { setDraggedLessonId(lesson.id); e.dataTransfer.effectAllowed = 'move'; }}
                           onDragEnd={() => setDraggedLessonId(null)}
-                          className="flex items-center px-1 cursor-grab active:cursor-grabbing text-[#475569] hover:text-[#D4AF37]"
+                          className="flex items-center px-1 cursor-grab active:cursor-grabbing text-[rgb(var(--text-faint))] hover:text-[rgb(var(--gold))]"
                           title="Drag to reorder"
                           data-testid={`lesson-drag-${lesson.id}`}
                         >

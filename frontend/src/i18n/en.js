@@ -32,7 +32,7 @@ const en = {
   nav_help: 'Help',
   theme_dark: 'Midnight',
   theme_light: 'Daylight',
-  village_guide: 'Village Guide',
+  village_guide: 'Ask Ìmọ̀',
   teacher_dashboard: 'Teacher Dashboard',
   dashboard: 'Dashboard',
   courses: 'Courses',
