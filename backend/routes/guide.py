@@ -1,4 +1,4 @@
-"""The Village Guide — a greeter/navigator, not a chatbot (Doc's framing).
+"""Ìmọ̀ — the village guide: a greeter/navigator, not a chatbot (Doc's framing).
 
 Answers "how do I…" questions from a curated knowledge file
 (guide_knowledge.md) and points people to the right page. Env-gated like
@@ -32,7 +32,7 @@ _KNOWLEDGE_PATH = Path(__file__).resolve().parent.parent / "guide_knowledge.md"
 try:
     KNOWLEDGE = _KNOWLEDGE_PATH.read_text()
 except Exception:  # missing knowledge file — guide can still run, thinner
-    KNOWLEDGE = "You are the Village Guide for Ilé Ubuntu, a living learning commons."
+    KNOWLEDGE = "You are Ìmọ̀, the village guide for Ilé Ubuntu, a living learning commons."
 
 # Valid in-app routes the guide may point to; anything else is dropped so a
 # hallucinated route can never become a broken "Take me there" button.

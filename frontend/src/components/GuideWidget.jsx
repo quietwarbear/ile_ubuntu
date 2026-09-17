@@ -3,7 +3,8 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { Compass, X, PaperPlaneRight } from '@phosphor-icons/react';
 import { apiGet, apiPost } from '../lib/api';
 
-// The Village Guide — a greeter/navigator, not a chatbot. Renders only when
+// Ìmọ̀ (Yoruba: "knowledge", pronounced ee-maw) — the village guide: a
+// greeter/navigator, not a chatbot. Renders only when
 // the server has the guide configured (GET /api/guide/status), so nothing
 // appears in prod until the ANTHROPIC_API_KEY is set.
 export default function GuideWidget({ user }) {
@@ -35,8 +36,8 @@ export default function GuideWidget({ user }) {
 
   const firstName = (user?.name || '').split(' ')[0];
   const greeting = user?.intent === 'family'
-    ? `Welcome to the village${firstName ? ', ' + firstName : ''}. I can show you how to follow your young person's growth — ask me anything about the app.`
-    : `Welcome${firstName ? ', ' + firstName : ''} — I'm your guide to the village. Ask me how to do anything here.`;
+    ? `Welcome to the village${firstName ? ', ' + firstName : ''}. I'm Ìmọ̀ (ee-maw) — I can show you how to follow your young person's growth. Ask me anything about the app.`
+    : `Welcome${firstName ? ', ' + firstName : ''} — I'm Ìmọ̀ (ee-maw), your guide to the village. Ask me how to do anything here.`;
 
   const ask = async () => {
     const q = question.trim();
@@ -60,12 +61,12 @@ export default function GuideWidget({ user }) {
         <button
           onClick={() => setOpen(true)}
           className="fixed bottom-5 right-5 z-40 h-12 pl-4 pr-5 rounded-full bg-[rgb(var(--gold))] text-[rgb(var(--ink-deep))] shadow-lg shadow-black/40 flex items-center justify-center gap-2 hover:bg-[rgb(var(--gold-soft))] transition-colors"
-          title="Ask the Village Guide"
+          title="Ask Ìmọ̀ — your village guide"
           data-testid="guide-launcher"
         >
           <Compass size={24} weight="duotone" />
           {/* An unlabeled compass reads as decoration; say what it is. */}
-          <span className="text-sm font-semibold">Guide</span>
+          <span className="text-sm font-semibold">Ìmọ̀</span>
         </button>
       )}
 
@@ -74,7 +75,7 @@ export default function GuideWidget({ user }) {
         <div className="fixed bottom-5 right-5 z-40 w-[min(92vw,360px)] rounded-lg border border-[rgb(var(--gold)/0.3)] bg-[rgb(var(--ink-card))] shadow-2xl shadow-black/60 flex flex-col overflow-hidden" data-testid="guide-panel">
           <div className="flex items-center justify-between px-4 py-3 bg-[rgb(var(--ink-deep))] border-b border-[rgb(var(--ink-border))]">
             <span className="flex items-center gap-2 text-sm text-[rgb(var(--text-main))]" style={{ fontFamily: 'Cormorant Garamond, serif' }}>
-              <Compass size={16} weight="duotone" className="text-[rgb(var(--gold))]" /> Village Guide
+              <Compass size={16} weight="duotone" className="text-[rgb(var(--gold))]" /> Ìmọ̀ · Village Guide
             </span>
             <button onClick={() => setOpen(false)} className="text-[rgb(var(--text-muted))] hover:text-[rgb(var(--text-main))]" data-testid="guide-close">
               <X size={16} />

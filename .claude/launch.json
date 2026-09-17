@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "ile-frontend",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["start", "--prefix", "/Users/professortoure/development/projects/ubuntuMarket/ile_ubuntu/frontend"],
+      "port": 3000
+    }
+  ]
+}

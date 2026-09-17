@@ -32,7 +32,7 @@ const yo = {
   nav_help: 'Ìrànlọ́wọ́',
   theme_dark: 'Òru',
   theme_light: 'Ọ̀sán',
-  village_guide: 'Amọ̀nà Abúlé',
+  village_guide: 'Bèèrè lọ́wọ́ Ìmọ̀',
   teacher_dashboard: 'Pánẹ́lì Olùkọ́',
   dashboard: 'Pánẹ́lì',
   courses: 'Àwọn Ẹ̀kọ́',
