@@ -25,6 +25,7 @@ import {
   Trash,
   Key,
   PaperPlaneTilt,
+  LockKey,
 } from '@phosphor-icons/react';
 import { apiGet, apiPut, apiPost, apiDelete, clearCookie, clearOfflineCache } from '../lib/api';
 
@@ -40,6 +41,12 @@ export default function SettingsPage({ user }) {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deleteInProgress, setDeleteInProgress] = useState(false);
   const [deleteError, setDeleteError] = useState('');
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [passwordBusy, setPasswordBusy] = useState(false);
+  const [passwordNote, setPasswordNote] = useState('');
+  const [passwordChanged, setPasswordChanged] = useState(false);
 
   const isAdmin = ['admin', 'elder'].includes(user?.role);
   const isFaculty = ['faculty', 'elder', 'admin'].includes(user?.role);
@@ -228,6 +235,39 @@ export default function SettingsPage({ user }) {
     }
   };
 
+  const handleChangePassword = async (event) => {
+    event.preventDefault();
+    setPasswordNote('');
+
+    if (newPassword.length < 6) {
+      setPasswordNote('Your new password must be at least 6 characters.');
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      setPasswordNote('The new passwords do not match.');
+      return;
+    }
+
+    setPasswordBusy(true);
+    try {
+      const result = await apiPut('/api/auth/me/password', {
+        current_password: currentPassword,
+        new_password: newPassword,
+      });
+      setPasswordChanged(true);
+      setPasswordNote(result.message || 'Password updated. Please sign in again.');
+      setCurrentPassword('');
+      setNewPassword('');
+      setConfirmPassword('');
+      clearCookie('session_id');
+      clearOfflineCache();
+      window.setTimeout(() => { window.location.href = '/login'; }, 1600);
+    } catch (e) {
+      setPasswordNote(e.message || 'Could not update your password.');
+      setPasswordBusy(false);
+    }
+  };
+
   const roleColor = (role) => {
     const colors = {
       admin: 'bg-red-500/10 text-red-400 border-red-500/20',
@@ -260,6 +300,98 @@ export default function SettingsPage({ user }) {
             <p className="text-sm text-[rgb(var(--text-muted))]">{user?.email}</p>
             <Badge className={`mt-1 text-[10px] ${roleColor(user?.role)}`}>{user?.role}</Badge>
           </div>
+        </CardContent>
+      </Card>
+
+      {/* Password */}
+      <Card className="bg-[#0F172A] border-[#1E293B]" data-testid="change-password-card">
+        <CardHeader>
+          <CardTitle className="text-lg text-[#F8FAFC] flex items-center gap-2" style={{ fontFamily: 'Cormorant Garamond, serif' }}>
+            <LockKey size={20} weight="duotone" className="text-[#D4AF37]" />
+            Change My Password
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-xs text-[#94A3B8] mb-4">
+            {user?.has_password
+              ? 'Enter your current password, then choose a new one.'
+              : 'Create a password so you can also sign in with your email address.'}
+          </p>
+          <form className="space-y-3" onSubmit={handleChangePassword}>
+            {user?.has_password && (
+              <div>
+                <label htmlFor="current-password" className="block text-[11px] uppercase tracking-wide text-[#94A3B8] mb-1">
+                  Current password
+                </label>
+                <input
+                  id="current-password"
+                  type="password"
+                  autoComplete="current-password"
+                  value={currentPassword}
+                  onChange={(e) => setCurrentPassword(e.target.value)}
+                  required
+                  className="w-full rounded-md border border-[#1E293B] bg-[#050814] px-3 py-2 text-sm text-[#F8FAFC] focus:border-[#D4AF37]/50 focus:outline-none"
+                  data-testid="current-password-input"
+                />
+              </div>
+            )}
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div>
+                <label htmlFor="new-password" className="block text-[11px] uppercase tracking-wide text-[#94A3B8] mb-1">
+                  New password
+                </label>
+                <input
+                  id="new-password"
+                  type="password"
+                  autoComplete="new-password"
+                  minLength={6}
+                  maxLength={72}
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  required
+                  className="w-full rounded-md border border-[#1E293B] bg-[#050814] px-3 py-2 text-sm text-[#F8FAFC] focus:border-[#D4AF37]/50 focus:outline-none"
+                  data-testid="new-password-input"
+                />
+              </div>
+              <div>
+                <label htmlFor="confirm-password" className="block text-[11px] uppercase tracking-wide text-[#94A3B8] mb-1">
+                  Confirm new password
+                </label>
+                <input
+                  id="confirm-password"
+                  type="password"
+                  autoComplete="new-password"
+                  minLength={6}
+                  maxLength={72}
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  required
+                  className="w-full rounded-md border border-[#1E293B] bg-[#050814] px-3 py-2 text-sm text-[#F8FAFC] focus:border-[#D4AF37]/50 focus:outline-none"
+                  data-testid="confirm-password-input"
+                />
+              </div>
+            </div>
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+              <Button
+                type="submit"
+                disabled={passwordBusy || passwordChanged}
+                className="bg-[#D4AF37] text-[#050814] hover:bg-[#F3E5AB]"
+                data-testid="change-password-btn"
+              >
+                <Key size={16} weight="duotone" className="mr-2" />
+                {passwordBusy ? 'Updating…' : user?.has_password ? 'Change password' : 'Create password'}
+              </Button>
+              {passwordNote && (
+                <p
+                  className={`text-xs ${passwordChanged ? 'text-emerald-400' : 'text-red-400'}`}
+                  role="status"
+                  data-testid="change-password-note"
+                >
+                  {passwordNote}
+                </p>
+              )}
+            </div>
+          </form>
         </CardContent>
       </Card>
 
