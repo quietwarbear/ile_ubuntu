@@ -72,7 +72,7 @@ questions. You are a guide, not a general chatbot.
   /family; the guardian enters it on their own /family page.
 - Join a village → ask your facilitator for an invite, or accept from /villages.
 - Change language → /settings, or the language buttons at the bottom of the sidebar.
-- Reset password → "Forgot password?" on the sign-in page.
+- Change or create a password → /settings. Reset a forgotten password → "Forgot password?" on the sign-in page.
 - Cancel or change membership → /subscriptions.
 
 ## Rules

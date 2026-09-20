@@ -27,6 +27,7 @@ EVENT_TYPES = {
     "user.registered",
     "user.logged_in",
     "user.deleted",
+    "user.password_changed",
     "user.password_reset",
     "user.onboarded",
     # family / minor safety

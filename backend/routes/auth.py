@@ -1041,6 +1041,53 @@ def get_me(current_user: dict = Depends(get_current_user)):
         "interests": current_user.get("interests", []),
         "intent": current_user.get("intent", "learner"),
         "is_minor": current_user.get("is_minor", False),
+        # The client only needs to know whether to request the existing password.
+        # Never expose the password hash itself.
+        "has_password": bool(current_user.get("password_hash")),
+    }
+
+
+@router.put("/me/password")
+async def change_my_password(request: Request, current_user: dict = Depends(get_current_user)):
+    """Set or change the authenticated user's local password.
+
+    Existing password users must prove knowledge of their current password.
+    Social/SSO-only users may create a local password because their active Ile
+    Ubuntu session already authenticated them with the upstream provider.
+    All sessions are revoked after the change so a stolen session cannot remain
+    active with the old credentials.
+    """
+    rate_limit(request, "change_password", max_requests=5, window_seconds=900)
+    data = await request.json()
+    current_password = data.get("current_password") or ""
+    new_password = data.get("new_password") or ""
+    existing_hash = current_user.get("password_hash")
+
+    if len(new_password) < 6:
+        raise HTTPException(status_code=400, detail="Password must be at least 6 characters")
+    if len(new_password.encode("utf-8")) > 72:
+        raise HTTPException(status_code=400, detail="Password must be 72 bytes or fewer")
+
+    if existing_hash:
+        if not current_password or not pwd_context.verify(current_password, existing_hash):
+            raise HTTPException(status_code=400, detail="Current password is incorrect")
+        if pwd_context.verify(new_password, existing_hash):
+            raise HTTPException(status_code=400, detail="New password must be different from your current password")
+
+    users_col.update_one(
+        {"id": current_user["id"]},
+        {"$set": {"password_hash": pwd_context.hash(new_password)}},
+    )
+    password_resets_col.update_many(
+        {"user_id": current_user["id"], "used": False},
+        {"$set": {"used": True}},
+    )
+    sessions_col.delete_many({"user_id": current_user["id"]})
+    emit("user.password_changed", {"id": current_user["id"]})
+
+    return {
+        "success": True,
+        "message": "Password updated. Please sign in again with your new password.",
     }
 
 
