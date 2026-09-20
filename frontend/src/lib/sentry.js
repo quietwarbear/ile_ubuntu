@@ -6,6 +6,13 @@
 import * as Sentry from "@sentry/capacitor";
 import * as SentryReact from "@sentry/react";
 
+export function resolveSentryEnvironment(hostname, configuredEnvironment) {
+  if (/^(?:localhost|127(?:\.\d{1,3}){3}|\[::1\])$/i.test(hostname || "")) {
+    return "development";
+  }
+  return configuredEnvironment || "production";
+}
+
 export function initSentry() {
   const dsn = (process.env.REACT_APP_SENTRY_DSN || "").trim();
   if (!dsn) return;
@@ -14,7 +21,10 @@ export function initSentry() {
     Sentry.init(
       {
         dsn,
-        environment: process.env.REACT_APP_SENTRY_ENVIRONMENT || "production",
+        environment: resolveSentryEnvironment(
+          window.location.hostname,
+          process.env.REACT_APP_SENTRY_ENVIRONMENT,
+        ),
         release: process.env.REACT_APP_SENTRY_RELEASE || undefined,
         tracesSampleRate: 0.1,
         sendDefaultPii: false,
