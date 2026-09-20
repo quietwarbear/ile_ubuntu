@@ -2528,17 +2528,17 @@
   resolved "https://registry.npmjs.org/@radix-ui/rect/-/rect-1.1.1.tgz"
   integrity sha512-HPwpGIzkl28mWyZqG52jiqDJ12waP11Pa1lGoiyUkIEuMLBP0oeK/C89esbXrxsky5we7dfd8U58nm0SgAWpVw==
 
-"@revenuecat/purchases-capacitor@^11.3.2":
-  version "11.3.2"
-  resolved "https://registry.npmjs.org/@revenuecat/purchases-capacitor/-/purchases-capacitor-11.3.2.tgz"
-  integrity sha512-3T4/lcAwpbPagrT4DuXvJ+8RewzFmHf3fQJQuhVy+uTQk5HGMHNlXcm2A/UdyHtWqU+/VqWbCClPFYGnpnNXAQ==
+"@revenuecat/purchases-capacitor@^13.3.0":
+  version "13.3.0"
+  resolved "https://registry.yarnpkg.com/@revenuecat/purchases-capacitor/-/purchases-capacitor-13.3.0.tgz#cf6c7c727f6168ebe1221a8613d9126e724371d6"
+  integrity sha512-Sc4+3r8ERUJKIO1H6jWzRZ1WljoaZ+DKwvi4yGivKkol/14gHYMSjjTkrUVT2x4qIMGywGhGNrut5tx2fL74oA==
   dependencies:
-    "@revenuecat/purchases-typescript-internal-esm" "17.25.0"
+    "@revenuecat/purchases-typescript-internal-esm" "18.28.0"
 
-"@revenuecat/purchases-typescript-internal-esm@17.25.0":
-  version "17.25.0"
-  resolved "https://registry.npmjs.org/@revenuecat/purchases-typescript-internal-esm/-/purchases-typescript-internal-esm-17.25.0.tgz"
-  integrity sha512-KC4BjFaQclXqFafG1Enh7t8GSwdg8p905by7UrHq0WSJmLhOR6yXSj6WDv1iwsFSAZxPPwgozNxt+U6IOFTdCA==
+"@revenuecat/purchases-typescript-internal-esm@18.28.0":
+  version "18.28.0"
+  resolved "https://registry.yarnpkg.com/@revenuecat/purchases-typescript-internal-esm/-/purchases-typescript-internal-esm-18.28.0.tgz#e07aef8566aa21b1ee4d43fd7a73fabe1847001c"
+  integrity sha512-RikgVZOZ8EEJb1IwiP/CJj4esSTOJXw5WK5jpNl09APkCpAciMDTcAEML2HaMHduLE6Nd3fr3dr+jsxI5p74Rw==
 
 "@rollup/plugin-babel@^5.2.0":
   version "5.3.1"
