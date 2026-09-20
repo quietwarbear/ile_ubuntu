@@ -1,6 +1,7 @@
 import React, { useState, useEffect, lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import { getCookie, setCookie, apiPost, apiGet } from './lib/api';
+import { hasPendingTier } from './lib/pendingTier';
 import { identifyUser, resetAnalytics } from './lib/analytics';
 import { I18nProvider } from './i18n';
 import { initializeRevenueCat, syncRevenueCatUser, logOutRevenueCat } from './lib/revenuecat';
@@ -162,6 +163,16 @@ function PublicRoutes({ handlePasswordLogin }) {
 
 function App() {
   const [user, setUser] = useState(null);
+
+  // Someone who picked Scholar or Elder Circle on the landing page signed in
+  // to buy it. Land them on the plans, not the dashboard — otherwise the
+  // intent they arrived with is gone by the time they're inside.
+  // SubscriptionsPage consumes the stored choice, so this self-clears.
+  useEffect(() => {
+    if (user && hasPendingTier()) {
+      navigate('/subscriptions');
+    }
+  }, [user, navigate]);
   const [loading, setLoading] = useState(true);
   const [showOnboarding, setShowOnboarding] = useState(false);
 

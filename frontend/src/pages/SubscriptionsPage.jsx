@@ -7,6 +7,7 @@ import {
   CreditCard, Sparkle, DeviceMobile, ArrowsClockwise,
 } from '@phosphor-icons/react';
 import { apiGet, apiPost } from '../lib/api';
+import { takePendingTier } from '../lib/pendingTier';
 import {
   isNative,
   TIER_TO_PRODUCT_ID,
@@ -46,6 +47,7 @@ export default function SubscriptionsPage({ user }) {
   const [paymentResult, setPaymentResult] = useState(null);
   const [processingTier, setProcessingTier] = useState(null);
   const [billingPeriod, setBillingPeriod] = useState('monthly'); // 'monthly' or 'annual'
+  const [preselectedTier, setPreselectedTier] = useState(null);
   const [restoringPurchases, setRestoringPurchases] = useState(false);
   const [cancelingWeb, setCancelingWeb] = useState(false);
 
@@ -69,6 +71,16 @@ export default function SubscriptionsPage({ user }) {
   useEffect(() => {
     fetchData();
   }, [fetchData]);
+
+  // The visitor chose this tier on the landing page and made an account to
+  // get here. Open on their billing period and mark the card, rather than
+  // making them find it again.
+  useEffect(() => {
+    const pending = takePendingTier();
+    if (!pending) return;
+    setPreselectedTier(pending.tierId);
+    setBillingPeriod(pending.period);
+  }, []);
 
   // Check for returning from Stripe checkout (web only)
   useEffect(() => {
@@ -299,7 +311,7 @@ export default function SubscriptionsPage({ user }) {
             : null;
 
           return (
-            <Card key={tierId} className={`bg-[rgb(var(--ink-card))] ${isActive ? 'border-[rgb(var(--gold))] ring-1 ring-[rgb(var(--gold)/0.2)]' : 'border-[rgb(var(--ink-border))]'} ${TIER_COLORS[tierId]} relative overflow-hidden`} data-testid={`tier-${tierId}`}>
+            <Card key={tierId} className={`bg-[rgb(var(--ink-card))] ${isActive ? 'border-[rgb(var(--gold))] ring-1 ring-[rgb(var(--gold)/0.2)]' : preselectedTier === tierId ? 'border-[rgb(var(--gold)/0.6)] ring-1 ring-[rgb(var(--gold)/0.3)]' : 'border-[rgb(var(--ink-border))]'} ${TIER_COLORS[tierId]} relative overflow-hidden`} data-preselected={preselectedTier === tierId ? 'true' : undefined} data-testid={`tier-${tierId}`}>
               {isActive && (
                 <div className="absolute top-2 right-2">
                   <Badge className="bg-[rgb(var(--gold)/0.2)] text-[rgb(var(--gold))] border-[rgb(var(--gold)/0.3)] text-[8px]">Current</Badge>

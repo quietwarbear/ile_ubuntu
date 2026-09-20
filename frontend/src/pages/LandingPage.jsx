@@ -9,6 +9,7 @@ import {
 } from '@phosphor-icons/react';
 import { Badge } from '../components/ui/badge';
 import BrandMark from '../components/brand/BrandMark';
+import { rememberPendingTier } from '../lib/pendingTier';
 
 const HERO_IMG = 'https://images.unsplash.com/photo-1694286068561-3233c946e9be?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA1NTJ8MHwxfHNlYXJjaHwxfHxhZnJpY2FuJTIwY29tbXVuaXR5JTIwbGVhcm5pbmclMjB0b2dldGhlcnxlbnwwfHx8fDE3NzUwMDYyNjh8MA&ixlib=rb-4.1.0&q=85';
 const COMMUNITY_IMG = 'https://images.unsplash.com/photo-1695131497431-1ca16e3381e3?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA1NTJ8MHwxfHNlYXJjaHwzfHxhZnJpY2FuJTIwY29tbXVuaXR5JTIwbGVhcm5pbmclMjB0b2dldGhlcnxlbnwwfHx8fDE3NzUwMDYyNjh8MA&ixlib=rb-4.1.0&q=85';
@@ -57,6 +58,13 @@ const PILLARS = [
 ];
 
 export default function LandingPage({ onLogin }) {
+  // Paid tiers carry the visitor's choice through sign-in; free stays a plain
+  // sign-in. Every tier button used to call onLogin alone, which threw away
+  // the tier they picked.
+  const chooseTier = (tierId) => {
+    rememberPendingTier(tierId);
+    onLogin();
+  };
   const navigate = useNavigate();
   const [currentTestimonial, setCurrentTestimonial] = useState(0);
   const [visibleFeatures, setVisibleFeatures] = useState(new Set());
@@ -530,7 +538,7 @@ export default function LandingPage({ onLogin }) {
                   ))}
                 </ul>
                 <Button
-                  onClick={onLogin}
+                  onClick={() => chooseTier(tier.id)}
                   className={`w-full text-xs font-medium py-5 rounded-md ${tier.highlighted
                     ? 'bg-[rgb(var(--gold))] text-[rgb(var(--ink-deep))] hover:bg-[rgb(var(--gold-soft))]'
                     : 'bg-transparent border border-[rgb(var(--gold)/0.4)] text-[rgb(var(--gold))] hover:bg-[rgb(var(--gold)/0.1)]'
