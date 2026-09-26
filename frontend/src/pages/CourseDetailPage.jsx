@@ -446,9 +446,9 @@ export default function CourseDetailPage({ user }) {
           <div className="space-y-4">
             {curriculumGroups.map((group, gi) => (
               <div key={group.module?.id || `ungrouped-${gi}`}>
-                {group.module && (
-                  <p className="text-[11px] tracking-[0.15em] uppercase text-[rgb(var(--text-muted))] mb-2 mt-2">{group.module.title}</p>
-                )}
+                <p className="text-[11px] tracking-[0.15em] uppercase text-[rgb(var(--text-muted))] mb-2 mt-2">
+                  {group.module?.title || (isInstructor ? 'No section' : 'Other lessons')}
+                </p>
                 <div className="space-y-2">
                   {group.items.map((lesson) => (
                     <div
@@ -489,6 +489,7 @@ export default function CourseDetailPage({ user }) {
                       courseId={courseId}
                       user={user}
                       onReloadCourse={loadCourseData}
+                      modules={modules}
                     />
                       </div>
                     </div>

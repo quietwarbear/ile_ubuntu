@@ -39,13 +39,15 @@ export function LessonCard({
   lesson, idx, isEnrolled, isLessonCompleted, isExpanded, isInstructor,
   lessonFiles, googleConnected, uploading, uploadingFor,
   onToggleExpand, onComplete, onUploadClick, onDeleteFile, onOpenImport,
-  courseId, user, onReloadCourse,
+  courseId, user, onReloadCourse, modules = [],
 }) {
   const [viewingPdf, setViewingPdf] = useState(null);
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
-  const [editForm, setEditForm] = useState({ title: '', description: '', content: '', available_at: '', hidden: false });
+  const [editForm, setEditForm] = useState({
+    title: '', description: '', content: '', module_id: '', available_at: '', hidden: false,
+  });
 
   // ISO instant → the local "YYYY-MM-DDTHH:mm" a datetime-local input wants.
   const toLocalInput = (iso) => {
@@ -61,6 +63,7 @@ export function LessonCard({
       title: lesson.title || '',
       description: lesson.description || '',
       content: lesson.content || '',
+      module_id: lesson.module_id || '',
       available_at: toLocalInput(lesson.available_at),
       hidden: Boolean(lesson.hidden),
     });
@@ -75,6 +78,7 @@ export function LessonCard({
         title: editForm.title.trim(),
         description: editForm.description,
         content: editForm.content,
+        module_id: editForm.module_id || null,
         hidden: editForm.hidden,
         // datetime-local has no timezone; send the browser's actual instant.
         // Empty clears the schedule (opens immediately unless hidden).
@@ -219,6 +223,23 @@ export function LessonCard({
                     className="mt-1 bg-[rgb(var(--ink-card))] border-[rgb(var(--ink-border))] text-[rgb(var(--text-main))] text-sm"
                     data-testid={`edit-lesson-desc-${lesson.id}`}
                   />
+                </div>
+                <div>
+                  <span className="text-[10px] tracking-[0.15em] uppercase text-[rgb(var(--gold))]">Section</span>
+                  <select
+                    value={editForm.module_id}
+                    onChange={e => setEditForm({ ...editForm, module_id: e.target.value })}
+                    className="mt-1 w-full px-3 py-2 rounded-md bg-[rgb(var(--ink-card))] border border-[rgb(var(--ink-border))] text-sm text-[rgb(var(--text-main))] focus:outline-none focus:border-[rgb(var(--gold)/0.5)]"
+                    data-testid={`edit-lesson-module-${lesson.id}`}
+                  >
+                    <option value="">No section</option>
+                    {modules.map(module => (
+                      <option key={module.id} value={module.id}>{module.title}</option>
+                    ))}
+                  </select>
+                  <p className="mt-1 text-[10px] text-[rgb(var(--text-faint))]">
+                    Choose where this lesson appears in the curriculum.
+                  </p>
                 </div>
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
                   <div className="flex-1">
