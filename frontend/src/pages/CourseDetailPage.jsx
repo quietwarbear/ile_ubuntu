@@ -360,20 +360,27 @@ export default function CourseDetailPage({ user }) {
 
         {/* Instructor: modules (sections) */}
         {isInstructor && (
-          <div className="flex flex-wrap items-center gap-2 mb-4">
-            <span className="text-[10px] tracking-[0.15em] uppercase text-[rgb(var(--text-faint))]">Sections:</span>
-            {modules.map(m => (
-              <span key={m.id} className="text-[11px] text-[rgb(var(--text-muted))] bg-[rgb(var(--ink-card))] border border-[rgb(var(--ink-border))] rounded-full px-2.5 py-1">{m.title}</span>
-            ))}
-            <input
-              value={newModule}
-              onChange={e => setNewModule(e.target.value)}
-              onKeyDown={e => e.key === 'Enter' && handleAddModule()}
-              placeholder="New section…"
-              className="px-2.5 py-1 rounded-full bg-[rgb(var(--ink-deep))] border border-[rgb(var(--ink-border))] text-[11px] text-[rgb(var(--text-main))] placeholder-[rgb(var(--text-faint))] focus:outline-none focus:border-[rgb(var(--gold)/0.5)] w-32"
-              data-testid="new-module-input"
-            />
-            <button onClick={handleAddModule} className="text-[rgb(var(--gold))] hover:text-[rgb(var(--gold-soft))]" title="Add section"><Plus size={14} /></button>
+          <div className="mb-4">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-[10px] tracking-[0.15em] uppercase text-[rgb(var(--text-faint))]">Sections:</span>
+              {modules.map(m => (
+                <span key={m.id} className="text-[11px] text-[rgb(var(--text-muted))] bg-[rgb(var(--ink-card))] border border-[rgb(var(--ink-border))] rounded-full px-2.5 py-1">{m.title}</span>
+              ))}
+              <input
+                value={newModule}
+                onChange={e => setNewModule(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && handleAddModule()}
+                placeholder="New section…"
+                className="px-2.5 py-1 rounded-full bg-[rgb(var(--ink-deep))] border border-[rgb(var(--ink-border))] text-[11px] text-[rgb(var(--text-main))] placeholder-[rgb(var(--text-faint))] focus:outline-none focus:border-[rgb(var(--gold)/0.5)] w-32"
+                data-testid="new-module-input"
+              />
+              <button onClick={handleAddModule} className="text-[rgb(var(--gold))] hover:text-[rgb(var(--gold-soft))]" title="Add section"><Plus size={14} /></button>
+            </div>
+            {lessons.length > 0 && (
+              <p className="mt-2 text-[10px] text-[rgb(var(--text-faint))]">
+                Drag to reorder lessons. To move a lesson to another section, open it and choose Edit lesson → Section.
+              </p>
+            )}
           </div>
         )}
 
@@ -463,7 +470,7 @@ export default function CourseDetailPage({ user }) {
                           onDragStart={(e) => { setDraggedLessonId(lesson.id); e.dataTransfer.effectAllowed = 'move'; }}
                           onDragEnd={() => setDraggedLessonId(null)}
                           className="flex items-center px-1 cursor-grab active:cursor-grabbing text-[rgb(var(--text-faint))] hover:text-[rgb(var(--gold))]"
-                          title="Drag to reorder"
+                          title="Drag to reorder. Use Edit lesson to change sections."
                           data-testid={`lesson-drag-${lesson.id}`}
                         >
                           <DotsSixVertical size={16} weight="bold" />
