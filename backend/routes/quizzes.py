@@ -1,6 +1,6 @@
 """Quiz routes — full quiz builder with multiple question types and grading."""
 
-from fastapi import APIRouter, HTTPException, Request, Depends
+from fastapi import APIRouter, HTTPException, Query, Request, Depends
 from datetime import datetime, timezone
 import uuid
 from database import quizzes_col, quiz_attempts_col, lessons_col, courses_col, enrollments_col
@@ -29,6 +29,25 @@ def _get_lesson(course_id: str, lesson_id: str):
     if not lesson:
         raise HTTPException(status_code=404, detail="Lesson not found")
     return lesson
+
+
+def _lesson_is_released(lesson: dict) -> bool:
+    """Quiz content follows the lesson's student release boundary."""
+    if lesson.get("hidden"):
+        return False
+    raw = lesson.get("available_at")
+    if not raw:
+        return True
+    if isinstance(raw, str):
+        try:
+            raw = datetime.fromisoformat(raw.strip().replace("Z", "+00:00"))
+        except ValueError:
+            return False
+    if not isinstance(raw, datetime):
+        return False
+    if raw.tzinfo is None:
+        raw = raw.replace(tzinfo=timezone.utc)
+    return raw <= datetime.now(timezone.utc)
 
 
 def _auto_grade(quiz: dict, answers: dict) -> dict:
@@ -111,7 +130,7 @@ def _auto_grade(quiz: dict, answers: dict) -> dict:
 async def create_quiz(course_id: str, lesson_id: str, request: Request, current_user: dict = Depends(get_current_user)):
     """Create a quiz for a lesson."""
     _check_course_instructor(course_id, current_user)
-    _get_lesson(course_id, lesson_id)
+    lesson = _get_lesson(course_id, lesson_id)
 
     # Only one quiz per lesson
     existing = quizzes_col.find_one({"lesson_id": lesson_id})
@@ -154,7 +173,12 @@ async def create_quiz(course_id: str, lesson_id: str, request: Request, current_
 
 
 @router.get("")
-def get_quiz(course_id: str, lesson_id: str, current_user: dict = Depends(get_current_user)):
+def get_quiz(
+    course_id: str,
+    lesson_id: str,
+    view_as_student: bool = Query(False),
+    current_user: dict = Depends(get_current_user),
+):
     """Get the quiz for a lesson. Students don't see correct answers."""
     _get_lesson(course_id, lesson_id)
     quiz = quizzes_col.find_one({"lesson_id": lesson_id}, {"_id": 0})
@@ -162,7 +186,12 @@ def get_quiz(course_id: str, lesson_id: str, current_user: dict = Depends(get_cu
         raise HTTPException(status_code=404, detail="No quiz for this lesson")
 
     # Hide correct answers from students
-    is_instructor = has_permission(current_user["role"], UserRole.FACULTY)
+    is_instructor = (
+        has_permission(current_user["role"], UserRole.FACULTY)
+        and not view_as_student
+    )
+    if not is_instructor and not _lesson_is_released(lesson):
+        raise HTTPException(status_code=404, detail="Quiz is not available yet")
     if not is_instructor:
         for q in quiz.get("questions", []):
             q.pop("correct_answer", None)

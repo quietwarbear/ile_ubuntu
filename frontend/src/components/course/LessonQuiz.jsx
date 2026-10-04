@@ -482,7 +482,7 @@ function QuizResults({ attempt, quiz }) {
 
 // ───────────────────────── Main Component ─────────────────────────
 
-export function LessonQuiz({ courseId, lessonId, user, isInstructor }) {
+export function LessonQuiz({ courseId, lessonId, user, isInstructor, viewAsStudent = false }) {
   const [quiz, setQuiz] = useState(null);
   const [attempts, setAttempts] = useState([]);
   const [maxAttempts, setMaxAttempts] = useState(3);
@@ -494,7 +494,8 @@ export function LessonQuiz({ courseId, lessonId, user, isInstructor }) {
 
   const loadQuiz = async () => {
     try {
-      const data = await apiGet(`/api/courses/${courseId}/lessons/${lessonId}/quiz`);
+      const suffix = viewAsStudent ? '?view_as_student=true' : '';
+      const data = await apiGet(`/api/courses/${courseId}/lessons/${lessonId}/quiz${suffix}`);
       setQuiz(data);
     } catch (e) {
       setQuiz(null);
@@ -508,7 +509,7 @@ export function LessonQuiz({ courseId, lessonId, user, isInstructor }) {
     setLoading(false);
   };
 
-  useEffect(() => { loadQuiz(); }, [courseId, lessonId]);
+  useEffect(() => { loadQuiz(); }, [courseId, lessonId, viewAsStudent]);
 
   const loadAllAttempts = async () => {
     try {

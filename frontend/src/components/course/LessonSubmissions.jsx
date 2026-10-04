@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
 import { apiGet, apiPost, apiDelete, apiUpload } from '../../lib/api';
+import { DownloadSimple } from '@phosphor-icons/react';
 
 const when = (v) => {
   if (!v) return '';
@@ -47,10 +48,21 @@ export function LessonSubmissions({ courseId, lessonId, user, isInstructor }) {
 
   const download = async (submissionId, file) => {
     setError('');
+    // Open immediately while the click is still trusted; waiting for the
+    // secure link first causes several browsers to block the new tab.
+    const downloadWindow = window.open('about:blank', '_blank');
     try {
       const res = await apiGet(`${base}/${submissionId}/download-link/${file.id}`);
-      window.open(res.url, '_blank', 'noopener');
-    } catch (e) { setError(e.message); }
+      if (downloadWindow) {
+        downloadWindow.opener = null;
+        downloadWindow.location = res.url;
+      } else {
+        window.location.assign(res.url);
+      }
+    } catch (e) {
+      if (downloadWindow) downloadWindow.close();
+      setError(e.message);
+    }
   };
 
   const submit = async () => {
@@ -93,7 +105,10 @@ export function LessonSubmissions({ courseId, lessonId, user, isInstructor }) {
         <button key={f.id} onClick={() => download(submission.id, f)}
           className="mr-2 mt-1 inline-flex items-center gap-1 rounded border border-[rgb(var(--ink-border))] bg-[rgb(var(--ink-card))] px-2 py-1 text-[11px] text-[rgb(var(--text-softer))] hover:border-[rgb(var(--gold)/0.4)]"
           data-testid={`download-${f.id}`}>
-          {f.original_filename} <span className="text-[rgb(var(--text-dim))]">{kb(f.file_size)}</span>
+          <DownloadSimple size={14} aria-hidden="true" />
+          <span className="max-w-[16rem] truncate">{f.original_filename}</span>
+          <span className="text-[rgb(var(--text-dim))]">{kb(f.file_size)}</span>
+          <span className="text-[rgb(var(--gold))]">Download homework</span>
         </button>
       ))}
       {(submission.links || []).map((url, i) => (
