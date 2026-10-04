@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { useParams, useNavigate, Navigate } from 'react-router-dom';
+import { useParams, useNavigate, Navigate, useSearchParams } from 'react-router-dom';
 import {
   ArrowLeft, CheckCircle, Circle, CaretRight, List, X,
   FilePdf, File as FileIcon, DownloadSimple, Eye, PencilSimple,
@@ -30,6 +30,9 @@ function buildCurriculum(course, lessons) {
 export default function CoursePlayerPage({ user }) {
   const { courseId, lessonId } = useParams();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const viewAsStudent = searchParams.get('view') === 'student';
+  const learnerSuffix = viewAsStudent ? '?view=student' : '';
 
   const [course, setCourse] = useState(null);
   const [lessons, setLessons] = useState([]);
@@ -44,24 +47,34 @@ export default function CoursePlayerPage({ user }) {
   const [draft, setDraft] = useState({ content: '', banner_url: '' });
   const [savingContent, setSavingContent] = useState(false);
 
-  const isInstructor = ['faculty', 'elder', 'admin'].includes(user?.role) && course?.instructor_id === user?.id;
+  const canTeachCourse = user?.role === 'admin' || (
+    ['faculty', 'elder'].includes(user?.role)
+    && (course?.instructor_id === user?.id || (course?.co_instructor_ids || []).includes(user?.id))
+  );
+  const isInstructor = canTeachCourse && !viewAsStudent;
 
   const load = useCallback(async () => {
     try {
       const [c, l, e, p, files] = await Promise.all([
         apiGet(`/api/courses/${courseId}`),
-        apiGet(`/api/courses/${courseId}/lessons`),
+        apiGet(`/api/courses/${courseId}/lessons${viewAsStudent ? '?view_as_student=true' : ''}`),
         apiGet(`/api/courses/${courseId}/enrollment`),
         apiGet(`/api/courses/${courseId}/progress`),
         apiGet(`/api/files?course_id=${courseId}`),
       ]);
       setCourse(c); setLessons(l); setEnrollment(e); setProgress(p);
       const fMap = {};
-      (files.files || []).forEach(f => { (fMap[f.lesson_id || '_course'] ||= []).push(f); });
+      (files.files || []).forEach(f => {
+        if (viewAsStudent) {
+          const visibleLesson = l.find(lesson => lesson.id === f.lesson_id && !lesson.locked);
+          if (f.lesson_id && !visibleLesson) return;
+        }
+        (fMap[f.lesson_id || '_course'] ||= []).push(f);
+      });
       setFilesMap(fMap);
     } catch (err) { console.error('player load failed:', err); }
     finally { setLoading(false); }
-  }, [courseId]);
+  }, [courseId, viewAsStudent]);
 
   useEffect(() => { load(); }, [load]);
 
@@ -76,18 +89,18 @@ export default function CoursePlayerPage({ user }) {
   // Land on the first lesson when none is specified in the URL.
   useEffect(() => {
     if (!loading && !lessonId && flat.length) {
-      navigate(`/courses/${courseId}/learn/${flat[0].id}`, { replace: true });
+      navigate(`/courses/${courseId}/learn/${flat[0].id}${learnerSuffix}`, { replace: true });
     }
-  }, [loading, lessonId, flat, courseId, navigate]);
+  }, [loading, lessonId, flat, courseId, navigate, learnerSuffix]);
 
   if (loading) return <p className="text-sm text-[rgb(var(--text-muted))]">Opening the course…</p>;
   if (!course) return <Navigate to="/courses" replace />;
   // Players are for enrolled learners or the instructor.
-  if (!enrollment?.enrolled && !isInstructor) return <Navigate to={`/courses/${courseId}`} replace />;
+  if (!enrollment?.enrolled && !canTeachCourse) return <Navigate to={`/courses/${courseId}`} replace />;
   if (!current) {
     return (
       <div className="max-w-2xl">
-        <button onClick={() => navigate(`/courses/${courseId}`)} className="flex items-center gap-2 text-sm text-[rgb(var(--text-muted))] hover:text-[rgb(var(--gold))] mb-4">
+        <button onClick={() => navigate(`/courses/${courseId}${learnerSuffix}`)} className="flex items-center gap-2 text-sm text-[rgb(var(--text-muted))] hover:text-[rgb(var(--gold))] mb-4">
           <ArrowLeft size={16} /> Course overview
         </button>
         <p className="text-sm text-[rgb(var(--text-muted))]">This course has no lessons yet.</p>
@@ -105,8 +118,8 @@ export default function CoursePlayerPage({ user }) {
         setProgress(p => ({ ...p, completed_lessons: [...(p?.completed_lessons || []), current.id] }));
         trackLessonCompletedForReview();
       }
-      if (next) navigate(`/courses/${courseId}/learn/${next.id}`);
-      else navigate(`/courses/${courseId}`);
+      if (next) navigate(`/courses/${courseId}/learn/${next.id}${learnerSuffix}`);
+      else navigate(`/courses/${courseId}${learnerSuffix}`);
     } catch (e) { alert(e.message); }
     setCompleting(false);
   };
@@ -132,7 +145,7 @@ export default function CoursePlayerPage({ user }) {
   const SidebarInner = (
     <div className="flex flex-col h-full">
       <div className="px-4 py-4 border-b border-[rgb(var(--ink-border))]">
-        <button onClick={() => navigate(`/courses/${courseId}`)} className="flex items-center gap-1.5 text-[10px] tracking-[0.15em] uppercase text-[rgb(var(--text-muted))] hover:text-[rgb(var(--gold))] mb-2">
+        <button onClick={() => navigate(`/courses/${courseId}${learnerSuffix}`)} className="flex items-center gap-1.5 text-[10px] tracking-[0.15em] uppercase text-[rgb(var(--text-muted))] hover:text-[rgb(var(--gold))] mb-2">
           <ArrowLeft size={12} /> Overview
         </button>
         <p className="text-sm text-[rgb(var(--text-main))]" style={{ fontFamily: 'Cormorant Garamond, serif' }}>{course.title}</p>
@@ -154,7 +167,7 @@ export default function CoursePlayerPage({ user }) {
               return (
                 <button
                   key={l.id}
-                  onClick={() => { setSidebarOpen(false); navigate(`/courses/${courseId}/learn/${l.id}`); }}
+                  onClick={() => { setSidebarOpen(false); navigate(`/courses/${courseId}/learn/${l.id}${learnerSuffix}`); }}
                   className={`w-full flex items-center gap-2.5 px-4 py-2 text-left text-xs border-l-2 transition-colors ${
                     active ? 'border-[rgb(var(--gold))] bg-[rgb(var(--gold)/0.05)] text-[rgb(var(--text-main))]' : 'border-transparent text-[rgb(var(--text-muted))] hover:bg-[rgb(var(--ink-card))] hover:text-[rgb(var(--text-main))]'
                   }`}
@@ -194,6 +207,19 @@ export default function CoursePlayerPage({ user }) {
 
       {/* Main lesson panel */}
       <main className="flex-1 min-w-0 px-0 lg:px-8 max-w-3xl mx-auto animate-fade-in-up">
+        {canTeachCourse && (
+          <div className="mb-4 flex items-center justify-between gap-3 rounded-md border border-[rgb(var(--gold)/0.25)] bg-[rgb(var(--gold)/0.06)] p-3" data-testid="player-view-switcher">
+            <span className="text-xs text-[rgb(var(--text-muted))]">{viewAsStudent ? 'Viewing the learner experience' : 'Teaching controls are on'}</span>
+            <button onClick={() => {
+              const nextParams = new URLSearchParams(searchParams);
+              if (viewAsStudent) nextParams.delete('view'); else nextParams.set('view', 'student');
+              setSearchParams(nextParams, { replace: true });
+              setEditing(false);
+            }} className="rounded border border-[rgb(var(--gold)/0.35)] px-3 py-1.5 text-xs text-[rgb(var(--gold))] hover:bg-[rgb(var(--gold)/0.1)]" data-testid="toggle-player-view">
+              {viewAsStudent ? 'Return to teaching' : 'View as student'}
+            </button>
+          </div>
+        )}
         <p className="text-[10px] tracking-[0.2em] uppercase text-[rgb(var(--gold))] mb-1">
           Lesson {currentIdx + 1} of {flat.length}
         </p>
@@ -201,7 +227,7 @@ export default function CoursePlayerPage({ user }) {
         {current.description && <p className="text-sm text-[rgb(var(--text-muted))] mb-4">{current.description}</p>}
 
         {/* Video first, like a course */}
-        {(current.video_url || current.video_file_id || isInstructor) && (
+        {!current.locked && (current.video_url || current.video_file_id || isInstructor) && (
           <div className="mb-5">
             <LessonVideoPlayer lesson={current} courseId={courseId} isInstructor={isInstructor} onUpdate={load} />
           </div>
@@ -284,30 +310,34 @@ export default function CoursePlayerPage({ user }) {
         )}
 
         {/* Quiz */}
-        <div className="mb-5">
-          <LessonQuiz courseId={courseId} lessonId={current.id} user={user} isInstructor={isInstructor} />
-        </div>
+        {!current.locked && (
+          <div className="mb-5">
+            <LessonQuiz courseId={courseId} lessonId={current.id} user={user} isInstructor={isInstructor} viewAsStudent={viewAsStudent} />
+          </div>
+        )}
 
         {/* Complete & Continue */}
         <div className="flex items-center justify-between gap-3 py-5 border-t border-[rgb(var(--ink-border))]">
           <span className="text-xs text-[rgb(var(--text-muted))]">
-            {isDone ? 'Completed' : enrollment?.enrolled ? 'Mark this lesson complete' : 'Preview mode'}
+            {current.locked ? 'This lesson is not available yet' : isDone ? 'Completed' : enrollment?.enrolled ? 'Mark this lesson complete' : 'Preview mode'}
           </span>
           <button
             onClick={handleCompleteContinue}
-            disabled={completing}
+            disabled={completing || current.locked}
             className="flex items-center gap-2 px-5 py-2.5 rounded-md bg-[rgb(var(--gold))] text-[rgb(var(--ink-deep))] text-sm font-medium hover:bg-[rgb(var(--gold-soft))] disabled:opacity-60"
             data-testid="complete-continue"
           >
-            {next ? (isDone ? 'Continue' : 'Complete & Continue') : (isDone ? 'Back to overview' : 'Complete & Finish')}
+            {current.locked ? 'Not available yet' : next ? (isDone ? 'Continue' : 'Complete & Continue') : (isDone ? 'Back to overview' : 'Complete & Finish')}
             <CaretRight size={15} />
           </button>
         </div>
 
         {/* Discussion */}
-        <div className="mb-10">
-          <LessonComments courseId={courseId} lessonId={current.id} user={user} isInstructor={isInstructor} />
-        </div>
+        {!current.locked && (
+          <div className="mb-10">
+            <LessonComments courseId={courseId} lessonId={current.id} user={user} isInstructor={isInstructor} />
+          </div>
+        )}
       </main>
     </div>
   );

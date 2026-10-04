@@ -384,7 +384,11 @@ def delete_lesson(course_id: str, lesson_id: str, current_user: dict = Depends(g
 
 
 @router.get("/{course_id}/lessons")
-def list_lessons(course_id: str, current_user: dict = Depends(get_current_user)):
+def list_lessons(
+    course_id: str,
+    view_as_student: bool = Query(False),
+    current_user: dict = Depends(get_current_user),
+):
     course = courses_col.find_one({"id": course_id})
     if not course:
         raise HTTPException(status_code=404, detail="Course not found")
@@ -392,8 +396,9 @@ def list_lessons(course_id: str, current_user: dict = Depends(get_current_user))
 
     # Staff see every lesson plus its computed state, so the teacher view can
     # show what is live and what is still scheduled.
-    if _is_course_staff(course, current_user) or has_permission(
-        current_user["role"], UserRole.ASSISTANT
+    if not view_as_student and (
+        _is_course_staff(course, current_user)
+        or has_permission(current_user["role"], UserRole.ASSISTANT)
     ):
         for lesson in lessons:
             lesson["locked"] = not _lesson_is_open(lesson)
@@ -549,11 +554,11 @@ def get_course_progress(course_id: str, current_user: dict = Depends(get_current
 
 @router.get("/{course_id}/enrollments")
 def list_course_enrollments(course_id: str, current_user: dict = Depends(get_current_user)):
-    """List all enrollments for a course (faculty+ only)"""
+    """List the course roster for its owner, co-teachers, or an admin."""
     course = courses_col.find_one({"id": course_id})
     if not course:
         raise HTTPException(status_code=404, detail="Course not found")
-    if course["instructor_id"] != current_user["id"] and not has_permission(current_user["role"], UserRole.ADMIN):
+    if not _is_course_staff(course, current_user):
         raise HTTPException(status_code=403, detail="Access denied")
 
     enrollments = list(enrollments_col.find({"course_id": course_id}, {"_id": 0}))
@@ -565,6 +570,96 @@ def list_course_enrollments(course_id: str, current_user: dict = Depends(get_cur
             "user_email": student.get("email", "") if student else "",
         })
     return result
+
+
+@router.post("/{course_id}/enrollments")
+async def add_course_enrollment(
+    course_id: str, request: Request, current_user: dict = Depends(get_current_user)
+):
+    """Add an existing Ile Ubuntu account to this course by email."""
+    course = courses_col.find_one({"id": course_id})
+    if not course:
+        raise HTTPException(status_code=404, detail="Course not found")
+    if not _is_course_staff(course, current_user):
+        raise HTTPException(status_code=403, detail="Access denied")
+
+    data = await request.json()
+    email = (data.get("email") or "").strip().lower()
+    if not email:
+        raise HTTPException(status_code=400, detail="Student email is required")
+    student = users_col.find_one({"email": email}, {"_id": 0})
+    if not student:
+        raise HTTPException(
+            status_code=404,
+            detail="No Ile Ubuntu account was found for that email",
+        )
+    if enrollments_col.find_one({"user_id": student["id"], "course_id": course_id}):
+        raise HTTPException(status_code=409, detail="This person is already enrolled")
+
+    enrollment = {
+        "id": str(uuid.uuid4()),
+        "user_id": student["id"],
+        "user_name": student.get("name", "Learner"),
+        "course_id": course_id,
+        "enrolled_at": datetime.now(timezone.utc),
+        "completed_lessons": [],
+        "progress": 0.0,
+        "status": "active",
+        "completed_at": None,
+    }
+    enrollments_col.insert_one(enrollment)
+    courses_col.update_one({"id": course_id}, {"$inc": {"enrolled_count": 1}})
+    enrollment.pop("_id", None)
+
+    try:
+        from routes.email_notifications import send_enrollment_email, send_in_background
+        send_in_background(send_enrollment_email(
+            student.get("email", ""),
+            student.get("name", "Learner"),
+            course["title"],
+            course_id,
+        ))
+    except Exception:
+        pass
+
+    emit(
+        "course.enrolled",
+        current_user,
+        "course",
+        course_id,
+        meta={"student_id": student["id"], "added_by_teacher": True},
+    )
+    return {**enrollment, "user_email": student.get("email", "")}
+
+
+@router.delete("/{course_id}/enrollments/{user_id}")
+def remove_course_enrollment(
+    course_id: str, user_id: str, current_user: dict = Depends(get_current_user)
+):
+    """Remove one learner from a course without changing their account role."""
+    course = courses_col.find_one({"id": course_id})
+    if not course:
+        raise HTTPException(status_code=404, detail="Course not found")
+    if not _is_course_staff(course, current_user):
+        raise HTTPException(status_code=403, detail="Access denied")
+
+    result = enrollments_col.delete_one({"user_id": user_id, "course_id": course_id})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="This person is not enrolled")
+    # Recount instead of blindly decrementing so legacy count drift cannot
+    # produce a negative or inaccurate roster total.
+    courses_col.update_one(
+        {"id": course_id},
+        {"$set": {"enrolled_count": enrollments_col.count_documents({"course_id": course_id})}},
+    )
+    emit(
+        "course.unenrolled",
+        current_user,
+        "course",
+        course_id,
+        meta={"student_id": user_id, "removed_by_teacher": True},
+    )
+    return {"success": True}
 
 
 # --- Visibility & invites (closed-ecosystem joining) ---

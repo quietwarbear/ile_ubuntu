@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { Card, CardContent } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
@@ -19,6 +19,7 @@ import { GoogleImportDialog } from '../components/course/GoogleImportDialog';
 export default function CourseDetailPage({ user }) {
   const { courseId } = useParams();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const fileInputRef = useRef(null);
 
   const [course, setCourse] = useState(null);
@@ -48,8 +49,12 @@ export default function CourseDetailPage({ user }) {
 
   // Course staff = the owning instructor plus assigned co-teachers. Gating on
   // instructor_id alone locked co-teachers out of every teaching control.
-  const isInstructor = ['faculty', 'elder', 'admin'].includes(user?.role)
-    && (course?.instructor_id === user?.id || (course?.co_instructor_ids || []).includes(user?.id));
+  const viewAsStudent = searchParams.get('view') === 'student';
+  const canTeachCourse = user?.role === 'admin' || (
+    ['faculty', 'elder'].includes(user?.role)
+    && (course?.instructor_id === user?.id || (course?.co_instructor_ids || []).includes(user?.id))
+  );
+  const isInstructor = canTeachCourse && !viewAsStudent;
   // Only the owner staffs the course — a co-teacher cannot appoint others.
   const isOwner = !!course && course.instructor_id === user?.id;
   const completedLessons = progress?.completed_lessons || [];
@@ -65,7 +70,7 @@ export default function CourseDetailPage({ user }) {
     try {
       const [courseData, lessonData, enrollmentData, progressData] = await Promise.all([
         apiGet(`/api/courses/${courseId}`),
-        apiGet(`/api/courses/${courseId}/lessons`),
+        apiGet(`/api/courses/${courseId}/lessons${viewAsStudent ? '?view_as_student=true' : ''}`),
         apiGet(`/api/courses/${courseId}/enrollment`),
         apiGet(`/api/courses/${courseId}/progress`),
       ]);
@@ -77,13 +82,21 @@ export default function CourseDetailPage({ user }) {
       const filesResult = await apiGet(`/api/files?course_id=${courseId}`);
       const fMap = {};
       (filesResult.files || []).forEach(f => {
+        if (viewAsStudent) {
+          const visibleLesson = lessonData.find(l => l.id === f.lesson_id && !l.locked);
+          if (f.lesson_id && !visibleLesson) return;
+        }
         const lid = f.lesson_id || '_course';
         if (!fMap[lid]) fMap[lid] = [];
         fMap[lid].push(f);
       });
       setFilesMap(fMap);
 
-      if (['faculty', 'elder', 'admin'].includes(user?.role) && courseData.instructor_id === user?.id) {
+      const isCourseStaff = user?.role === 'admin' || (
+        ['faculty', 'elder'].includes(user?.role)
+        && (courseData.instructor_id === user?.id || (courseData.co_instructor_ids || []).includes(user?.id))
+      );
+      if (isCourseStaff) {
         try {
           const enrollList = await apiGet(`/api/courses/${courseId}/enrollments`);
           setEnrollments(enrollList);
@@ -94,7 +107,7 @@ export default function CourseDetailPage({ user }) {
     } finally {
       setLoading(false);
     }
-  }, [courseId, user?.role, user?.id]);
+  }, [courseId, user?.role, user?.id, viewAsStudent]);
 
   useEffect(() => {
     loadCourseData();
@@ -274,6 +287,17 @@ export default function CourseDetailPage({ user }) {
     );
   }
 
+  const setCourseView = (studentView) => {
+    const next = new URLSearchParams(searchParams);
+    if (studentView) next.set('view', 'student');
+    else next.delete('view');
+    setSearchParams(next, { replace: true });
+    setExpandedLesson(null);
+    setShowAddLesson(false);
+  };
+
+  const learnerSuffix = viewAsStudent ? '?view=student' : '';
+
   return (
     <div className="space-y-6 animate-fade-in-up" data-testid="course-detail-page">
       <input ref={fileInputRef} type="file" className="hidden" onChange={handleFileSelected}
@@ -285,9 +309,23 @@ export default function CourseDetailPage({ user }) {
         <ArrowLeft size={16} /> Back to Courses
       </button>
 
+      {canTeachCourse && (
+        <div className="flex items-center justify-between gap-3 rounded-md border border-[rgb(var(--gold)/0.25)] bg-[rgb(var(--gold)/0.06)] p-3" data-testid="course-view-switcher">
+          <div>
+            <p className="text-sm text-[rgb(var(--text-main))]">{viewAsStudent ? 'Student view' : 'Teaching view'}</p>
+            <p className="text-[11px] text-[rgb(var(--text-muted))]">Your faculty access stays unchanged.</p>
+          </div>
+          <Button size="sm" variant="outline" onClick={() => setCourseView(!viewAsStudent)}
+            className="border-[rgb(var(--gold)/0.35)] text-[rgb(var(--gold))] whitespace-nowrap"
+            data-testid="toggle-course-view">
+            {viewAsStudent ? 'Return to teaching' : 'View as student'}
+          </Button>
+        </div>
+      )}
+
       <CourseHeader
         course={course} lessons={lessons} enrollment={enrollment} progress={progress}
-        user={user} isInstructor={isInstructor}
+        user={user} isInstructor={isInstructor} isStaffPreview={canTeachCourse && viewAsStudent}
         onEnroll={handleEnroll} onUnenroll={handleUnenroll}
       />
 
@@ -343,8 +381,8 @@ export default function CourseDetailPage({ user }) {
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-xs tracking-[0.15em] uppercase text-[rgb(var(--gold))]">Curriculum</h2>
           <div className="flex items-center gap-2">
-            {(enrollment?.enrolled || isInstructor) && firstLessonId && (
-              <Button size="sm" onClick={() => navigate(`/courses/${courseId}/learn/${nextLessonId}`)}
+            {(enrollment?.enrolled || canTeachCourse) && firstLessonId && (
+              <Button size="sm" onClick={() => navigate(`/courses/${courseId}/learn/${nextLessonId}${learnerSuffix}`)}
                 className="bg-[rgb(var(--gold))] text-[rgb(var(--ink-deep))] hover:bg-[rgb(var(--gold-soft))] text-xs" data-testid="start-learning">
                 {completedLessons.length > 0 ? 'Continue learning' : 'Start learning'}
               </Button>
@@ -488,7 +526,10 @@ export default function CourseDetailPage({ user }) {
                       googleConnected={googleConnected}
                       uploading={uploading}
                       uploadingFor={uploadingFor}
-                      onToggleExpand={(id) => setExpandedLesson(expandedLesson === id ? null : id)}
+                      onToggleExpand={(id) => {
+                        if (lesson.locked && !isInstructor) return;
+                        setExpandedLesson(expandedLesson === id ? null : id);
+                      }}
                       onComplete={handleCompleteLesson}
                       onUploadClick={handleUploadClick}
                       onDeleteFile={handleDeleteFile}
@@ -512,9 +553,9 @@ export default function CourseDetailPage({ user }) {
         <CourseDiscussion courseId={courseId} user={user} isStaff={isInstructor} />
       )}
 
-      {isOwner && <CourseStaffPanel courseId={courseId} isOwner={isOwner} />}
+      {isInstructor && isOwner && <CourseStaffPanel courseId={courseId} isOwner={isOwner} />}
 
-      {isInstructor && <EnrolledStudents enrollments={enrollments} />}
+      {isInstructor && <EnrolledStudents courseId={courseId} enrollments={enrollments} onChanged={loadCourseData} />}
 
       <GoogleImportDialog
         importOpen={importOpen} importTab={importTab}
