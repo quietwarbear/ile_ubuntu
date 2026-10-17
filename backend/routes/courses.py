@@ -562,13 +562,19 @@ def list_course_enrollments(course_id: str, current_user: dict = Depends(get_cur
         raise HTTPException(status_code=403, detail="Access denied")
 
     enrollments = list(enrollments_col.find({"course_id": course_id}, {"_id": 0}))
-    result = []
-    for enrollment in enrollments:
-        student = users_col.find_one({"id": enrollment["user_id"]}, {"_id": 0, "email": 1})
-        result.append({
-            **enrollment,
-            "user_email": student.get("email", "") if student else "",
-        })
+    # One batched lookup instead of a users.find_one per enrollment (the N+1
+    # in ILE-UBUNTU-BACKEND-3 — a large roster did one DB round-trip per row).
+    user_ids = [e["user_id"] for e in enrollments if e.get("user_id")]
+    emails = {
+        u["id"]: u.get("email", "")
+        for u in users_col.find(
+            {"id": {"$in": user_ids}}, {"_id": 0, "id": 1, "email": 1}
+        )
+    }
+    result = [
+        {**enrollment, "user_email": emails.get(enrollment.get("user_id"), "")}
+        for enrollment in enrollments
+    ]
     return result
 
 
