@@ -142,6 +142,7 @@ from routes.portfolio import router as portfolio_router
 from routes.guide import router as guide_router
 from routes.enrollment_imports import router as enrollment_imports_router
 from routes.course_notice import router as course_notice_router
+from routes.stream_video import router as stream_video_router
 
 app.include_router(auth_router)
 app.include_router(courses_router)
@@ -152,6 +153,7 @@ app.include_router(cohorts_router)
 app.include_router(community_router)
 app.include_router(archives_router)
 app.include_router(files_router)
+app.include_router(stream_video_router)
 app.include_router(messages_router)
 app.include_router(enrollments_router)
 app.include_router(enrollment_imports_router)
