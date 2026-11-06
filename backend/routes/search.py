@@ -42,12 +42,18 @@ def _hybrid_find(col, q, regex_or, filters, projection, sort_spec, limit, releva
     return list(col.find({**regex_or, **filters}, projection).sort(sort_spec).limit(limit))
 
 
-def _search_courses(q, pattern, sort, limit, status, is_faculty):
+def _search_courses(q, pattern, sort, limit, status, is_faculty, user_id=None):
     filters = {}
     if status:
         filters["status"] = status
     elif not is_faculty:
         filters["status"] = "active"
+    # Private courses never surface in search — except to their own teachers.
+    filters["$and"] = [{"$or": [
+        {"visibility": {"$ne": "private"}},
+        {"instructor_id": user_id},
+        {"co_instructor_ids": user_id},
+    ]}]
     return _hybrid_find(
         courses_col, q,
         {"$or": [{"title": pattern}, {"description": pattern}, {"tags": pattern}]},
@@ -132,7 +138,7 @@ def search_all(
     total = 0
 
     searchers = {
-        "courses": lambda: _search_courses(q, pattern, sort, limit, status, is_faculty),
+        "courses": lambda: _search_courses(q, pattern, sort, limit, status, is_faculty, current_user["id"]),
         "community": lambda: _search_community(q, pattern, sort, limit),
         "archives": lambda: _search_archives(q, pattern, sort, limit, access_level, is_faculty),
         "cohorts": lambda: _search_cohorts(q, pattern, sort, limit),

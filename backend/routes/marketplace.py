@@ -206,7 +206,8 @@ async def set_premium(course_id: str, request: Request, current_user: dict = Dep
 async def course_checkout(course_id: str, request: Request, current_user: dict = Depends(get_current_user)):
     _require_stripe()
     course = courses_col.find_one({"id": course_id})
-    if not course:
+    if not course or course.get("visibility") == "private":
+        # Private courses are by enrollment only, so they can't be bought.
         raise HTTPException(status_code=404, detail="Course not found")
     price = course.get("premium_price") or 0
     if not course.get("is_premium") or price <= 0:

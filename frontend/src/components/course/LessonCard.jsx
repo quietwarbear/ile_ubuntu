@@ -147,6 +147,11 @@ export function LessonCard({
                   data-testid={`lesson-hidden-${lesson.id}`}>
                   Hidden
                 </span>
+              ) : lesson.enrollment_required ? (
+                <span className="rounded-full bg-[rgb(var(--ink-border-strong))] px-2 py-0.5 text-[10px] font-medium text-[rgb(var(--text-softer))]"
+                  data-testid={`lesson-enroll-required-${lesson.id}`}>
+                  Enroll to open
+                </span>
               ) : lesson.locked && lesson.available_at ? (
                 <span className="rounded-full bg-[rgb(var(--gold)/0.15)] px-2 py-0.5 text-[10px] font-medium text-[rgb(var(--gold))]"
                   data-testid={`lesson-scheduled-${lesson.id}`}>

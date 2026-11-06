@@ -9,7 +9,7 @@ from models.user import has_permission, UserRole
 from events import emit
 # Acyclic: courses.py imports from database/middleware/models/villages, never
 # from here.
-from routes.courses import _is_course_staff, _lesson_is_open
+from routes.courses import _is_course_staff, _lesson_is_open, _has_role_reach
 
 router = APIRouter(
     prefix="/api/courses/{course_id}/lessons/{lesson_id}/comments",
@@ -28,7 +28,7 @@ def _verify_access(course_id: str, lesson_id: str, current_user: dict):
         raise HTTPException(status_code=404, detail="Lesson not found")
 
     # Course staff (owner, co-teachers) and faculty+ always have access
-    if _is_course_staff(course, current_user) or has_permission(current_user["role"], UserRole.FACULTY):
+    if _is_course_staff(course, current_user) or _has_role_reach(course, current_user, UserRole.FACULTY):
         return course, lesson
 
     # Students must be enrolled
@@ -88,7 +88,7 @@ async def create_comment(
 
     is_instructor = (
         course["instructor_id"] == current_user["id"]
-        or has_permission(current_user["role"], UserRole.FACULTY)
+        or _has_role_reach(course, current_user, UserRole.FACULTY)
     )
 
     comment = {

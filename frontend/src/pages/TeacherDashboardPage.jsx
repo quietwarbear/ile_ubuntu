@@ -6,7 +6,10 @@ import {
   CheckCircle, Warning, Lightning, ChartLineUp,
   CreditCard, Storefront,
 } from '@phosphor-icons/react';
-import { apiGet, apiPost } from '../lib/api';
+import { apiGet, apiPost, apiPut } from '../lib/api';
+import {
+  currentVisibility, visibilityOptionsFor, visibilityExplanation, certificatesEnabled,
+} from '../lib/courseVisibility';
 
 export default function TeacherDashboardPage({ user }) {
   const [connectStatus, setConnectStatus] = useState(null);
@@ -77,20 +80,32 @@ export default function TeacherDashboardPage({ user }) {
     }
   };
 
-  const handleToggleVisibility = async (course) => {
-    const isListed = course.visibility !== 'unlisted';
-    const next = isListed ? 'unlisted' : 'listed';
+  const handleSetVisibility = async (course, next) => {
+    if (next === currentVisibility(course)) return;
+    if (next === 'private' && !window.confirm(
+      `Make "${course.title}" private? It disappears from the catalog and search, its invite codes stop working, and only people you enroll can get in.`
+    )) return;
     try {
       await apiPost(`/api/courses/${course.id}/visibility`, { visibility: next });
-      setStatusMessage({
-        type: 'success',
-        text: next === 'listed'
-          ? `"${course.title}" is now listed in the community catalog`
-          : `"${course.title}" is now invite-only`,
-      });
+      setStatusMessage({ type: 'success', text: `"${course.title}": ${visibilityExplanation(next)}` });
       fetchAll();
     } catch (e) {
       setStatusMessage({ type: 'error', text: e.message || 'Failed to update visibility' });
+    }
+  };
+
+  const handleToggleCertificates = async (course) => {
+    const next = !certificatesEnabled(course);
+    try {
+      await apiPut(`/api/courses/${course.id}`, { certificates_enabled: next });
+      setStatusMessage({
+        type: 'success',
+        text: next ? `"${course.title}" will issue certificates on completion`
+                   : `"${course.title}" no longer issues certificates`,
+      });
+      fetchAll();
+    } catch (e) {
+      setStatusMessage({ type: 'error', text: e.message || 'Failed to update certificates' });
     }
   };
 
@@ -311,19 +326,30 @@ export default function TeacherDashboardPage({ user }) {
                           }`}>
                             {course.status}
                           </Badge>
-                          <button
-                            onClick={() => handleToggleVisibility(course)}
-                            title="Toggle whether this course appears in the community catalog"
-                            className={`text-[8px] uppercase tracking-wider px-1.5 py-0.5 rounded border shrink-0 transition-colors ${
-                              course.visibility !== 'unlisted'
-                                ? 'bg-sky-500/10 text-sky-400 border-sky-500/20 hover:bg-sky-500/20'
-                                : 'bg-[rgb(var(--gold)/0.1)] text-[rgb(var(--gold))] border-[rgb(var(--gold)/0.2)] hover:bg-[rgb(var(--gold)/0.2)]'
-                            }`}
+                          <select
+                            value={currentVisibility(course)}
+                            onChange={e => handleSetVisibility(course, e.target.value)}
+                            aria-label={`Who can see ${course.title}`}
+                            className="text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded border shrink-0 bg-[rgb(var(--ink-deep))] text-[rgb(var(--gold))] border-[rgb(var(--gold)/0.2)]"
                             data-testid={`visibility-${course.id}`}
                           >
-                            {course.visibility !== 'unlisted' ? 'Listed' : 'Invite-only'}
+                            {visibilityOptionsFor(course).map(o => (
+                              <option key={o.value} value={o.value}>{o.label}</option>
+                            ))}
+                          </select>
+                          <button
+                            onClick={() => handleToggleCertificates(course)}
+                            aria-pressed={certificatesEnabled(course)}
+                            title="Whether students get a certificate when they finish this course"
+                            className="text-[8px] uppercase tracking-wider px-1.5 py-0.5 rounded border shrink-0 text-[rgb(var(--text-muted))] border-[rgb(var(--ink-border))] hover:text-[rgb(var(--gold))]"
+                            data-testid={`certificates-${course.id}`}
+                          >
+                            Certificates {certificatesEnabled(course) ? 'on' : 'off'}
                           </button>
                         </div>
+                        <p className="text-[10px] text-[rgb(var(--text-muted))] mb-0.5" data-testid={`visibility-explain-${course.id}`}>
+                          {visibilityExplanation(currentVisibility(course))}
+                        </p>
                         {courseEarnings && (
                           <p className="text-[10px] text-[rgb(var(--text-muted))]">
                             {courseEarnings.total_sales} sale{courseEarnings.total_sales !== 1 ? 's' : ''} · ${courseEarnings.net_earnings.toFixed(2)} earned

@@ -138,6 +138,12 @@ def generate_certificate_pdf(student_name, course_title, completion_date, cert_i
     return buffer
 
 
+def certificates_enabled(course: dict) -> bool:
+    """Courses issue certificates unless their staff switched them off
+    (e.g. a recorded festival day, where a certificate means nothing)."""
+    return bool(course) and course.get("certificates_enabled", True) is not False
+
+
 @router.get("/check/{course_id}")
 def check_certificate(course_id: str, current_user: dict = Depends(get_current_user)):
     """Check if user is eligible for a certificate."""
@@ -147,6 +153,9 @@ def check_certificate(course_id: str, current_user: dict = Depends(get_current_u
     )
     if not enrollment:
         return {"eligible": False, "reason": "Not enrolled"}
+    if not certificates_enabled(courses_col.find_one({"id": course_id}, {"_id": 0})):
+        return {"eligible": False, "reason": "Certificates are turned off for this course",
+                "certificates_enabled": False}
 
     progress = enrollment.get("progress", 0)
     if progress < 100:
@@ -175,6 +184,8 @@ def download_certificate(course_id: str, current_user: dict = Depends(get_curren
     course = courses_col.find_one({"id": course_id}, {"_id": 0})
     if not course:
         raise HTTPException(status_code=404, detail="Course not found")
+    if not certificates_enabled(course):
+        raise HTTPException(status_code=403, detail="Certificates are turned off for this course")
 
     cert_id = str(uuid.uuid4())
     completed_at = enrollment.get("completed_at") or enrollment.get("enrolled_at")
@@ -215,8 +226,11 @@ def list_my_certificates(current_user: dict = Depends(get_current_user)):
 
     certs = []
     for enr in completed:
-        course = courses_col.find_one({"id": enr["course_id"]}, {"_id": 0, "id": 1, "title": 1, "description": 1})
-        if course:
+        course = courses_col.find_one(
+            {"id": enr["course_id"]},
+            {"_id": 0, "id": 1, "title": 1, "description": 1, "certificates_enabled": 1},
+        )
+        if course and certificates_enabled(course):
             certs.append({
                 "course_id": course["id"],
                 "course_title": course["title"],

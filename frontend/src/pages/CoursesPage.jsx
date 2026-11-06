@@ -351,6 +351,15 @@ export default function CoursesPage({ user }) {
                         <h3 className="text-sm font-medium text-[rgb(var(--text-main))]" style={{ fontFamily: 'Cormorant Garamond, serif' }}>
                           {enrollment.course_title}
                         </h3>
+                        {enrollment.course_visibility === 'private' && (
+                          <span
+                            className="rounded-full bg-[rgb(var(--ink-border-strong))] px-2 py-0.5 text-[10px] font-medium text-[rgb(var(--text-softer))]"
+                            title="A private class: only people the teachers enroll can see it."
+                            data-testid={`private-${enrollment.course_id}`}
+                          >
+                            Private
+                          </span>
+                        )}
                         {enrollment.course_visibility === 'unlisted' && (
                           <span
                             className="rounded-full bg-[rgb(var(--ink-border-strong))] px-2 py-0.5 text-[10px] font-medium text-[rgb(var(--text-softer))]"

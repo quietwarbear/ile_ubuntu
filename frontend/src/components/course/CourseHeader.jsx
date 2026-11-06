@@ -108,7 +108,7 @@ export function CourseHeader({ course, lessons, enrollment, progress, user, isIn
                 data-testid="progress-bar"
               />
             </div>
-            {progressPct >= 100 && (
+            {progressPct >= 100 && course.certificates_enabled !== false && (
               <a
                 href={`${BACKEND_URL}/api/certificates/download/${course.id}`}
                 className="mt-3 inline-flex items-center gap-2 px-4 py-2 bg-[rgb(var(--gold)/0.15)] border border-[rgb(var(--gold)/0.3)] text-[rgb(var(--gold))] rounded-md text-xs font-medium hover:bg-[rgb(var(--gold)/0.25)] transition-all"

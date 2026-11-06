@@ -18,7 +18,7 @@ from middleware import get_current_user
 from models.user import has_permission, UserRole
 from events import emit
 # Acyclic: courses.py imports database/middleware/models/villages, never this.
-from routes.courses import _is_course_staff
+from routes.courses import _is_course_staff, _has_role_reach
 import teacher_alerts
 
 router = APIRouter(
@@ -36,8 +36,8 @@ def _verify_access(course_id: str, current_user: dict):
     course = courses_col.find_one({"id": course_id})
     if not course:
         raise HTTPException(status_code=404, detail="Course not found")
-    if _is_course_staff(course, current_user) or has_permission(
-        current_user["role"], UserRole.FACULTY
+    if _is_course_staff(course, current_user) or _has_role_reach(
+        course, current_user, UserRole.FACULTY
     ):
         return course, True
     enrolled = enrollments_col.find_one(
