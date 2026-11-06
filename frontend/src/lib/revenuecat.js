@@ -44,36 +44,19 @@ const getApiKey = () => {
  * Initialize RevenueCat SDK (iOS/Android only)
  * Safe to call on web — will no-op
  */
+let initializationPromise;
 export const initializeRevenueCat = async () => {
-  if (revenueCatInitialized) return;
-
-  const isNative = Capacitor.isNativePlatform();
-  if (!isNative) {
-    console.log("[IleUbuntu] RevenueCat: skipping init (not native)");
-    return;
-  }
-
+  if (revenueCatInitialized || !Capacitor.isNativePlatform()) return;
+  if (initializationPromise) return initializationPromise;
   const apiKey = getApiKey();
-  if (!apiKey) {
-    console.warn("[IleUbuntu] RevenueCat: API key not configured for", Capacitor.getPlatform());
-    return;
-  }
-
-  try {
-    const { Purchases } = await import(
-      "@revenuecat/purchases-capacitor"
-    );
-
-    await Purchases.configure({
-      apiKey,
-      appUserID: null, // Will be set after login via syncRevenueCatUser
-    });
-
+  if (!apiKey) throw new Error('In-app purchases are not configured for this app build.');
+  initializationPromise = (async () => {
+    const { Purchases } = await import('@revenuecat/purchases-capacitor');
+    await Purchases.configure({ apiKey, appUserID: null });
     revenueCatInitialized = true;
-    console.log("[IleUbuntu] RevenueCat initialized successfully on", Capacitor.getPlatform());
-  } catch (error) {
-    console.error("[IleUbuntu] Failed to initialize RevenueCat:", error);
-  }
+  })();
+  try { await initializationPromise; }
+  finally { initializationPromise = null; }
 };
 
 /**
@@ -215,11 +198,10 @@ export const restorePurchases = async () => {
  * Native only
  */
 export const syncRevenueCatUser = async (userId) => {
-  if (!Capacitor.isNativePlatform() || !revenueCatInitialized) {
-    return;
-  }
+  if (!Capacitor.isNativePlatform()) return;
 
   try {
+    await initializeRevenueCat();
     const { Purchases } = await import(
       "@revenuecat/purchases-capacitor"
     );

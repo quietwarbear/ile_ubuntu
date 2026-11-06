@@ -24,6 +24,9 @@ enrollments_col = db.enrollments
 live_sessions_col = db.live_sessions
 spaces_col = db.spaces
 payment_transactions_col = db.payment_transactions
+course_iap_grants_col = db.course_iap_grants
+course_iap_events_col = db.course_iap_events
+course_iap_sync_col = db.course_iap_sync
 blog_posts_col = db.blog_posts
 blog_comments_col = db.blog_comments
 
@@ -91,6 +94,10 @@ def ensure_indexes():
     logger = logging.getLogger(__name__)
 
     specs = [
+        (course_iap_sync_col, [("user_id", 1)], {"unique": True}),
+        (course_iap_events_col, [("event_id", 1)], {"unique": True}),
+        (enrollments_col, [("user_id", 1), ("course_id", 1)], {"unique": True, "partialFilterExpression": {"iap_managed": True}, "name": "unique_iap_enrollment"}),
+        (course_iap_grants_col, [("course_id", 1), ("user_id", 1)], {"unique": True}),
         # Auth: two lookups on EVERY authenticated request (middleware.py)
         (sessions_col, [("session_id", 1)], {"unique": True}),
         # TTL: Mongo auto-deletes sessions once expires_at passes

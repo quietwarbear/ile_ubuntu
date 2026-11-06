@@ -38,7 +38,8 @@ def _course_or_404(course_id: str) -> dict:
 def can_read_notice(course: dict, user: dict) -> bool:
     if _is_course_staff(course, user):
         return True
-    return enrollments_col.find_one({"user_id": user["id"], "course_id": course["id"]}) is not None
+    enrollment = enrollments_col.find_one({"user_id": user["id"], "course_id": course["id"]})
+    return enrollment is not None and not enrollment.get("iap_revoked_at")
 
 
 def _public(row: dict) -> dict:

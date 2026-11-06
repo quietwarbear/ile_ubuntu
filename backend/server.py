@@ -169,6 +169,8 @@ app.include_router(certificates_router)
 app.include_router(push_router)
 app.include_router(blog_router)
 app.include_router(revenuecat_router)
+from routes.course_iap import router as course_iap_router
+app.include_router(course_iap_router)
 app.include_router(quizzes_router)
 app.include_router(lesson_comments_router)
 app.include_router(events_router)

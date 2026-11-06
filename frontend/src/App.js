@@ -182,7 +182,7 @@ function App() {
     // Initialize native platform (Capacitor plugins, safe areas)
     applySafeAreaStyles();
     initializeNativePlugins();
-    initializeRevenueCat();
+    initializeRevenueCat().catch(error => console.warn("In-app purchases unavailable:", error.message));
 
     checkAuth();
     handleAuthCallback();

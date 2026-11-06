@@ -83,7 +83,8 @@
     "cap:ios": "npx cap open ios",
     "cap:android": "npx cap open android",
     "build:mobile": "craco build && npx cap sync",
-    "postbuild": "node scripts/prerender.js"
+    "postbuild": "node scripts/prerender.js",
+    "build:native": "node scripts/check-native-config.cjs && npm run build && cap sync"
   },
   "browserslist": {
     "production": [
