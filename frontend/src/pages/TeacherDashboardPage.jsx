@@ -8,6 +8,7 @@ import {
 } from '@phosphor-icons/react';
 import { apiGet, apiPost, apiPut } from '../lib/api';
 import { BulkEnrollmentImport } from '../components/course/BulkEnrollmentImport';
+import { KindredConnection } from '../components/course/KindredConnection';
 import {
   currentVisibility, visibilityOptionsFor, visibilityExplanation, certificatesEnabled,
 } from '../lib/courseVisibility';
@@ -453,6 +454,9 @@ export default function TeacherDashboardPage({ user }) {
           Enroll a list
         </h2>
         <BulkEnrollmentImport />
+        <div className="mt-3">
+          <KindredConnection />
+        </div>
       </div>
 
       {/* Recent Transactions */}

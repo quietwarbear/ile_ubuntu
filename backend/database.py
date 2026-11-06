@@ -21,6 +21,8 @@ messages_col = db.messages
 notifications_col = db.notifications
 google_tokens_col = db.google_tokens
 enrollments_col = db.enrollments
+# X2: keys a course's staff issue so Kindred can enroll attendees as them.
+kindred_handoff_keys_col = db.kindred_handoff_keys
 live_sessions_col = db.live_sessions
 spaces_col = db.spaces
 payment_transactions_col = db.payment_transactions
@@ -148,6 +150,8 @@ def ensure_indexes():
         (sso_codes_col, [("code", 1)], {}),
         (sso_codes_col, [("expires_at", 1)], {"expireAfterSeconds": 0}),
         (email_signin_tokens_col, [("token_hash", 1)], {"unique": True}),
+        (kindred_handoff_keys_col, [("key_hash", 1)], {"unique": True}),
+        (kindred_handoff_keys_col, [("user_id", 1)], {}),
         (email_signin_tokens_col, [("user_id", 1), ("created_at", -1)], {}),
         (email_signin_tokens_col, [("expires_at", 1)], {"expireAfterSeconds": 0}),
         # Kept 180 days: long enough to answer "did my email arrive?".
