@@ -180,7 +180,7 @@ def get_quiz(
     current_user: dict = Depends(get_current_user),
 ):
     """Get the quiz for a lesson. Students don't see correct answers."""
-    _get_lesson(course_id, lesson_id)
+    lesson = _get_lesson(course_id, lesson_id)
     quiz = quizzes_col.find_one({"lesson_id": lesson_id}, {"_id": 0})
     if not quiz:
         raise HTTPException(status_code=404, detail="No quiz for this lesson")
