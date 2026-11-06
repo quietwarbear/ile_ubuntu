@@ -1,10 +1,12 @@
 import os
 import asyncio
 import logging
+import uuid
+from datetime import datetime, timezone
 import resend
 from fastapi import APIRouter, HTTPException, Depends, Request
 from dotenv import load_dotenv
-from database import users_col
+from database import users_col, email_log_col
 from middleware import get_current_user
 
 load_dotenv()
@@ -18,6 +20,15 @@ PUBLIC_SITE_URL = os.environ.get("PUBLIC_SITE_URL", "https://www.ile-ubuntu.org"
 
 if RESEND_API_KEY:
     resend.api_key = RESEND_API_KEY
+else:
+    logger.warning("RESEND_API_KEY is not set: no email will be sent")
+if "SENDER_EMAIL" not in os.environ or SENDER_EMAIL.endswith("@resend.dev"):
+    # Resend's shared test sender only delivers to the Resend account's own
+    # address. Every other recipient silently gets nothing.
+    logger.warning(
+        "SENDER_EMAIL is %r: Resend delivers from it only to the account owner. "
+        "Set SENDER_EMAIL to an address on a domain verified in Resend.", SENDER_EMAIL,
+    )
 
 # Branded HTML email template
 def build_email_html(title, body_html, cta_text=None, cta_url=None):
@@ -49,9 +60,34 @@ def build_email_html(title, body_html, cta_text=None, cta_url=None):
     </div>'''
 
 
-async def send_email(to_email, subject, html):
+def _log_send(to_email, subject, kind, status, resend_id=None, error=None):
+    """Record one send attempt — the answer to "did that email go out?".
+    Both a log line (Railway logs: search "email.send") and a row in
+    email_log (admin view: GET /api/notifications/email/log). Never raises."""
+    logger.info(
+        "email.send kind=%s status=%s resend_id=%s to=%s%s",
+        kind, status, resend_id or "-", to_email, f" error={error}" if error else "",
+    )
+    try:
+        email_log_col.insert_one({
+            "id": str(uuid.uuid4()),
+            "to": (to_email or "").strip().lower(),
+            "subject": subject,
+            "kind": kind,
+            "status": status,          # sent | failed | not_configured
+            "resend_id": resend_id,
+            "error": (str(error)[:500] if error else None),
+            "sender": SENDER_EMAIL,
+            "created_at": datetime.now(timezone.utc),
+        })
+    except Exception:
+        logger.exception("email_log write failed")
+
+
+async def send_email(to_email, subject, html, kind="general"):
     if not RESEND_API_KEY:
         logger.warning("RESEND_API_KEY not configured, skipping email")
+        _log_send(to_email, subject, kind, "not_configured")
         return None
     params = {
         "from": SENDER_EMAIL,
@@ -61,11 +97,41 @@ async def send_email(to_email, subject, html):
     }
     try:
         result = await asyncio.to_thread(resend.Emails.send, params)
-        logger.info(f"Email sent to {to_email}: {result.get('id', 'unknown')}")
+        resend_id = (result or {}).get("id") if isinstance(result, dict) else getattr(result, "id", None)
+        _log_send(to_email, subject, kind, "sent" if resend_id else "failed", resend_id,
+                  None if resend_id else f"no id in response: {result!r}"[:300])
         return result
     except Exception as e:
         logger.error(f"Failed to send email to {to_email}: {e}")
+        _log_send(to_email, subject, kind, "failed", error=e)
         return None
+
+
+# Resend's default limit is 2 requests a second per account. A roster import
+# can queue hundreds of emails, so those go out one at a time on a single
+# background thread instead of a thread per email.
+PACED_SEND_INTERVAL_SECONDS = 0.6
+
+
+def send_paced_in_background(messages, interval=PACED_SEND_INTERVAL_SECONDS):
+    """messages: [(to_email, subject, html, kind)]. Fire-and-forget."""
+    import threading
+    import time
+
+    messages = list(messages)
+    if not messages:
+        return
+
+    def _run():
+        for i, (to_email, subject, html, kind) in enumerate(messages):
+            try:
+                asyncio.run(send_email(to_email, subject, html, kind=kind))
+            except Exception as e:
+                logger.error(f"Paced email failed: {e}")
+            if i < len(messages) - 1:
+                time.sleep(interval)
+
+    threading.Thread(target=_run, daemon=True).start()
 
 
 def send_in_background(coro):
@@ -95,7 +161,7 @@ async def send_enrollment_email(user_email, user_name, course_title, course_id):
         "Go to Course",
         f"{PUBLIC_SITE_URL}/courses/{course_id}",
     )
-    await send_email(user_email, f"Enrolled: {course_title}", html)
+    await send_email(user_email, f"Enrolled: {course_title}", html, kind="enrollment")
 
 
 async def send_course_access_email(user_email, user_name, course_title, course_id):
@@ -116,7 +182,7 @@ async def send_course_access_email(user_email, user_name, course_title, course_i
         "Open Your Class",
         class_url,
     )
-    await send_email(user_email, f"You're in: {course_title}", html)
+    await send_email(user_email, f"You're in: {course_title}", html, kind="course_access")
 
 
 async def send_lesson_complete_email(user_email, user_name, lesson_title, course_title):
@@ -167,6 +233,31 @@ async def test_email(current_user: dict = Depends(get_current_user)):
     if result:
         return {"success": True, "email_id": result.get("id")}
     raise HTTPException(status_code=500, detail="Failed to send test email")
+
+
+@router.get("/log")
+def email_log(to: str = "", kind: str = "", limit: int = 50,
+              current_user: dict = Depends(get_current_user)):
+    """Admin view of what the platform tried to send and what Resend said.
+    ?to=person@example.com narrows to one address; ?kind=signin_link etc."""
+    if current_user.get("role") != "admin":
+        raise HTTPException(status_code=403, detail="Admins only")
+    query = {}
+    if to.strip():
+        query["to"] = to.strip().lower()
+    if kind.strip():
+        query["kind"] = kind.strip()
+    limit = max(1, min(int(limit or 50), 500))
+    rows = list(email_log_col.find(query, {"_id": 0}).sort("created_at", -1).limit(limit))
+    summary = {}
+    for row in rows:
+        summary[row["status"]] = summary.get(row["status"], 0) + 1
+    return {
+        "configured": bool(RESEND_API_KEY),
+        "sender": SENDER_EMAIL,
+        "summary": summary,
+        "entries": rows,
+    }
 
 
 # --- Per-teacher alert preferences ---

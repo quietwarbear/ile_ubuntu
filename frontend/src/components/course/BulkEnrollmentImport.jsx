@@ -32,7 +32,7 @@ const selectClass = 'text-xs px-2 py-1 rounded border bg-[rgb(var(--ink-deep))] 
 function Counts({ counts, done }) {
   if (!counts) return null;
   const items = done
-    ? [['created', 'new accounts'], ['enrolled', 'enrollments added'], ['skipped', 'already enrolled'], ['errors', 'rows with problems']]
+    ? [['created', 'new accounts'], ['enrolled', 'enrollments added'], ['skipped', 'already enrolled'], ['errors', 'rows with problems'], ['welcome_emails', 'welcome emails going out']]
     : [['created', 'new accounts to create'], ['enrolled', 'enrollments to add'], ['skipped', 'already enrolled'], ['errors', 'rows with problems']];
   return (
     <ul className="grid grid-cols-2 sm:grid-cols-4 gap-2" data-testid={done ? 'import-report-counts' : 'import-preview-counts'}>
@@ -117,8 +117,9 @@ export function BulkEnrollmentImport() {
           <p className={`text-[11px] ${muted}`}>
             Upload a CSV with the columns <strong>name, email, sessions</strong>. Put several sessions in one
             cell separated by <code>;</code>. Each session goes to one of your courses — including private ones.
-            Anyone without an account gets one; they sign in with Google or use "Forgot password" on the sign-in
-            page to set a password. Running the same file again only adds who's new.
+            Anyone without an account gets one. Everyone newly enrolled gets a welcome email naming their
+            course(s), with a sign-in link that needs no password. Running the same file again only adds (and
+            emails) who's new.
           </p>
         </div>
 
@@ -185,7 +186,7 @@ export function BulkEnrollmentImport() {
         {report && (
           <div className="space-y-3" data-testid="import-report">
             <p className="text-xs text-emerald-400">Import finished.</p>
-            <Counts counts={report.counts} done />
+            <Counts counts={{ ...report.counts, welcome_emails: report.welcome_emails ?? 0 }} done />
             <RowErrors errors={report.errors} />
             <Button variant="ghost" onClick={reset} className="text-[rgb(var(--gold))]">Import another file</Button>
           </div>

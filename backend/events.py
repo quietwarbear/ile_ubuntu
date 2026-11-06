@@ -26,6 +26,7 @@ EVENT_TYPES = {
     # auth
     "user.registered",
     "user.logged_in",
+    "user.signin_link_sent",
     "user.deleted",
     "user.password_changed",
     "user.password_reset",

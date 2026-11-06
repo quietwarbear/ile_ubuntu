@@ -20,6 +20,7 @@ import './App.css';
 
 const OnboardingWizard = lazy(() => import('./components/OnboardingWizard'));
 const ResetPasswordPage = lazy(() => import('./pages/ResetPasswordPage'));
+const EmailSignInPage = lazy(() => import('./pages/EmailSignInPage'));
 const FamilyPage = lazy(() => import('./pages/FamilyPage'));
 const LearningCirclePage = lazy(() => import('./pages/LearningCirclePage'));
 const PortfolioPage = lazy(() => import('./pages/PortfolioPage'));
@@ -154,6 +155,7 @@ function PublicRoutes({ handlePasswordLogin }) {
       <Route path="/login" element={<LoginPage onLogin={handleGoogleFromLogin} onPasswordLogin={handlePasswordLogin} />} />
       <Route path="/sso" element={<SSOHandoffPage />} />
       <Route path="/reset-password" element={<ResetPasswordPage />} />
+      <Route path="/signin-link" element={<EmailSignInPage />} />
       <Route path="/join/:code" element={<JoinCoursePage />} />
       <Route path="*" element={<LandingPage onLogin={handleLogin} />} />
     </Routes>
@@ -344,6 +346,8 @@ function App() {
             <Route path="/" element={<VillageHomeGate user={user} />} />
             <Route path="/village/:villageId" element={<VillageHomePage user={user} />} />
             <Route path="/dashboard" element={<DashboardPage user={user} />} />
+            {/* An emailed link opened while already signed in (e.g. to hand off to the app) */}
+            <Route path="/signin-link" element={<EmailSignInPage />} />
             <Route path="/courses" element={<CoursesPage user={user} />} />
             <Route path="/courses/:courseId" element={<CourseDetailPage user={user} />} />
             <Route path="/courses/:courseId/learn" element={<CoursePlayerPage user={user} />} />
