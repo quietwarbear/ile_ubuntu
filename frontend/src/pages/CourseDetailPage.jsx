@@ -17,6 +17,8 @@ import { CourseStaffPanel } from '../components/course/CourseStaffPanel';
 import { CourseDiscussion } from '../components/course/CourseDiscussion';
 import { GoogleImportDialog } from '../components/course/GoogleImportDialog';
 import { parseAccessEnded } from '../lib/courseAccess';
+import { NativeCoursePurchase } from '../components/course/NativeCoursePurchase';
+import { coursePurchasePlatform, needsCoursePurchase } from '../lib/coursePurchases';
 import { AccessEndedNotice } from '../components/course/AccessEndedNotice';
 
 export default function CourseDetailPage({ user }) {
@@ -71,6 +73,7 @@ export default function CourseDetailPage({ user }) {
   }, []);
 
   const loadCourseData = useCallback(async () => {
+    setAccessEnded(null);
     try {
       const [courseData, lessonData, enrollmentData, progressData] = await Promise.all([
         apiGet(`/api/courses/${courseId}`),
@@ -128,16 +131,13 @@ export default function CourseDetailPage({ user }) {
       await apiPost(`/api/courses/${courseId}/enroll`, {});
       loadCourseData();
     } catch (e) {
-      // Premium course → purchase flow (web only; app stores require IAP for
-      // in-app digital purchases, so native users are pointed to the website)
+      // Website purchases use Stripe. Native course purchases have their own
+      // store-billing controls in NativeCoursePurchase.
       const premiumMatch = /premium_required:([\d.]+)/.exec(e.message || '');
       if (premiumMatch) {
         const price = premiumMatch[1];
-        const isNative = window.Capacitor?.isNativePlatform?.();
-        if (isNative) {
-          alert(`This is a premium course ($${price}). Premium courses can be purchased on the web at ile-ubuntu.org.`);
-          return;
-        }
+        const isNative = coursePurchasePlatform();
+        if (isNative) return;
         if (!window.confirm(`This is a premium course: $${price} (one-time). Continue to secure checkout?`)) return;
         try {
           const res = await apiPost(`/api/marketplace/courses/${courseId}/checkout`, {
@@ -344,6 +344,8 @@ export default function CourseDetailPage({ user }) {
         course={course} lessons={lessons} enrollment={enrollment} progress={progress}
         user={user} isInstructor={isInstructor} isStaffPreview={canTeachCourse && viewAsStudent}
         onEnroll={handleEnroll} onUnenroll={handleUnenroll}
+        purchaseActions={needsCoursePurchase(user, course)
+            ? <NativeCoursePurchase key={`${courseId}:${user.id}`} courseId={courseId} userId={user.id} onAccessGranted={loadCourseData} /> : null}
       />
 
       {/* Invite students (instructor only) */}

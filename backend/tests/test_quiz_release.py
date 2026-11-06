@@ -59,6 +59,7 @@ def _load_quiz_reader(lesson):
     module = ast.fix_missing_locations(ast.Module(body=[node], type_ignores=[]))
     namespace = {
         "_get_lesson": lambda course_id, lesson_id: lesson,
+        "_require_student_access": lambda course_id, current_user: None,
         "quizzes_col": SimpleNamespace(find_one=lambda *args: {"questions": [{"id": "q1", "correct_answer": "private", "explanation": "private"}]}),
         "has_permission": lambda *args: False,
         "UserRole": SimpleNamespace(FACULTY="faculty"),

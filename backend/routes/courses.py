@@ -492,7 +492,7 @@ def enroll_in_course(course_id: str, current_user: dict = Depends(get_current_us
         raise HTTPException(status_code=400, detail="Course is not open for enrollment")
 
     existing = enrollments_col.find_one({"user_id": current_user["id"], "course_id": course_id})
-    if existing:
+    if existing and not existing.get("iap_revoked_at"):
         raise HTTPException(status_code=400, detail="Already enrolled")
 
     # Private: no self-enrollment. Staff add people (or a bulk import does).
@@ -517,6 +517,17 @@ def enroll_in_course(course_id: str, current_user: dict = Depends(get_current_us
                 status_code=402,
                 detail=f"premium_required:{course['premium_price']}",
             )
+
+    if existing:
+        # Rejoin a now-free course (or staff access) after a store refund.
+        # Keep the learner's original progress; paid students already hit 402 above.
+        enrollments_col.update_one({"id": existing["id"]}, {
+            "$set": {"iap_managed": False, "source": "self_enrollment"},
+            "$unset": {"iap_revoked_at": ""},
+        })
+        existing.pop("_id", None)
+        existing.pop("iap_revoked_at", None)
+        return existing
 
     # Tier gating: check enrollment limit
     check_enrollment_limit(current_user)
@@ -567,7 +578,7 @@ def get_enrollment_status(course_id: str, current_user: dict = Depends(get_curre
     enrollment = enrollments_col.find_one(
         {"user_id": current_user["id"], "course_id": course_id}, {"_id": 0}
     )
-    return {"enrolled": enrollment is not None, "enrollment": enrollment}
+    return {"enrolled": enrollment is not None and not enrollment.get("iap_revoked_at"), "enrollment": enrollment}
 
 
 @router.post("/{course_id}/lessons/{lesson_id}/complete")

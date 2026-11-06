@@ -76,6 +76,8 @@ def effective_end(course: dict, enrollment: Optional[dict]):
 
 def ended_at(course: dict, enrollment: Optional[dict], now: datetime = None):
     """The end date if it has passed, else None."""
+    if enrollment and enrollment.get("iap_managed") and enrollment.get("iap_revoked_at"):
+        return _stored(enrollment["iap_revoked_at"])
     end = effective_end(course, enrollment)
     if end is None:
         return None

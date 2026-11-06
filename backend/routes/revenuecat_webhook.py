@@ -73,11 +73,21 @@ async def revenuecat_webhook(request: Request):
     app_user_id = event.get("app_user_id", "")
     product_id = event.get("product_id", "")
 
+    # Course purchases/refunds never mutate membership tiers. A fresh provider
+    # lookup also makes delayed and duplicate course events harmless.
+    from course_iap import handle_course_event
+    from fastapi.concurrency import run_in_threadpool
+    if await run_in_threadpool(handle_course_event, event):
+        return {"status": "ok", "kind": "course_purchase", "event_type": event_type}
+
     if not app_user_id:
         return {"status": "ignored", "reason": "no app_user_id"}
 
     # Resolve tier from product ID
     tier_id = PRODUCT_ID_TO_TIER.get(product_id)
+
+    if not tier_id:
+        return {"status": "ignored", "reason": "unmapped product"}
 
     now = datetime.now(timezone.utc).isoformat()
 

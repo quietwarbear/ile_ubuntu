@@ -7,7 +7,7 @@ import {
 } from '@phosphor-icons/react';
 import { BACKEND_URL } from '../../lib/api';
 
-export function CourseHeader({ course, lessons, enrollment, progress, user, isInstructor, isStaffPreview = false, onEnroll, onUnenroll }) {
+export function CourseHeader({ course, lessons, enrollment, progress, user, isInstructor, isStaffPreview = false, onEnroll, onUnenroll, purchaseActions }) {
   const isEnrolled = enrollment?.enrolled;
   const progressPct = progress?.progress || 0;
   const isCompleted = progress?.status === 'completed';
@@ -79,7 +79,7 @@ export function CourseHeader({ course, lessons, enrollment, progress, user, isIn
               <span className="inline-flex rounded-full border border-[rgb(var(--gold)/0.3)] bg-[rgb(var(--gold)/0.08)] px-3 py-1.5 text-xs text-[rgb(var(--gold))]">
                 Student preview
               </span>
-            ) : (
+            ) : purchaseActions || (
               <Button
                 onClick={onEnroll}
                 className="bg-[rgb(var(--gold))] text-[rgb(var(--ink-deep))] hover:bg-[rgb(var(--gold-soft))] font-medium"

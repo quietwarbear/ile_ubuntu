@@ -1,8 +1,7 @@
 """Teacher Marketplace — Stripe Connect (Express) for premium course sales.
 
-Money flow: student pays via Stripe Checkout on the WEB ONLY (Apple/Google
-in-app purchase rules prohibit Stripe checkout for digital goods inside the
-native apps). The charge is a destination charge: funds land on the teacher's
+Money flow: student pays via Stripe Checkout on the website. Native courses
+use RevenueCat and store billing separately. The Stripe charge is a destination charge: funds land on the teacher's
 connected Express account, the platform keeps MARKETPLACE_FEE_PCT as an
 application fee. Fulfillment (enrollment) happens in the Stripe webhook in
 server.py, never in the redirect, so a forged success URL can't grant access.
@@ -213,7 +212,8 @@ async def course_checkout(course_id: str, request: Request, current_user: dict =
     if not course.get("is_premium") or price <= 0:
         raise HTTPException(status_code=400, detail="This course is not a premium course")
 
-    if enrollments_col.find_one({"user_id": current_user["id"], "course_id": course_id}):
+    enrollment = enrollments_col.find_one({"user_id": current_user["id"], "course_id": course_id})
+    if enrollment and not enrollment.get("iap_revoked_at"):
         raise HTTPException(status_code=400, detail="Already enrolled")
     import course_access
     if course_access.course_ended(course):
@@ -306,6 +306,14 @@ def fulfill_course_purchase(session_data: dict) -> bool:
             "via_purchase": True,
         })
         courses_col.update_one({"id": txn["course_id"]}, {"$inc": {"enrolled_count": 1}})
+
+    # A learner can buy on the web after a refunded store purchase. Preserve
+    # their progress, and protect this independent paid access from later RC events.
+    enrollments_col.update_one(
+        {"user_id": txn["user_id"], "course_id": txn["course_id"], "iap_managed": True},
+        {"$set": {"iap_managed": False, "source": "stripe", "via_purchase": True},
+         "$unset": {"iap_revoked_at": ""}},
+    )
 
     emit("course.purchased", {"id": txn["user_id"]}, "course", txn["course_id"],
          meta={"amount": txn["amount"], "teacher_id": txn["teacher_id"]})

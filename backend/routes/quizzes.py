@@ -31,6 +31,16 @@ def _get_lesson(course_id: str, lesson_id: str):
     return lesson
 
 
+def _require_student_access(course_id, current_user):
+    if has_permission(current_user["role"], UserRole.FACULTY):
+        return
+    enrollment = enrollments_col.find_one({"course_id": course_id, "user_id": current_user["id"]})
+    if not enrollment:
+        raise HTTPException(403, "Not enrolled in this course")
+    import course_access
+    course_access.require_open(courses_col.find_one({"id": course_id}) or {}, enrollment)
+
+
 def _lesson_is_released(lesson: dict) -> bool:
     """Quiz content follows the lesson's student release boundary."""
     if lesson.get("hidden"):
@@ -181,6 +191,7 @@ def get_quiz(
 ):
     """Get the quiz for a lesson. Students don't see correct answers."""
     lesson = _get_lesson(course_id, lesson_id)
+    _require_student_access(course_id, current_user)
     quiz = quizzes_col.find_one({"lesson_id": lesson_id}, {"_id": 0})
     if not quiz:
         raise HTTPException(status_code=404, detail="No quiz for this lesson")
