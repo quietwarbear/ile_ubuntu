@@ -141,9 +141,11 @@ from routes.villages import router as villages_router
 from routes.portfolio import router as portfolio_router
 from routes.guide import router as guide_router
 from routes.enrollment_imports import router as enrollment_imports_router
+from routes.course_notice import router as course_notice_router
 
 app.include_router(auth_router)
 app.include_router(courses_router)
+app.include_router(course_notice_router)
 app.include_router(discussions_router)
 app.include_router(submissions_router)
 app.include_router(cohorts_router)

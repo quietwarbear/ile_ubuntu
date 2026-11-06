@@ -10,6 +10,7 @@ import {
 import { apiGet, apiPost, apiUpload, apiDelete, parseTierError, apiPut } from '../lib/api';
 import UpgradePrompt from '../components/UpgradePrompt';
 import { CourseHeader } from '../components/course/CourseHeader';
+import { CourseNotice } from '../components/course/CourseNotice';
 import { LessonCard } from '../components/course/LessonCard';
 import { EnrolledStudents } from '../components/course/EnrolledStudents';
 import { CourseStaffPanel } from '../components/course/CourseStaffPanel';
@@ -334,6 +335,10 @@ export default function CourseDetailPage({ user }) {
           </Button>
         </div>
       )}
+
+      <CourseNotice courseId={courseId}
+        canRead={!!enrollment?.enrolled || canTeachCourse}
+        canEdit={isInstructor} />
 
       <CourseHeader
         course={course} lessons={lessons} enrollment={enrollment} progress={progress}
