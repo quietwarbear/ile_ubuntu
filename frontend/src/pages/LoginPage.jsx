@@ -344,7 +344,7 @@ export default function LoginPage({ onLogin, onPasswordLogin }) {
             </Button>
           </form>
 
-          {/* Passwordless: one-time link by email */}
+          {/* No-password option: a one-time link by email */}
           {mode === 'login' && (
             <button
               type="button"
