@@ -3,6 +3,10 @@ import { initializeRevenueCat } from './revenuecat';
 
 export const coursePurchasePlatform = () => Capacitor.isNativePlatform() ? Capacitor.getPlatform() : null;
 
+// Match the existing server enrollment policy: platform faculty+ can enroll
+// without buying. Do not send those accounts to a store charge sheet.
+export const needsCoursePurchase = (user, course) => !!(coursePurchasePlatform() && course?.is_premium && course.premium_price > 0 && !['faculty', 'elder', 'admin'].includes(user?.role));
+
 async function purchasesFor(userId) {
   if (!userId || !coursePurchasePlatform()) throw new Error('Sign in to purchase this course.');
   await initializeRevenueCat();

@@ -1,7 +1,7 @@
 import { Capacitor } from '@capacitor/core';
 import { Purchases } from '@revenuecat/purchases-capacitor';
 import { initializeRevenueCat } from './revenuecat';
-import { loadCourseProduct, purchaseCourseProduct, restoreCourseProducts } from './coursePurchases';
+import { loadCourseProduct, purchaseCourseProduct, restoreCourseProducts, needsCoursePurchase } from './coursePurchases';
 jest.mock('@capacitor/core', () => ({ Capacitor: { isNativePlatform: jest.fn(() => true), getPlatform: () => 'android' } }));
 jest.mock('./revenuecat', () => ({ initializeRevenueCat: jest.fn() }));
 jest.mock('@revenuecat/purchases-capacitor', () => ({ Purchases: { logIn: jest.fn(), getAppUserID: jest.fn(), getProducts: jest.fn(), purchaseStoreProduct: jest.fn(), restorePurchases: jest.fn() } }));
@@ -27,4 +27,11 @@ test('already owned products restore instead of charging again', async () => {
 });
 test('restore binds the signed-in account', async () => {
   await restoreCourseProducts('learner'); expect(Purchases.logIn).toHaveBeenCalledWith({ appUserID:'learner' }); expect(Purchases.restorePurchases).toHaveBeenCalledTimes(1);
+});
+
+
+test('existing faculty enrollment rights do not produce a store charge', () => {
+  const course = { is_premium:true, premium_price:3 };
+  expect(needsCoursePurchase({ role:'student' },course)).toBe(true);
+  for (const role of ['faculty','elder','admin']) expect(needsCoursePurchase({ role },course)).toBe(false);
 });

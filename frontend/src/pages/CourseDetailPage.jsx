@@ -18,7 +18,7 @@ import { CourseDiscussion } from '../components/course/CourseDiscussion';
 import { GoogleImportDialog } from '../components/course/GoogleImportDialog';
 import { parseAccessEnded } from '../lib/courseAccess';
 import { NativeCoursePurchase } from '../components/course/NativeCoursePurchase';
-import { coursePurchasePlatform } from '../lib/coursePurchases';
+import { coursePurchasePlatform, needsCoursePurchase } from '../lib/coursePurchases';
 import { AccessEndedNotice } from '../components/course/AccessEndedNotice';
 
 export default function CourseDetailPage({ user }) {
@@ -344,7 +344,7 @@ export default function CourseDetailPage({ user }) {
         course={course} lessons={lessons} enrollment={enrollment} progress={progress}
         user={user} isInstructor={isInstructor} isStaffPreview={canTeachCourse && viewAsStudent}
         onEnroll={handleEnroll} onUnenroll={handleUnenroll}
-        purchaseActions={coursePurchasePlatform() && course.is_premium && course.premium_price > 0
+        purchaseActions={needsCoursePurchase(user, course)
             ? <NativeCoursePurchase key={`${courseId}:${user.id}`} courseId={courseId} userId={user.id} onAccessGranted={loadCourseData} /> : null}
       />
 
