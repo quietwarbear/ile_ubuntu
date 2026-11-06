@@ -17,6 +17,7 @@ import jwt as pyjwt
 from cryptography.hazmat.primitives.asymmetric.rsa import RSAPublicNumbers
 from cryptography.hazmat.backends import default_backend
 import hashlib
+import hmac
 from database import (
     users_col,
     sessions_col,
@@ -422,7 +423,7 @@ async def exchange(request: Request):
     data = await request.json()
     secret = data.get("secret") or ""
     expected = os.environ.get("UBUNTU_SSO_SECRET", "")
-    if not expected or secret != expected:
+    if not expected or not hmac.compare_digest(str(secret).encode(), expected.encode()):
         raise HTTPException(status_code=403, detail="Invalid SSO secret")
 
     email = (data.get("email") or "").strip().lower()
@@ -462,7 +463,7 @@ async def sso_mint_code(request: Request):
     data = await request.json()
     secret = data.get("secret") or ""
     expected = os.environ.get("UBUNTU_SSO_SECRET", "")
-    if not expected or secret != expected:
+    if not expected or not hmac.compare_digest(str(secret).encode(), expected.encode()):
         raise HTTPException(status_code=403, detail="Invalid SSO secret")
     email = (data.get("email") or "").strip().lower()
     name = (data.get("name") or "").strip()
