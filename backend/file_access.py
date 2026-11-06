@@ -15,7 +15,8 @@ The rule, in order:
      submission's course (same rule as routes/submissions.py);
    - for course material: staff on the owning course (owner, co-teacher, or
      assistant+ — the same rule list_lessons uses), or enrolled in it, and for
-     a lesson file the lesson must be open (not hidden, release time passed);
+     a lesson file the lesson must be open (not hidden, release time passed),
+     and the enrollment's access must not have ended (I6, course_access.py);
    - for a portfolio file: faculty+ or a linked guardian, when the owner has
      shared the item that holds it.
 
@@ -117,6 +118,20 @@ def _is_enrolled(course_id: str, user_id: str) -> bool:
     return enrollments_col.find_one({"user_id": user_id, "course_id": course_id}) is not None
 
 
+def _owning_courses(file_data: dict) -> list:
+    """[(course, lesson or None)] the file belongs to."""
+    lessons = _owning_lessons(file_data)
+    targets = [(l.get("course_id"), l) for l in lessons]
+    if not targets and file_data.get("course_id"):
+        targets = [(file_data["course_id"], None)]  # course-level attachment
+    out = []
+    for course_id, lesson in targets:
+        course = courses_col.find_one({"id": course_id}) if course_id else None
+        if course:
+            out.append((course, lesson))
+    return out
+
+
 def _owning_lessons(file_data: dict) -> list:
     fid = file_data["id"]
     if file_data.get("lesson_id"):
@@ -132,21 +147,31 @@ def _owning_lessons(file_data: dict) -> list:
 
 def _course_access(file_data: dict, user: dict) -> bool:
     from routes.courses import _lesson_is_open
+    import course_access
 
-    lessons = _owning_lessons(file_data)
-    targets = [(l.get("course_id"), l) for l in lessons]
-    if not targets and file_data.get("course_id"):
-        targets = [(file_data["course_id"], None)]  # course-level attachment
-
-    for course_id, lesson in targets:
-        course = courses_col.find_one({"id": course_id}) if course_id else None
-        if not course:
-            continue
+    for course, lesson in _owning_courses(file_data):
         if _is_staff_on(course, user):
             return True
-        if _is_enrolled(course_id, user["id"]) and (lesson is None or _lesson_is_open(lesson)):
+        enrollment = enrollments_col.find_one({"user_id": user["id"], "course_id": course["id"]})
+        if (enrollment and course_access.ended_at(course, enrollment) is None
+                and (lesson is None or _lesson_is_open(lesson))):
             return True
     return False
+
+
+def access_ended_for(file_data: dict, user: Optional[dict]):
+    """When can_access said no: the end date if the reason is that this
+    person's access to the file's course has ended (I6), else None."""
+    if not user:
+        return None
+    import course_access
+
+    for course, _lesson in _owning_courses(file_data):
+        enrollment = enrollments_col.find_one({"user_id": user["id"], "course_id": course["id"]})
+        end = course_access.ended_at(course, enrollment) if enrollment else None
+        if end is not None:
+            return end
+    return None
 
 
 def _submission_access(file_data: dict, user: dict) -> bool:

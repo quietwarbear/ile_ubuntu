@@ -11,6 +11,7 @@ import { BulkEnrollmentImport } from '../components/course/BulkEnrollmentImport'
 import {
   currentVisibility, visibilityOptionsFor, visibilityExplanation, certificatesEnabled,
 } from '../lib/courseVisibility';
+import { endOfDayIso, toDateInput } from '../lib/courseAccess';
 
 export default function TeacherDashboardPage({ user }) {
   const [connectStatus, setConnectStatus] = useState(null);
@@ -107,6 +108,20 @@ export default function TeacherDashboardPage({ user }) {
       fetchAll();
     } catch (e) {
       setStatusMessage({ type: 'error', text: e.message || 'Failed to update certificates' });
+    }
+  };
+
+  const handleSetAccessEnd = async (course, dateValue) => {
+    try {
+      await apiPut(`/api/courses/${course.id}`, { access_ends_at: endOfDayIso(dateValue) });
+      setStatusMessage({
+        type: 'success',
+        text: dateValue ? `"${course.title}": students keep access until the end of ${dateValue}`
+                        : `"${course.title}": students keep access forever`,
+      });
+      fetchAll();
+    } catch (e) {
+      setStatusMessage({ type: 'error', text: e.message || 'Failed to update access' });
     }
   };
 
@@ -351,6 +366,28 @@ export default function TeacherDashboardPage({ user }) {
                         <p className="text-[10px] text-[rgb(var(--text-muted))] mb-0.5" data-testid={`visibility-explain-${course.id}`}>
                           {visibilityExplanation(currentVisibility(course))}
                         </p>
+                        <label className="flex flex-wrap items-center gap-1.5 text-[10px] text-[rgb(var(--text-muted))] mb-0.5">
+                          Access until
+                          <input
+                            type="date"
+                            value={toDateInput(course.access_ends_at)}
+                            onChange={e => handleSetAccessEnd(course, e.target.value)}
+                            aria-label={`Access end date for ${course.title}`}
+                            className="px-1 py-0.5 rounded border bg-[rgb(var(--ink-deep))] text-[rgb(var(--text-main))] border-[rgb(var(--ink-border))]"
+                            data-testid={`access-end-${course.id}`}
+                          />
+                          <span data-testid={`access-explain-${course.id}`}>
+                            {course.access_ends_at
+                              ? 'After this date students keep the course page and certificate, not the lessons, files or recordings. You can extend one person from the roster.'
+                              : 'Empty = forever (the default).'}
+                          </span>
+                          {course.access_ends_at && (
+                            <button type="button" onClick={() => handleSetAccessEnd(course, '')}
+                              className="underline hover:text-[rgb(var(--gold))]" data-testid={`access-forever-${course.id}`}>
+                              Make it forever
+                            </button>
+                          )}
+                        </label>
                         {courseEarnings && (
                           <p className="text-[10px] text-[rgb(var(--text-muted))]">
                             {courseEarnings.total_sales} sale{courseEarnings.total_sales !== 1 ? 's' : ''} · ${courseEarnings.net_earnings.toFixed(2)} earned

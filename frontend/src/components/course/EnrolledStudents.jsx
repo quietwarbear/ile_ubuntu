@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import { Card, CardContent } from '../../components/ui/card';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
-import { apiDelete, apiPost } from '../../lib/api';
+import { apiDelete, apiPost, apiPut } from '../../lib/api';
+import { accessSummary, endOfDayIso } from '../../lib/courseAccess';
 
 function getFirstName(name = '', email = '') {
   const trimmedName = name.trim();
@@ -41,6 +42,17 @@ export function EnrolledStudents({ courseId, enrollments, onChanged }) {
     finally { setBusy(false); }
   };
 
+  // I6: give one person their own end date, forever, or back to the course's.
+  const setAccess = async (enrollment, body, note) => {
+    setBusy(true); setError(''); setMessage('');
+    try {
+      await apiPut(`/api/courses/${courseId}/enrollments/${enrollment.user_id}/access`, body);
+      setMessage(note);
+      await onChanged?.();
+    } catch (err) { setError(err.message); }
+    finally { setBusy(false); }
+  };
+
   return (
     <div>
       <h2 className="text-xs tracking-[0.15em] uppercase text-[rgb(var(--gold))] mb-4">
@@ -72,6 +84,25 @@ export function EnrolledStudents({ courseId, enrollments, onChanged }) {
                 <p className="text-[10px] text-[rgb(var(--text-muted))]">
                   Enrolled {new Date(e.enrolled_at).toLocaleDateString()}
                 </p>
+                <p className={`text-[10px] ${e.access_ended ? 'text-red-400' : 'text-[rgb(var(--text-muted))]'}`} data-testid={`access-${e.user_id}`}>
+                  {e.access_ended ? 'Access ended' : accessSummary(e.access_ends_at)}
+                  {e.overridden ? ' (set for this person)' : ''}
+                </p>
+                <div className="flex flex-wrap items-center gap-1.5 text-[10px] text-[rgb(var(--text-muted))]">
+                  <input type="date" aria-label={`Access end date for ${getFirstName(e.user_name, e.user_email)}`}
+                    disabled={busy}
+                    onChange={ev => ev.target.value && setAccess(e, { access_ends_at: endOfDayIso(ev.target.value) }, 'Access date updated for this person.')}
+                    className="px-1 py-0.5 rounded border bg-[rgb(var(--ink-card))] text-[rgb(var(--text-main))] border-[rgb(var(--ink-border))]"
+                    data-testid={`access-date-${e.user_id}`} />
+                  <button type="button" disabled={busy} className="underline hover:text-[rgb(var(--gold))]"
+                    onClick={() => setAccess(e, { access_ends_at: null }, 'This person keeps access forever.')}
+                    data-testid={`access-forever-${e.user_id}`}>Forever</button>
+                  {e.overridden && (
+                    <button type="button" disabled={busy} className="underline hover:text-[rgb(var(--gold))]"
+                      onClick={() => setAccess(e, { inherit: true }, "This person now follows the course's access setting.")}
+                      data-testid={`access-inherit-${e.user_id}`}>Use course setting</button>
+                  )}
+                </div>
               </div>
               <div className="flex items-center gap-2">
                 <div className="w-16 h-1.5 bg-[rgb(var(--ink-deep))] rounded-full overflow-hidden border border-[rgb(var(--ink-border))]">

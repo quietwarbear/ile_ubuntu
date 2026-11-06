@@ -10,6 +10,7 @@ from models.user import has_permission, UserRole
 from models.course import CourseStatus
 from tier_gating import check_enrollment_limit
 from events import emit
+import course_access
 # Acyclic: villages.py only imports from database/middleware/models, never routes.
 from routes.villages import is_village_member, user_village_ids, _get_village, _can_steward
 
@@ -251,6 +252,10 @@ def get_course(course_id: str, current_user: dict = Depends(get_current_user)):
     if _is_private(course):
         if not (_is_course_staff(course, current_user) or _is_enrolled(course_id, current_user["id"])):
             raise HTTPException(status_code=404, detail="Course not found")
+    # I6: the course page stays open after access ends, and says so.
+    enrollment = enrollments_col.find_one({"user_id": current_user["id"], "course_id": course_id})
+    if enrollment and not _is_course_staff(course, current_user):
+        course["viewer_access"] = course_access.viewer_access(course, enrollment)
     return course
 
 
@@ -272,6 +277,12 @@ async def update_course(course_id: str, request: Request, current_user: dict = D
         if not isinstance(data["certificates_enabled"], bool):
             raise HTTPException(status_code=400, detail="certificates_enabled must be true or false")
         update_fields["certificates_enabled"] = data["certificates_enabled"]
+    # Access end (I6): null = forever (default), or a date/datetime.
+    if "access_ends_at" in data:
+        try:
+            update_fields["access_ends_at"] = course_access.parse_end(data["access_ends_at"])
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail=str(exc))
     update_fields["updated_at"] = datetime.now(timezone.utc)
 
     courses_col.update_one({"id": course_id}, {"$set": update_fields})
@@ -448,13 +459,16 @@ def list_lessons(
     is_staff = _is_course_staff(course, current_user) or _has_role_reach(
         course, current_user, UserRole.ASSISTANT
     )
-    if not is_staff and not _is_enrolled(course_id, current_user["id"]):
+    enrollment = None if is_staff else enrollments_col.find_one({"user_id": current_user["id"], "course_id": course_id})
+    if not is_staff and not enrollment:
         if _is_private(course):
             raise HTTPException(status_code=404, detail="Course not found")
         return [
             {**_locked_lesson_stub(lesson), "enrollment_required": True}
             for lesson in lessons if not lesson.get("hidden")
         ]
+    if not is_staff:
+        course_access.require_open(course, enrollment)   # I6
 
     # Students: a hidden lesson disappears entirely; a scheduled one appears as
     # a dated placeholder so the shape of the course stays legible.
@@ -484,6 +498,8 @@ def enroll_in_course(course_id: str, current_user: dict = Depends(get_current_us
     # Private: no self-enrollment. Staff add people (or a bulk import does).
     if _is_private(course):
         raise HTTPException(status_code=403, detail="This course is by enrollment only")
+    if course_access.course_ended(course):
+        raise HTTPException(status_code=400, detail="This course's access period has ended")
 
     # Village-only courses: members of the village enroll directly (no invite
     # code needed); everyone else needs to belong to the village first.
@@ -559,6 +575,7 @@ def complete_lesson(course_id: str, lesson_id: str, current_user: dict = Depends
     enrollment = enrollments_col.find_one({"user_id": current_user["id"], "course_id": course_id})
     if not enrollment:
         raise HTTPException(status_code=400, detail="Not enrolled in this course")
+    course_access.require_open(courses_col.find_one({"id": course_id}) or {}, enrollment)
 
     lesson = lessons_col.find_one({"id": lesson_id, "course_id": course_id})
     if not lesson:
@@ -628,7 +645,12 @@ def list_course_enrollments(course_id: str, current_user: dict = Depends(get_cur
         )
     }
     result = [
-        {**enrollment, "user_email": emails.get(enrollment.get("user_id"), "")}
+        {
+            **enrollment,
+            "user_email": emails.get(enrollment.get("user_id"), ""),
+            # I6: what applies to this person, and whether it's their own date.
+            **course_access.viewer_access(course, enrollment),
+        }
         for enrollment in enrollments
     ]
     return result
@@ -722,6 +744,39 @@ def remove_course_enrollment(
         meta={"student_id": user_id, "removed_by_teacher": True},
     )
     return {"success": True}
+
+
+@router.put("/{course_id}/enrollments/{user_id}/access")
+async def set_enrollment_access(
+    course_id: str, user_id: str, request: Request, current_user: dict = Depends(get_current_user)
+):
+    """Staff override of one person's access end (I6). Body:
+    {"access_ends_at": "<date or datetime>"} — their own end date;
+    {"access_ends_at": null} — this person keeps access forever;
+    {"inherit": true} — follow the course setting again."""
+    course = courses_col.find_one({"id": course_id})
+    if not course:
+        raise HTTPException(status_code=404, detail="Course not found")
+    if not _is_course_staff(course, current_user):
+        raise HTTPException(status_code=403, detail="Access denied")
+    enrollment = enrollments_col.find_one({"user_id": user_id, "course_id": course_id})
+    if not enrollment:
+        raise HTTPException(status_code=404, detail="This person is not enrolled")
+
+    data = await request.json()
+    if data.get("inherit") is True:
+        enrollments_col.update_one({"_id": enrollment["_id"]}, {"$unset": {"access_ends_at": ""}})
+    elif "access_ends_at" in data:
+        try:
+            end = course_access.parse_end(data["access_ends_at"])
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail=str(exc))
+        enrollments_col.update_one({"_id": enrollment["_id"]}, {"$set": {"access_ends_at": end}})
+    else:
+        raise HTTPException(status_code=400, detail="Send access_ends_at (a date or null) or inherit: true")
+
+    updated = enrollments_col.find_one({"_id": enrollment["_id"]}, {"_id": 0})
+    return {**updated, **course_access.viewer_access(course, updated)}
 
 
 # --- Visibility & invites (closed-ecosystem joining) ---
@@ -948,6 +1003,8 @@ def accept_invite(code: str, current_user: dict = Depends(get_current_user)):
 
     if enrollments_col.find_one({"user_id": current_user["id"], "course_id": course["id"]}):
         return {"enrolled": True, "course_id": course["id"], "message": "Already enrolled"}
+    if course_access.course_ended(course):
+        raise HTTPException(status_code=400, detail="This course's access period has ended")
 
     # Invite codes don't pierce village privacy: village-only courses still
     # require village membership (members never needed the code anyway).

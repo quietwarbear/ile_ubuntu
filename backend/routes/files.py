@@ -1,5 +1,5 @@
 from fastapi import APIRouter, HTTPException, Depends, File, UploadFile, Form, Header, Query, Request
-from fastapi.responses import FileResponse, RedirectResponse, HTMLResponse
+from fastapi.responses import FileResponse, RedirectResponse, HTMLResponse, JSONResponse
 from datetime import datetime, timezone
 from typing import Optional
 import uuid
@@ -241,29 +241,67 @@ def _authorize(file_id: str, token: Optional[str], x_session_id: Optional[str]) 
         raise HTTPException(status_code=401, detail="Sign in to view this file")
 
     if not file_access.can_access(file_data, user):
+        ended = file_access.access_ended_for(file_data, user)
+        if ended is not None:
+            raise AccessEnded(ended)
         raise HTTPException(status_code=403, detail="You don't have access to this file")
     return file_data
+
+
+class AccessEnded(Exception):
+    """I6: the person's access to this file's course is over."""
+    def __init__(self, ended):
+        self.ended = ended
+
+
+_ENDED_PAGE = """<!doctype html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1"><title>Access has ended</title>
+<style>body{{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;
+background:#050814;color:#F8FAFC;font-family:Arial,sans-serif;padding:16px}}
+main{{max-width:420px;text-align:center}}p{{color:#94A3B8;line-height:1.6}}a{{color:#D4AF37}}</style></head>
+<body><main><h1>Your access has ended</h1>
+<p>Access to this course's materials ended on {date}. If you think that's a mistake, contact the course organizer.</p>
+<p><a href="{site}/">Back to The Ile Ubuntu</a></p></main></body></html>"""
+
+
+def _ended_response(request: Request, exc: AccessEnded):
+    """A clear page for a person who opened the link in a browser tab, the
+    usual JSON code (access_ended:<date>) for the app."""
+    import course_access
+    from routes.email_notifications import PUBLIC_SITE_URL
+    if "text/html" in (request.headers.get("accept") or ""):
+        date = exc.ended.strftime("%B %-d, %Y") if exc.ended.year > 1 else "an earlier date"
+        return HTMLResponse(_ENDED_PAGE.format(date=date, site=PUBLIC_SITE_URL), status_code=403)
+    return JSONResponse({"detail": course_access.detail(exc.ended)}, status_code=403)
 
 
 @router.get("/{file_id}/download")
 def download_file(
     file_id: str,
+    request: Request,
     t: Optional[str] = Query(None),
     x_session_id: Optional[str] = Header(None),
 ):
     """View or download a file. Requires the session header or a playback
     token from POST /api/files/access-tokens; see file_access.py for the rule."""
-    return _serve(_authorize(file_id, t, x_session_id))
+    try:
+        return _serve(_authorize(file_id, t, x_session_id))
+    except AccessEnded as exc:
+        return _ended_response(request, exc)
 
 
 @router.get("/{file_id}/stream")
 def stream_video(
     file_id: str,
+    request: Request,
     t: Optional[str] = Query(None),
     x_session_id: Optional[str] = Header(None),
 ):
     """Stream a video inline. S3 presigned URLs support range requests (seeking)."""
-    file_data = _authorize(file_id, t, x_session_id)
+    try:
+        file_data = _authorize(file_id, t, x_session_id)
+    except AccessEnded as exc:
+        return _ended_response(request, exc)
     if file_data.get("file_category") != "video":
         raise HTTPException(status_code=400, detail="Not a video file")
     return _serve(file_data, inline=True)
@@ -283,8 +321,13 @@ async def issue_access_tokens(request: Request, current_user: dict = Depends(get
         raise HTTPException(status_code=400, detail="file_ids must be a list of ids")
     ids = list(dict.fromkeys(ids))[:MAX_TOKEN_BATCH]
     out = {}
+    ended = {}
     for record in files_col.find({"id": {"$in": ids}}, {"_id": 0}):
         if not file_access.can_access(record, current_user):
+            end = file_access.access_ended_for(record, current_user)
+            if end is not None:
+                import course_access
+                ended[record["id"]] = course_access.detail(end)   # I6: say why
             continue
         issued = file_access.issue_token(current_user["id"], record["id"])
         kind = "stream" if record.get("file_category") == "video" else "download"
@@ -293,7 +336,7 @@ async def issue_access_tokens(request: Request, current_user: dict = Depends(get
             "url": f"/api/files/{record['id']}/{kind}?t={issued['token']}",
             "download_url": f"/api/files/{record['id']}/download?t={issued['token']}",
         }
-    return {"tokens": out, "ttl_seconds": file_access.TOKEN_TTL}
+    return {"tokens": out, "ended": ended, "ttl_seconds": file_access.TOKEN_TTL}
 
 
 @router.get("/integrity/report")
