@@ -7,6 +7,10 @@ import {
 } from '@phosphor-icons/react';
 import { BACKEND_URL, apiUpload, apiPut } from '../../lib/api';
 import { fetchFileTokens } from '../../lib/fileAccess';
+import { streamConfig, uploadToStream } from '../../lib/streamUpload';
+import StreamCaptions from './StreamCaptions';
+
+const PROCESSING_POLL_MS = 30 * 1000;
 
 /**
  * An uploaded lesson video. The stream URL carries a short-lived playback
@@ -16,6 +20,7 @@ import { fetchFileTokens } from '../../lib/fileAccess';
  */
 export function ProtectedVideo({ fileId }) {
   const [src, setSrc] = useState(null);
+  const [streamed, setStreamed] = useState(null); // Cloudflare Stream playback, when the file is on Stream
   const [failed, setFailed] = useState(false);
   const videoRef = useRef(null);
   const resumeAt = useRef(0);
@@ -26,6 +31,7 @@ export function ProtectedVideo({ fileId }) {
     const t = tokens[fileId];
     if (!t) { setFailed(true); return; }
     setFailed(false);
+    if (t.stream) { setStreamed(t.stream); return; }
     setSrc(`${BACKEND_URL}${t.url}`);
   };
 
@@ -33,8 +39,16 @@ export function ProtectedVideo({ fileId }) {
     resumeAt.current = 0;
     retries.current = 0;
     setSrc(null);
+    setStreamed(null);
     load();
   }, [fileId]);
+
+  // A video still processing on Stream: check back until it's ready.
+  useEffect(() => {
+    if (!streamed || streamed.state === 'ready' || streamed.state === 'unavailable') return undefined;
+    const timer = setTimeout(load, PROCESSING_POLL_MS);
+    return () => clearTimeout(timer);
+  }, [streamed]);
 
   const handleError = () => {
     const v = videoRef.current;
@@ -54,6 +68,31 @@ export function ProtectedVideo({ fileId }) {
       <p className="p-4 text-xs text-[rgb(var(--text-muted))]" data-testid="video-unavailable">
         This video is available to enrolled students. Sign in, or ask the instructor for access.
       </p>
+    );
+  }
+  if (streamed) {
+    if (streamed.state !== 'ready') {
+      return (
+        <p className="p-4 text-xs text-[rgb(var(--text-muted))]" data-testid="video-processing">
+          {streamed.state === 'unavailable' || streamed.state === 'error'
+            ? 'This video is unavailable right now. Please try again later.'
+            : 'This video is still processing. It will start here when it is ready.'}
+        </p>
+      );
+    }
+    // Stream's player: adaptive HLS that plays long recordings on phones, with
+    // a CC button. Captions start off (no defaultTextTrack).
+    return (
+      <div className="relative w-full" style={{ paddingTop: '56.25%' }}>
+        <iframe
+          src={streamed.iframe_url}
+          title="Lesson video"
+          className="absolute inset-0 w-full h-full border-0"
+          allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture; fullscreen"
+          allowFullScreen
+          data-testid="stream-video"
+        />
+      </div>
     );
   }
   if (!src) return <div className="w-full aspect-video bg-[rgb(var(--ink-deep))]" />;
@@ -86,6 +125,7 @@ export function LessonVideoPlayer({
   const [mode, setMode] = useState(null); // 'url' | 'upload'
   const [videoUrl, setVideoUrl] = useState('');
   const [uploading, setUploading] = useState(false);
+  const [progress, setProgress] = useState(null);
 
   const hasVideo = lesson.video_url || lesson.video_file_id;
 
@@ -121,19 +161,30 @@ export function LessonVideoPlayer({
     if (!file) return;
     setUploading(true);
     try {
-      const formData = new FormData();
-      formData.append('file', file);
-      formData.append('lesson_id', lesson.id);
-      formData.append('course_id', courseId);
-      const result = await apiUpload('/api/files/upload', formData);
+      let fileId;
+      const config = await streamConfig();
+      if (config.enabled) {
+        // Straight to Cloudflare Stream, in resumable chunks (any length).
+        setProgress(0);
+        fileId = await uploadToStream(file, {
+          courseId, lessonId: lesson.id, onProgress: setProgress,
+        });
+      } else {
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('lesson_id', lesson.id);
+        formData.append('course_id', courseId);
+        const result = await apiUpload('/api/files/upload', formData);
+        fileId = result.file.id;
+      }
       // Set the video_file_id on the lesson
       await apiPut(`/api/courses/${courseId}/lessons/${lesson.id}`, {
-        video_file_id: result.file.id,
+        video_file_id: fileId,
       });
       setMode(null);
       onUpdate?.();
     } catch (err) { alert(err.message); }
-    finally { setUploading(false); }
+    finally { setUploading(false); setProgress(null); }
   };
 
   const handleRemoveVideo = async () => {
@@ -179,6 +230,10 @@ export function LessonVideoPlayer({
         <div className="rounded-md overflow-hidden border border-[rgb(var(--ink-border))]">
           <ProtectedVideo fileId={lesson.video_file_id} />
         </div>
+      )}
+
+      {isInstructor && lesson.video_file_id && !lesson.video_url && (
+        <StreamCaptions fileId={lesson.video_file_id} />
       )}
 
       {/* Instructor controls */}
@@ -230,7 +285,9 @@ export function LessonVideoPlayer({
             <div className="flex items-center gap-2">
               <label className="cursor-pointer flex items-center gap-2 px-3 py-1.5 rounded bg-[rgb(var(--ink-deep))] border border-[rgb(var(--ink-border))] text-xs text-[rgb(var(--gold))] hover:border-[rgb(var(--gold)/0.4)] transition-colors">
                 <Play size={14} />
-                {uploading ? 'Uploading...' : 'Choose Video File'}
+                {uploading
+                  ? (progress === null ? 'Uploading...' : `Uploading ${Math.round(progress * 100)}%`)
+                  : 'Choose Video File'}
                 <input type="file" className="hidden" accept="video/*" onChange={handleUpload} disabled={uploading} />
               </label>
               <Button size="sm" variant="ghost" onClick={() => setMode(null)}

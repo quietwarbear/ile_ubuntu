@@ -12,6 +12,7 @@ from middleware import get_current_user
 from models.user import has_permission, UserRole
 import file_access
 import storage
+import stream
 
 router = APIRouter(prefix="/api/files", tags=["files"])
 
@@ -170,7 +171,15 @@ def upload_file(
 
 
 def _serve(file_data: dict, inline: Optional[bool] = None):
-    """Serve a stored file from S3 (presigned redirect) or local disk (fallback)."""
+    """Serve a stored file from S3 (presigned redirect) or local disk (fallback).
+    A Cloudflare Stream video redirects to a freshly signed HLS manifest."""
+    if file_data.get("stream_uid"):
+        if not stream.enabled():
+            raise HTTPException(status_code=503, detail="Video streaming is not configured")
+        if not file_data.get("stream_ready"):
+            raise HTTPException(status_code=409, detail="This video is still processing")
+        urls = stream.playback(file_data["stream_uid"], file_data.get("duration_seconds"))
+        return RedirectResponse(urls["hls_url"], status_code=307)
     is_video = file_data.get("file_category") == "video"
     if inline is None or is_video:
         # Video is never offered as an attachment: it plays, it doesn't download.
@@ -308,6 +317,31 @@ def stream_video(
 
 
 MAX_TOKEN_BATCH = 100
+STREAM_RECHECK_SECONDS = 30
+
+
+def _stream_playback(record: dict) -> dict:
+    """I4 phase 2: signed Cloudflare Stream URLs for someone file_access has
+    already let in. While the video is processing, check Stream at most every
+    STREAM_RECHECK_SECONDS so the player starts once it's ready (no webhook)."""
+    if not stream.enabled():
+        return {"state": "unavailable"}
+    if not record.get("stream_ready"):
+        checked = record.get("stream_checked_at")
+        now = datetime.now(timezone.utc)
+        if checked and checked.tzinfo is None:
+            checked = checked.replace(tzinfo=timezone.utc)
+        if not checked or (now - checked).total_seconds() >= STREAM_RECHECK_SECONDS:
+            files_col.update_one({"id": record["id"]}, {"$set": {"stream_checked_at": now}})
+            try:
+                from routes.stream_video import refresh_record
+                record = refresh_record(record)
+            except stream.StreamError as exc:
+                import logging
+                logging.getLogger(__name__).warning("stream.refresh %s %s", record["id"], exc)
+    if not record.get("stream_ready"):
+        return {"state": record.get("stream_state") or "processing"}
+    return {"state": "ready", **stream.playback(record["stream_uid"], record.get("duration_seconds"))}
 
 
 @router.post("/access-tokens")
@@ -336,6 +370,8 @@ async def issue_access_tokens(request: Request, current_user: dict = Depends(get
             "url": f"/api/files/{record['id']}/{kind}?t={issued['token']}",
             "download_url": f"/api/files/{record['id']}/download?t={issued['token']}",
         }
+        if record.get("stream_uid"):
+            out[record["id"]]["stream"] = _stream_playback(record)
     return {"tokens": out, "ended": ended, "ttl_seconds": file_access.TOKEN_TTL}
 
 
@@ -347,7 +383,8 @@ def file_integrity_report(current_user: dict = Depends(get_current_user)):
     if not has_permission(current_user["role"], UserRole.FACULTY):
         raise HTTPException(status_code=403, detail="Faculty+ required")
 
-    local_records = list(files_col.find({"s3_key": {"$exists": False}}, {"_id": 0}))
+    local_records = list(files_col.find(
+        {"s3_key": {"$exists": False}, "stream_uid": {"$exists": False}}, {"_id": 0}))
     report = []
     for f in local_records:
         path = Path(f.get("file_path", ""))
@@ -419,6 +456,11 @@ def delete_file(file_id: str, current_user: dict = Depends(get_current_user)):
     if file_data["uploaded_by"] != current_user["id"]:
         raise HTTPException(status_code=403, detail="Access denied")
 
+    if file_data.get("stream_uid") and stream.enabled():
+        try:
+            stream.delete_video(file_data["stream_uid"])
+        except stream.StreamError as exc:
+            raise HTTPException(status_code=502, detail=f"Couldn't remove the streamed video: {exc}")
     if file_data.get("s3_key"):
         storage.delete_object(file_data["s3_key"])
     elif file_data.get("file_path"):
