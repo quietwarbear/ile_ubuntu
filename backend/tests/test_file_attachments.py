@@ -309,15 +309,12 @@ class TestFileDownload(TestFileAttachmentsSetup):
         yield
     
     def test_download_file_without_auth(self):
-        """Download file works without authentication (public link)"""
+        """Download without a session or playback token is refused (I4)."""
         response = requests.get(
             f"{BASE_URL}/api/files/{self.download_test_file_id}/download"
-            # No auth header - should still work
         )
-        
-        assert response.status_code == 200, f"Expected 200, got {response.status_code}: {response.text}"
-        assert b"Download test content" in response.content
-        assert "text/plain" in response.headers.get("content-type", "")
+
+        assert response.status_code == 401, f"Expected 401, got {response.status_code}: {response.text}"
     
     def test_download_file_with_auth(self):
         """Download file also works with authentication"""

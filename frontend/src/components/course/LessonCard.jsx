@@ -7,7 +7,9 @@ import {
   DownloadSimple, Trash, Plus, GoogleLogo, Presentation, Article, ArrowSquareOut,
   File as FileIcon, FilePdf, FileDoc, FileXls, FilePpt, FileImage, Eye, X, PencilSimple,
 } from '@phosphor-icons/react';
-import { BACKEND_URL, apiPut, apiDelete } from '../../lib/api';
+import { apiPut, apiDelete } from '../../lib/api';
+import { useSignedFileUrls } from '../../lib/fileAccess';
+import { fileHref, StableFrame } from './FileLinks';
 import { Input } from '../../components/ui/input';
 import LessonContentViewer from '../LessonContentViewer';
 import WysiwygEditor from './WysiwygEditor';
@@ -42,6 +44,7 @@ export function LessonCard({
   courseId, user, onReloadCourse, modules = [],
 }) {
   const [viewingPdf, setViewingPdf] = useState(null);
+  const signedFiles = useSignedFileUrls((lessonFiles || []).map(f => f.id));
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -366,7 +369,7 @@ export function LessonCard({
                               </button>
                             )}
                             <a
-                              href={`${BACKEND_URL}/api/files/${file.id}/download`}
+                              href={fileHref(file, signedFiles)}
                               target="_blank" rel="noopener noreferrer"
                               className="p-1 text-[rgb(var(--text-muted))] hover:text-[rgb(var(--gold))] transition-colors"
                               title="Download"
@@ -389,8 +392,8 @@ export function LessonCard({
                         </div>
                         {isPdf && isPdfOpen && (
                           <div className="mt-1 rounded-md overflow-hidden border border-[rgb(var(--ink-border))]">
-                            <iframe
-                              src={`${BACKEND_URL}/api/files/${file.id}/download`}
+                            <StableFrame
+                              src={fileHref(file, signedFiles)}
                               className="w-full h-[600px] bg-white"
                               title={file.original_filename}
                             />

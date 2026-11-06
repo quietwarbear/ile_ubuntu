@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Card, CardContent } from '../ui/card';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
@@ -6,6 +6,75 @@ import {
   VideoCamera, Play, Link as LinkIcon, Upload, Trash, X,
 } from '@phosphor-icons/react';
 import { BACKEND_URL, apiUpload, apiPut } from '../../lib/api';
+import { fetchFileTokens } from '../../lib/fileAccess';
+
+/**
+ * An uploaded lesson video. The stream URL carries a short-lived playback
+ * token (see lib/fileAccess.js) and the storage link behind it expires in
+ * minutes, so a long video can outlive both: on a load error we fetch a fresh
+ * token and resume where the viewer was. Inline only, no download control.
+ */
+export function ProtectedVideo({ fileId }) {
+  const [src, setSrc] = useState(null);
+  const [failed, setFailed] = useState(false);
+  const videoRef = useRef(null);
+  const resumeAt = useRef(0);
+  const retries = useRef(0);
+
+  const load = async () => {
+    const tokens = await fetchFileTokens([fileId]);
+    const t = tokens[fileId];
+    if (!t) { setFailed(true); return; }
+    setFailed(false);
+    setSrc(`${BACKEND_URL}${t.url}`);
+  };
+
+  useEffect(() => {
+    resumeAt.current = 0;
+    retries.current = 0;
+    setSrc(null);
+    load();
+  }, [fileId]);
+
+  const handleError = () => {
+    const v = videoRef.current;
+    if (v) resumeAt.current = v.currentTime || resumeAt.current;
+    if (retries.current >= 3) { setFailed(true); return; }
+    retries.current += 1;
+    load();
+  };
+
+  const handleLoaded = () => {
+    const v = videoRef.current;
+    if (v && resumeAt.current) v.currentTime = resumeAt.current;
+  };
+
+  if (failed) {
+    return (
+      <p className="p-4 text-xs text-[rgb(var(--text-muted))]" data-testid="video-unavailable">
+        This video is available to enrolled students. Sign in, or ask the instructor for access.
+      </p>
+    );
+  }
+  if (!src) return <div className="w-full aspect-video bg-[rgb(var(--ink-deep))]" />;
+  return (
+    <video
+      ref={videoRef}
+      controls
+      controlsList="nodownload"
+      disablePictureInPicture
+      onContextMenu={(e) => e.preventDefault()}
+      onError={handleError}
+      onLoadedMetadata={handleLoaded}
+      onPlaying={() => { retries.current = 0; }}
+      className="w-full"
+      src={src}
+      data-testid="protected-video"
+    >
+      Your browser does not support the video tag.
+    </video>
+  );
+}
 
 /**
  * LessonVideoPlayer — shows video from a URL (YouTube/Vimeo) or direct upload.
@@ -108,10 +177,7 @@ export function LessonVideoPlayer({
 
       {lesson.video_file_id && !lesson.video_url && (
         <div className="rounded-md overflow-hidden border border-[rgb(var(--ink-border))]">
-          <video controls className="w-full"
-            src={`${BACKEND_URL}/api/files/${lesson.video_file_id}/stream`}>
-            Your browser does not support the video tag.
-          </video>
+          <ProtectedVideo fileId={lesson.video_file_id} />
         </div>
       )}
 
