@@ -15,6 +15,8 @@ import { EnrolledStudents } from '../components/course/EnrolledStudents';
 import { CourseStaffPanel } from '../components/course/CourseStaffPanel';
 import { CourseDiscussion } from '../components/course/CourseDiscussion';
 import { GoogleImportDialog } from '../components/course/GoogleImportDialog';
+import { parseAccessEnded } from '../lib/courseAccess';
+import { AccessEndedNotice } from '../components/course/AccessEndedNotice';
 
 export default function CourseDetailPage({ user }) {
   const { courseId } = useParams();
@@ -24,6 +26,7 @@ export default function CourseDetailPage({ user }) {
 
   const [course, setCourse] = useState(null);
   const [lessons, setLessons] = useState([]);
+  const [accessEnded, setAccessEnded] = useState(null);
   const [enrollment, setEnrollment] = useState(null);
   const [inviteCode, setInviteCode] = useState(null);
   const [inviteCopied, setInviteCopied] = useState(false);
@@ -70,7 +73,12 @@ export default function CourseDetailPage({ user }) {
     try {
       const [courseData, lessonData, enrollmentData, progressData] = await Promise.all([
         apiGet(`/api/courses/${courseId}`),
-        apiGet(`/api/courses/${courseId}/lessons${viewAsStudent ? '?view_as_student=true' : ''}`),
+        apiGet(`/api/courses/${courseId}/lessons${viewAsStudent ? '?view_as_student=true' : ''}`).catch(err => {
+          // I6: the course page stays open after access ends; the lessons don't.
+          const ended = parseAccessEnded(err.message);
+          if (ended) { setAccessEnded(ended); return []; }
+          throw err;
+        }),
         apiGet(`/api/courses/${courseId}/enrollment`),
         apiGet(`/api/courses/${courseId}/progress`),
       ]);
@@ -308,6 +316,10 @@ export default function CourseDetailPage({ user }) {
         data-testid="back-to-courses">
         <ArrowLeft size={16} /> Back to Courses
       </button>
+
+      {accessEnded && !canTeachCourse && (
+        <AccessEndedNotice endedAt={accessEnded.endedAt} courseTitle={course.title} />
+      )}
 
       {canTeachCourse && (
         <div className="flex items-center justify-between gap-3 rounded-md border border-[rgb(var(--gold)/0.25)] bg-[rgb(var(--gold)/0.06)] p-3" data-testid="course-view-switcher">

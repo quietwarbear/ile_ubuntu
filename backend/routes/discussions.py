@@ -45,6 +45,8 @@ def _verify_access(course_id: str, current_user: dict):
     )
     if not enrolled:
         raise HTTPException(status_code=403, detail="Not enrolled in this course")
+    import course_access
+    course_access.require_open(course, enrolled)   # I6
     return course, False
 
 

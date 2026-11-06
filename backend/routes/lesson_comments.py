@@ -35,6 +35,8 @@ def _verify_access(course_id: str, lesson_id: str, current_user: dict):
     enrollment = enrollments_col.find_one({"user_id": current_user["id"], "course_id": course_id})
     if not enrollment:
         raise HTTPException(status_code=403, detail="Not enrolled in this course")
+    import course_access
+    course_access.require_open(course, enrollment)   # I6
 
     # A hidden or not-yet-released lesson has no discussion for students. The
     # lesson is absent from their listing, so this only closes the direct-id

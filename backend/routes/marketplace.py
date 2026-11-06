@@ -215,6 +215,9 @@ async def course_checkout(course_id: str, request: Request, current_user: dict =
 
     if enrollments_col.find_one({"user_id": current_user["id"], "course_id": course_id}):
         raise HTTPException(status_code=400, detail="Already enrolled")
+    import course_access
+    if course_access.course_ended(course):
+        raise HTTPException(status_code=400, detail="This course's access period has ended")
 
     teacher = users_col.find_one({"id": course["instructor_id"]}) or {}
     teacher_account = teacher.get("stripe_account_id")

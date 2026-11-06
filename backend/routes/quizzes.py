@@ -250,6 +250,10 @@ async def submit_quiz(course_id: str, lesson_id: str, request: Request, current_
     enrollment = enrollments_col.find_one({"user_id": current_user["id"], "course_id": course_id})
     if not enrollment and not has_permission(current_user["role"], UserRole.FACULTY):
         raise HTTPException(status_code=403, detail="Not enrolled in this course")
+    if enrollment and not has_permission(current_user["role"], UserRole.FACULTY):
+        import course_access
+        from database import courses_col
+        course_access.require_open(courses_col.find_one({"id": course_id}) or {}, enrollment)   # I6
 
     quiz = quizzes_col.find_one({"lesson_id": lesson_id})
     if not quiz:

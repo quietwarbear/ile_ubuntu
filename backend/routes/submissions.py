@@ -61,10 +61,13 @@ def _verify_access(course_id: str, lesson_id: str, current_user: dict):
     ):
         return course, lesson, True
 
-    if not enrollments_col.find_one(
+    enrollment = enrollments_col.find_one(
         {"user_id": current_user["id"], "course_id": course_id}
-    ):
+    )
+    if not enrollment:
         raise HTTPException(status_code=403, detail="Not enrolled in this course")
+    import course_access
+    course_access.require_open(course, enrollment)   # I6
     if not _lesson_is_open(lesson):
         raise HTTPException(status_code=404, detail="Lesson not found")
     return course, lesson, False

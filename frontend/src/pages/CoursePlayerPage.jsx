@@ -13,6 +13,8 @@ import { LessonVideoPlayer } from '../components/course/LessonVideoPlayer';
 import { LessonQuiz } from '../components/course/LessonQuiz';
 import { LessonComments } from '../components/course/LessonComments';
 import { trackLessonCompletedForReview } from '../lib/review';
+import { parseAccessEnded } from '../lib/courseAccess';
+import { AccessEndedNotice } from '../components/course/AccessEndedNotice';
 
 // Order lessons the way the curriculum reads: each module (by order) with its
 // lessons (by order), then any ungrouped lessons last. One flat list powers
@@ -38,6 +40,7 @@ export default function CoursePlayerPage({ user }) {
 
   const [course, setCourse] = useState(null);
   const [lessons, setLessons] = useState([]);
+  const [accessEnded, setAccessEnded] = useState(null);
   const [enrollment, setEnrollment] = useState(null);
   const [progress, setProgress] = useState(null);
   const [filesMap, setFilesMap] = useState({});
@@ -61,7 +64,12 @@ export default function CoursePlayerPage({ user }) {
     try {
       const [c, l, e, p, files] = await Promise.all([
         apiGet(`/api/courses/${courseId}`),
-        apiGet(`/api/courses/${courseId}/lessons${viewAsStudent ? '?view_as_student=true' : ''}`),
+        apiGet(`/api/courses/${courseId}/lessons${viewAsStudent ? '?view_as_student=true' : ''}`).catch(err => {
+          // I6: the course page stays open after access ends; the lessons don't.
+          const ended = parseAccessEnded(err.message);
+          if (ended) { setAccessEnded(ended); return []; }
+          throw err;
+        }),
         apiGet(`/api/courses/${courseId}/enrollment`),
         apiGet(`/api/courses/${courseId}/progress`),
         apiGet(`/api/files?course_id=${courseId}`),
@@ -101,6 +109,16 @@ export default function CoursePlayerPage({ user }) {
   if (!course) return <Navigate to="/courses" replace />;
   // Players are for enrolled learners or the instructor.
   if (!enrollment?.enrolled && !canTeachCourse) return <Navigate to={`/courses/${courseId}`} replace />;
+  if (accessEnded && !canTeachCourse) {
+    return (
+      <div className="max-w-2xl space-y-4">
+        <button onClick={() => navigate(`/courses/${courseId}`)} className="flex items-center gap-2 text-sm text-[rgb(var(--text-muted))] hover:text-[rgb(var(--gold))]">
+          <ArrowLeft size={16} /> Course overview
+        </button>
+        <AccessEndedNotice endedAt={accessEnded.endedAt} courseTitle={course.title} />
+      </div>
+    );
+  }
   if (!current) {
     return (
       <div className="max-w-2xl">

@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends
 from database import enrollments_col, courses_col
 from middleware import get_current_user
+import course_access
 
 router = APIRouter(prefix="/api/enrollments", tags=["enrollments"])
 
@@ -27,5 +28,7 @@ def my_enrolled_courses(current_user: dict = Depends(get_current_user)):
                 # My Classes needs this: an unlisted class never appears in
                 # the catalog, so the UI badges it as reachable-by-link-only.
                 "course_visibility": course.get("visibility", "listed"),
+                # I6: when this person's access ends, and whether it has.
+                **course_access.viewer_access(course, enrollment),
             })
     return result
