@@ -17,6 +17,22 @@ KINDRED_WEB_URL = os.environ.get("KINDRED_WEB_URL", "https://www.heykindred.org"
 KINDRED_SSO_AUDIENCE = "kindred"
 KINDRED_SSO_ORIGIN = os.environ.get("KINDRED_SSO_ORIGIN", "https://www.ile-ubuntu.org").rstrip("/")
 
+# Sign-in providers that prove the person owns the address.
+VERIFIED_SIGN_IN_PROVIDERS = frozenset({"google", "apple"})
+
+
+def email_proven(user: dict) -> bool:
+    """True only when this account has shown it owns its email address.
+
+    Kindred signs the person into whichever account holds the email we send.
+    An address nobody has proved must never travel, or anyone could sign up
+    here with someone else's email and land in their Kindred account.
+    Email sign-in links and the verification link both set email_verified.
+    """
+    if user.get("email_verified") is True:
+        return True
+    return user.get("auth_provider") in VERIFIED_SIGN_IN_PROVIDERS
+
 
 @router.post("/open-kindred")
 async def open_kindred(current_user: dict = Depends(get_current_user)):
@@ -25,6 +41,11 @@ async def open_kindred(current_user: dict = Depends(get_current_user)):
     Mints a single-use code at Kindred (server-to-server, shared UBUNTU_SSO_SECRET) and
     returns the jump URL. Only a one-time code rides in the URL — never a session token.
     """
+    if not email_proven(current_user):
+        raise HTTPException(
+            status_code=403,
+            detail="Verify your email to open Kindred. Use \"Email me a sign-in link\" on the sign-in page, then try again.",
+        )
     secret = os.environ.get("UBUNTU_SSO_SECRET", "")
     if not secret:
         raise HTTPException(status_code=503, detail="Cross-product sign-in isn't configured.")
