@@ -41,3 +41,41 @@ def test_scheduled_quiz_is_withheld_until_release_time():
 
 def test_invalid_release_time_fails_closed():
     assert is_released({"available_at": "not-a-time"}) is False
+
+
+class QuizHTTPException(Exception):
+    def __init__(self, status_code, detail):
+        self.status_code = status_code
+        self.detail = detail
+
+
+def _load_quiz_reader(lesson):
+    from copy import deepcopy
+    from types import SimpleNamespace
+
+    node = deepcopy(next(n for n in TREE.body if isinstance(n, ast.FunctionDef) and n.name == "get_quiz"))
+    node.decorator_list = []
+    node.args.defaults = [ast.Constant(False), ast.Constant(None)]
+    module = ast.fix_missing_locations(ast.Module(body=[node], type_ignores=[]))
+    namespace = {
+        "_get_lesson": lambda course_id, lesson_id: lesson,
+        "quizzes_col": SimpleNamespace(find_one=lambda *args: {"questions": [{"id": "q1", "correct_answer": "private", "explanation": "private"}]}),
+        "has_permission": lambda *args: False,
+        "UserRole": SimpleNamespace(FACULTY="faculty"),
+        "_lesson_is_released": is_released,
+        "HTTPException": QuizHTTPException,
+    }
+    exec(compile(module, str(QUIZZES), "exec"), namespace)
+    return namespace["get_quiz"]
+
+
+def test_student_reads_released_quiz_without_answer_key():
+    quiz = _load_quiz_reader({"hidden": False})("course", "lesson", False, {"role": "student"})
+    assert quiz["questions"] == [{"id": "q1"}]
+
+
+def test_student_cannot_read_hidden_quiz():
+    import pytest
+    with pytest.raises(QuizHTTPException) as exc:
+        _load_quiz_reader({"hidden": True})("course", "lesson", False, {"role": "student"})
+    assert exc.value.status_code == 404
