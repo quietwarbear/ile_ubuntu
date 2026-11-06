@@ -316,6 +316,14 @@ async def register(request: Request):
 
     # Check if user already exists
     existing = users_col.find_one({"email": email})
+    if existing and existing.get("auth_provider") == "invited" and not existing.get("password_hash"):
+        # An organizer enrolled this address. Registering here would let anyone
+        # who types the address claim those enrollments, so the way in proves
+        # ownership of the inbox: the reset-password email (or Google/Apple).
+        raise HTTPException(
+            status_code=409,
+            detail="You've already been enrolled with this email. Use \"Forgot password\" to set a password, or sign in with Google.",
+        )
     if existing:
         raise HTTPException(status_code=409, detail="An account with this email already exists. Try signing in instead.")
 
@@ -374,6 +382,12 @@ async def login(request: Request):
     user = users_col.find_one({"email": email})
     if not user:
         raise HTTPException(status_code=401, detail="Invalid email or password")
+
+    if not user.get("password_hash") and user.get("auth_provider") == "invited":
+        raise HTTPException(
+            status_code=401,
+            detail="You were enrolled by an organizer and haven't set a password yet. Use \"Forgot password\" to set one, or sign in with Google.",
+        )
 
     # If user signed up via Google and has no password, tell them
     if not user.get("password_hash"):
@@ -535,8 +549,11 @@ async def forgot_password(request: Request):
     generic = {"success": True, "message": "If an account exists for that email, a reset link has been sent."}
 
     user = users_col.find_one({"email": email})
-    if not user or not user.get("password_hash"):
+    invited = bool(user) and user.get("auth_provider") == "invited"
+    if not user or (not user.get("password_hash") and not invited):
         # No account, or social-login-only account — same generic answer.
+        # An invited account (bulk import) has no password yet; this email is
+        # how its owner sets the first one.
         return generic
 
     token = str(uuid.uuid4())
@@ -632,6 +649,11 @@ async def reset_password(request: Request):
     users_col.update_one(
         {"id": reset["user_id"]},
         {"$set": {"password_hash": pwd_context.hash(password)}},
+    )
+    # An invited account becomes an ordinary password account once claimed.
+    users_col.update_one(
+        {"id": reset["user_id"], "auth_provider": "invited"},
+        {"$set": {"auth_provider": "password", "email_verified": True}},
     )
     password_resets_col.update_one({"_id": reset["_id"]}, {"$set": {"used": True}})
     # Invalidate all existing sessions for this user.

@@ -67,13 +67,19 @@ def has_tier(user: dict, required_tier: str) -> bool:
     return TIER_HIERARCHY.get(user_tier, 0) >= TIER_HIERARCHY.get(required_tier, 0)
 
 
+def own_enrollments_query(user_id: str) -> dict:
+    """Enrollments that count toward a person's tier limit. Ones an organizer
+    imported (bulk_enrollment.py, source "import") are free and don't count."""
+    return {"user_id": user_id, "source": {"$ne": "import"}}
+
+
 def check_enrollment_limit(user: dict):
     """Raise 403 if user has hit their enrollment limit."""
     if _should_bypass(user):
         return
     tier = get_user_tier(user)
     limit = ENROLLMENT_LIMITS.get(tier, 2)
-    current_count = enrollments_col.count_documents({"user_id": user["id"]})
+    current_count = enrollments_col.count_documents(own_enrollments_query(user["id"]))
     if current_count >= limit:
         raise HTTPException(
             status_code=403,

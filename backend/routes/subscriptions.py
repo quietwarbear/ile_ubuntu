@@ -156,7 +156,8 @@ def get_my_subscription(current_user: dict = Depends(get_current_user)):
     enrollment_count = 0
     if not is_bypassed:
         from database import enrollments_col
-        enrollment_count = enrollments_col.count_documents({"user_id": current_user["id"]})
+        from tier_gating import own_enrollments_query
+        enrollment_count = enrollments_col.count_documents(own_enrollments_query(current_user["id"]))
 
     limits = {
         "explorer": {"max_enrollments": 2, "cohorts": False, "spaces": False, "live_sessions": False, "restricted_archives": False},

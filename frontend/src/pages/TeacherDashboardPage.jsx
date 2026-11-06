@@ -7,6 +7,7 @@ import {
   CreditCard, Storefront,
 } from '@phosphor-icons/react';
 import { apiGet, apiPost, apiPut } from '../lib/api';
+import { BulkEnrollmentImport } from '../components/course/BulkEnrollmentImport';
 import {
   currentVisibility, visibilityOptionsFor, visibilityExplanation, certificatesEnabled,
 } from '../lib/courseVisibility';
@@ -407,6 +408,14 @@ export default function TeacherDashboardPage({ user }) {
             })}
           </div>
         )}
+      </div>
+
+      {/* Roster import: enroll a list of people into your courses */}
+      <div>
+        <h2 className="text-sm text-[rgb(var(--text-main))] mb-3" style={{ fontFamily: 'Cormorant Garamond, serif' }}>
+          Enroll a list
+        </h2>
+        <BulkEnrollmentImport />
       </div>
 
       {/* Recent Transactions */}
