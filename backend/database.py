@@ -199,3 +199,6 @@ def ensure_indexes():
             col.create_index(keys, background=True, **kwargs)
         except Exception as e:
             logger.warning("Index %s on %s skipped: %s", keys, col.name, e)
+# Organizer-written course notice (I7): one row per course. Kept off the
+# course document so no catalog or list endpoint can carry it to outsiders.
+course_notices_col = db.course_notices
