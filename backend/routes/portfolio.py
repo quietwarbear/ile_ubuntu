@@ -31,6 +31,7 @@ from database import (
 from middleware import get_current_user
 from models.user import has_permission, UserRole
 from events import emit
+import file_access
 
 router = APIRouter(prefix="/api/portfolio", tags=["portfolio"])
 
@@ -69,7 +70,7 @@ def _recognitions(user_id: str) -> list:
     return out
 
 
-def _attach_file_meta(items: list) -> list:
+def _attach_file_meta(items: list, viewer_id: str) -> list:
     for item in items:
         if item.get("file_id"):
             f = files_col.find_one(
@@ -77,7 +78,9 @@ def _attach_file_meta(items: list) -> list:
                 {"_id": 0, "original_filename": 1, "file_size": 1, "mime_type": 1, "file_category": 1},
             )
             if f:
-                item["file"] = {**f, "download_url": f"/api/files/{item['file_id']}/download"}
+                # Tokenized for the viewer: /api/files checks access itself
+                # (file_access.py — owner, or faculty/guardian on shared items).
+                item["file"] = {**f, "download_url": file_access.signed_path(item["file_id"], viewer_id)}
     return items
 
 
@@ -90,7 +93,7 @@ def my_portfolio(current_user: dict = Depends(get_current_user)):
         .sort("created_at", -1)
     )
     return {
-        "items": _attach_file_meta(items),
+        "items": _attach_file_meta(items, current_user["id"]),
         "recognitions": _recognitions(current_user["id"]),
     }
 
@@ -111,7 +114,7 @@ def view_portfolio(user_id: str, current_user: dict = Depends(get_current_user))
         .sort("created_at", -1)
     )
     return {
-        "items": _attach_file_meta(items),
+        "items": _attach_file_meta(items, current_user["id"]),
         "recognitions": _recognitions(user_id),
     }
 

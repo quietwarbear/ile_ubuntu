@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { COLOR_RE, normalizeColor } from './course/wysiwygMarkdown';
+import { fetchFileTokens, fileIdsIn, signFileUrls } from '../lib/fileAccess';
 
 // Markdown has no colour, so the editor stores it as {color:#hex}…{/color}.
 // This viewer renders through react-markdown, which would print that marker
@@ -102,10 +103,30 @@ function extractEmbeds(content) {
   return { text, embeds };
 }
 
+// Files uploaded from the lesson editor are stored in the content as
+// /api/files/{id}/download URLs. Those routes check access, so before
+// rendering, each URL gets the reader's own short-lived token. Signed once per
+// content change (not on a timer) so an open PDF frame never reloads.
+function useSignedContent(content) {
+  const [signed, setSigned] = useState({ source: null, text: null });
+  useEffect(() => {
+    let cancelled = false;
+    const ids = fileIdsIn(content);
+    if (!ids.length) { setSigned({ source: content, text: content }); return undefined; }
+    fetchFileTokens(ids).then((tokens) => {
+      if (!cancelled) setSigned({ source: content, text: signFileUrls(content, tokens) });
+    });
+    return () => { cancelled = true; };
+  }, [content]);
+  // Until tokens arrive, render unsigned text (links resolve once signed).
+  return signed.source === content ? signed.text : content;
+}
+
 export default function LessonContentViewer({ content, banner }) {
+  const signedContent = useSignedContent(content || '');
   if (!content && !banner) return null;
 
-  const { text, embeds } = extractEmbeds(content || '');
+  const { text, embeds } = extractEmbeds(signedContent || '');
 
   return (
     <div className="lesson-content-viewer" data-testid="lesson-content-viewer">

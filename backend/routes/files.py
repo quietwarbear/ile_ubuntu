@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, Depends, File, UploadFile, Form
+from fastapi import APIRouter, HTTPException, Depends, File, UploadFile, Form, Header, Query, Request
 from fastapi.responses import FileResponse, RedirectResponse, HTMLResponse
 from datetime import datetime, timezone
 from typing import Optional
@@ -7,9 +7,10 @@ import os
 import shutil
 from html import escape as html_escape
 from pathlib import Path
-from database import files_col, lessons_col, courses_col
+from database import files_col, lessons_col, courses_col, users_col
 from middleware import get_current_user
 from models.user import has_permission, UserRole
+import file_access
 import storage
 
 router = APIRouter(prefix="/api/files", tags=["files"])
@@ -158,18 +159,28 @@ def upload_file(
         )
 
     file_data.pop("_id", None)
-    return {"success": True, "file": file_data, "download_url": f"/api/files/{file_id}/download"}
+    return {
+        "success": True,
+        "file": file_data,
+        # Stable path stored in lesson content (the viewer tokenizes it when it
+        # renders); the signed URL is for immediate use by the uploader.
+        "download_url": f"/api/files/{file_id}/download",
+        "signed_url": file_access.signed_path(file_id, current_user["id"]),
+    }
 
 
 def _serve(file_data: dict, inline: Optional[bool] = None):
     """Serve a stored file from S3 (presigned redirect) or local disk (fallback)."""
-    if inline is None:
-        inline = _renders_inline(file_data)
+    is_video = file_data.get("file_category") == "video"
+    if inline is None or is_video:
+        # Video is never offered as an attachment: it plays, it doesn't download.
+        inline = True if is_video else _renders_inline(file_data)
     original = file_data.get("original_filename") or file_data.get("filename") or "file"
     mime = file_data.get("mime_type") or "application/octet-stream"
 
     if file_data.get("s3_key"):
-        url = storage.presigned_get(file_data["s3_key"], original, mime, inline=inline)
+        ttl = storage.VIDEO_PRESIGN_TTL if is_video else None
+        url = storage.presigned_get(file_data["s3_key"], original, mime, inline=inline, ttl=ttl)
         return RedirectResponse(url, status_code=307)
 
     file_path = Path(file_data.get("file_path", ""))
@@ -189,27 +200,100 @@ def _serve(file_data: dict, inline: Optional[bool] = None):
         filename=original,
         media_type=mime,
         content_disposition_type="inline" if inline else "attachment",
+        headers={"Cache-Control": "private, no-store"},
     )
 
 
-@router.get("/{file_id}/download")
-def download_file(file_id: str):
-    """Download/view a file. Public access for enrolled users via direct link."""
+def _requester(x_session_id: Optional[str]) -> Optional[dict]:
+    """The signed-in user behind the X-Session-ID header, or None."""
+    if not x_session_id:
+        return None
+    try:
+        return get_current_user(x_session_id)
+    except HTTPException:
+        return None
+
+
+def _authorize(file_id: str, token: Optional[str], x_session_id: Optional[str]) -> dict:
+    """Load the file and enforce file_access.can_access. A playback token
+    (``?t=``) stands in for the session header on <video>/<iframe>/<img>; it
+    must be valid, for this file, and — when a session is also presented —
+    issued to that same user. Access is re-checked for the token's user on
+    every request."""
     file_data = files_col.find_one({"id": file_id})
     if not file_data:
         raise HTTPException(status_code=404, detail="File not found")
-    return _serve(file_data)
+    if file_access.is_public(file_data):
+        return file_data
+
+    user = _requester(x_session_id)
+    if token:
+        token_user_id = file_access.verify_token(token, file_id)
+        if not token_user_id:
+            raise HTTPException(status_code=403, detail="Link expired or invalid")
+        if user and user["id"] != token_user_id:
+            raise HTTPException(status_code=403, detail="Link was issued to someone else")
+        if not user:
+            user = users_col.find_one({"id": token_user_id}, {"_id": 0})
+            if not user:
+                raise HTTPException(status_code=403, detail="Link expired or invalid")
+    elif not user:
+        raise HTTPException(status_code=401, detail="Sign in to view this file")
+
+    if not file_access.can_access(file_data, user):
+        raise HTTPException(status_code=403, detail="You don't have access to this file")
+    return file_data
+
+
+@router.get("/{file_id}/download")
+def download_file(
+    file_id: str,
+    t: Optional[str] = Query(None),
+    x_session_id: Optional[str] = Header(None),
+):
+    """View or download a file. Requires the session header or a playback
+    token from POST /api/files/access-tokens; see file_access.py for the rule."""
+    return _serve(_authorize(file_id, t, x_session_id))
 
 
 @router.get("/{file_id}/stream")
-def stream_video(file_id: str):
-    """Stream a video. S3 presigned URLs support range requests natively (seeking)."""
-    file_data = files_col.find_one({"id": file_id})
-    if not file_data:
-        raise HTTPException(status_code=404, detail="File not found")
+def stream_video(
+    file_id: str,
+    t: Optional[str] = Query(None),
+    x_session_id: Optional[str] = Header(None),
+):
+    """Stream a video inline. S3 presigned URLs support range requests (seeking)."""
+    file_data = _authorize(file_id, t, x_session_id)
     if file_data.get("file_category") != "video":
         raise HTTPException(status_code=400, detail="Not a video file")
     return _serve(file_data, inline=True)
+
+
+MAX_TOKEN_BATCH = 100
+
+
+@router.post("/access-tokens")
+async def issue_access_tokens(request: Request, current_user: dict = Depends(get_current_user)):
+    """Short-lived playback tokens for the files this user may read. Body:
+    {"file_ids": [...]}. Files the user can't read are simply absent from the
+    result, so a page can ask for everything it renders without probing."""
+    data = await request.json()
+    ids = data.get("file_ids")
+    if not isinstance(ids, list) or not all(isinstance(i, str) for i in ids):
+        raise HTTPException(status_code=400, detail="file_ids must be a list of ids")
+    ids = list(dict.fromkeys(ids))[:MAX_TOKEN_BATCH]
+    out = {}
+    for record in files_col.find({"id": {"$in": ids}}, {"_id": 0}):
+        if not file_access.can_access(record, current_user):
+            continue
+        issued = file_access.issue_token(current_user["id"], record["id"])
+        kind = "stream" if record.get("file_category") == "video" else "download"
+        out[record["id"]] = {
+            **issued,
+            "url": f"/api/files/{record['id']}/{kind}?t={issued['token']}",
+            "download_url": f"/api/files/{record['id']}/download?t={issued['token']}",
+        }
+    return {"tokens": out, "ttl_seconds": file_access.TOKEN_TTL}
 
 
 @router.get("/integrity/report")
@@ -263,9 +347,8 @@ def list_files(
     query = {}
     if lesson_id:
         query["lesson_id"] = lesson_id
-        # Student submissions are not course material. This listing applies no
-        # enrolment check and /download authenticates nobody, so anything
-        # handed in must stay out of it.
+        # Student submissions are not course material; they are listed only
+        # through routes/submissions.py, never here.
         query["submission_id"] = {"$exists": False}
     elif course_id:
         query["course_id"] = course_id
@@ -273,9 +356,15 @@ def list_files(
     else:
         query["uploaded_by"] = current_user["id"]
 
-    files = list(files_col.find(query, {"_id": 0}).sort("uploaded_at", -1))
+    files = [
+        f for f in files_col.find(query, {"_id": 0}).sort("uploaded_at", -1)
+        if file_access.can_access(f, current_user)
+    ]
     for f in files:
-        f["download_url"] = f"/api/files/{f['id']}/download"
+        # Tokenized for this caller, so the URL works in a plain <a>/<iframe>.
+        # It expires in minutes; pages that stay open refresh it through
+        # POST /access-tokens.
+        f["download_url"] = file_access.signed_path(f["id"], current_user["id"])
     return {"files": files}
 
 

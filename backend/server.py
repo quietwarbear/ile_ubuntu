@@ -1,7 +1,6 @@
 import os
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.staticfiles import StaticFiles
 from pathlib import Path
 from dotenv import load_dotenv
 
@@ -103,9 +102,9 @@ def _ensure_indexes():
     from database import ensure_indexes
     ensure_indexes()
 
-# Ensure uploads directory exists
-Path("uploads").mkdir(exist_ok=True)
-app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
+# No public /uploads mount: local-disk files are served only through
+# /api/files/{id}/download, which checks access (file_access.py). A static
+# mount would hand out every file to anyone who knows its id.
 
 # Import and register routers
 from routes.auth import router as auth_router

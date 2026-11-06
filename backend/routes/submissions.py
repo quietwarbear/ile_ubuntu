@@ -9,10 +9,10 @@ Two consequences that shape this module:
 - Submission files are uploaded WITHOUT lesson_id or course_id. `list_files`
   filters on those and applies no enrolment check, so stamping either would
   expose every student's work to every signed-in user.
-- `/api/files/{id}/download` is unauthenticated by design, because lesson
-  material is embedded in tags that cannot send a session header. Submission
-  files are therefore fetched through `download-link` here, which authenticates
-  first and then hands back a short-lived URL.
+- `/api/files/{id}/download` now enforces file_access.can_access, under
+  which a submission file is readable only by its student and the course's
+  teachers. Submission files are still fetched through `download-link` here,
+  which checks the lesson context first and hands back a short-lived URL.
 """
 
 from fastapi import APIRouter, HTTPException, Request, Depends
@@ -20,6 +20,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 import uuid
 
+import file_access
 import storage
 from database import (
     submissions_col,
@@ -234,9 +235,8 @@ async def submit_work(course_id: str, lesson_id: str, request: Request, current_
 
 @router.get("/{submission_id}/download-link/{file_id}")
 def submission_download_link(course_id: str, lesson_id: str, submission_id: str, file_id: str, current_user: dict = Depends(get_current_user)):
-    """A short-lived URL for one submitted file. This exists because
-    /api/files/{id}/download authenticates nobody — student work must not be
-    readable by anyone holding the id."""
+    """A short-lived URL for one submitted file, checked against this
+    lesson's context before /api/files applies its own rule."""
     _, _, is_staff = _verify_access(course_id, lesson_id, current_user)
     submission = submissions_col.find_one(
         {"id": submission_id, "course_id": course_id, "lesson_id": lesson_id}
@@ -257,7 +257,7 @@ def submission_download_link(course_id: str, lesson_id: str, submission_id: str,
     if record.get("s3_key"):
         return {"url": storage.presigned_get(record["s3_key"], name, mime, inline=False), "filename": name}
     # Local dev fallback only; production runs on S3.
-    return {"url": f"/api/files/{file_id}/download", "filename": name}
+    return {"url": file_access.signed_path(file_id, current_user["id"]), "filename": name}
 
 
 @router.delete("/{submission_id}")

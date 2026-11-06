@@ -4,8 +4,10 @@ import {
   ArrowLeft, CheckCircle, Circle, CaretRight, List, X,
   FilePdf, File as FileIcon, DownloadSimple, Eye, PencilSimple,
 } from '@phosphor-icons/react';
-import { apiGet, apiPost, apiPut, BACKEND_URL } from '../lib/api';
+import { apiGet, apiPost, apiPut } from '../lib/api';
 import LessonContentViewer from '../components/LessonContentViewer';
+import { fileHref, StableFrame } from '../components/course/FileLinks';
+import { useSignedFileUrls } from '../lib/fileAccess';
 import WysiwygEditor from '../components/course/WysiwygEditor';
 import { LessonVideoPlayer } from '../components/course/LessonVideoPlayer';
 import { LessonQuiz } from '../components/course/LessonQuiz';
@@ -42,6 +44,8 @@ export default function CoursePlayerPage({ user }) {
   const [loading, setLoading] = useState(true);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [viewingPdf, setViewingPdf] = useState(null);
+  // Fresh playback tokens for every listed file, renewed while the page is open.
+  const signedFiles = useSignedFileUrls(Object.values(filesMap).flat().map(f => f.id));
   const [completing, setCompleting] = useState(false);
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState({ content: '', banner_url: '' });
@@ -293,13 +297,13 @@ export default function CoursePlayerPage({ user }) {
                           {open ? <X size={14} /> : <Eye size={14} />}
                         </button>
                       )}
-                      <a href={`${BACKEND_URL}/api/files/${file.id}/download`} target="_blank" rel="noopener noreferrer" className="p-1 text-[rgb(var(--text-muted))] hover:text-[rgb(var(--gold))]" title="Download">
+                      <a href={fileHref(file, signedFiles)} target="_blank" rel="noopener noreferrer" className="p-1 text-[rgb(var(--text-muted))] hover:text-[rgb(var(--gold))]" title="Download">
                         <DownloadSimple size={14} />
                       </a>
                     </div>
                     {isPdf && open && (
                       <div className="mt-1 rounded-md overflow-hidden border border-[rgb(var(--ink-border))]">
-                        <iframe src={`${BACKEND_URL}/api/files/${file.id}/download`} className="w-full h-[600px] bg-white" title={file.original_filename} />
+                        <StableFrame src={fileHref(file, signedFiles)} className="w-full h-[600px] bg-white" title={file.original_filename} />
                       </div>
                     )}
                   </div>

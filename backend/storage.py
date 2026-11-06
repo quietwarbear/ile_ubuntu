@@ -14,6 +14,9 @@ Backblaze B2, MinIO, etc.:
     S3_REGION             region (default us-east-1; R2 uses "auto")
     S3_PREFIX             key prefix inside the bucket (default "uploads")
     S3_PRESIGN_TTL        presigned-URL lifetime in seconds (default 3600)
+    S3_VIDEO_PRESIGN_TTL  presigned-URL lifetime for video (default 300). Short, so a
+                          copied media URL stops working within minutes; the player
+                          fetches a fresh one when it does.
 
 If S3_BUCKET / creds are not set, ``s3_enabled()`` returns False and the file routes fall
 back to local disk (fine for local dev; NOT durable on Railway).
@@ -28,6 +31,7 @@ _ACCESS_KEY = os.environ.get("S3_ACCESS_KEY_ID") or os.environ.get("AWS_ACCESS_K
 _SECRET_KEY = os.environ.get("S3_SECRET_ACCESS_KEY") or os.environ.get("AWS_SECRET_ACCESS_KEY", "")
 _PREFIX = os.environ.get("S3_PREFIX", "uploads").strip().strip("/")
 _PRESIGN_TTL = int(os.environ.get("S3_PRESIGN_TTL", "3600"))
+VIDEO_PRESIGN_TTL = int(os.environ.get("S3_VIDEO_PRESIGN_TTL", "300"))
 
 _client = None
 
@@ -66,7 +70,7 @@ def upload_fileobj(fileobj, key: str, content_type: str) -> None:
     _get_client().upload_fileobj(fileobj, _BUCKET, key, ExtraArgs=extra)
 
 
-def presigned_get(key: str, filename: str, content_type: str, inline: bool = True) -> str:
+def presigned_get(key: str, filename: str, content_type: str, inline: bool = True, ttl: int = None) -> str:
     """A short-lived URL to GET the object. Forces the right content-type and
     inline-vs-attachment disposition so PDFs/images render in an <iframe>/<img>
     while documents download."""
@@ -79,7 +83,7 @@ def presigned_get(key: str, filename: str, content_type: str, inline: bool = Tru
     }
     if content_type:
         params["ResponseContentType"] = content_type
-    return _get_client().generate_presigned_url("get_object", Params=params, ExpiresIn=_PRESIGN_TTL)
+    return _get_client().generate_presigned_url("get_object", Params=params, ExpiresIn=ttl or _PRESIGN_TTL)
 
 
 def delete_object(key: str) -> None:
