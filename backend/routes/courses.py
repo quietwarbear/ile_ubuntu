@@ -51,6 +51,31 @@ def _is_course_staff(course: dict, user: dict) -> bool:
     return user["id"] in _course_staff_ids(course) or user["role"] == UserRole.ADMIN
 
 
+# --- Visibility ---
+#   listed   — in the community catalog and search
+#   unlisted — hidden from the catalog; anyone with the link or an invite joins
+#   village  — only members of the course's village see or join it
+#   private  — hidden everywhere; the only way in is being enrolled by the
+#              course's staff (or a bulk import). Outsiders get 404, so the
+#              course's existence isn't revealed. For adult or sacred material.
+VISIBILITIES = ("listed", "unlisted", "village", "private")
+
+
+def _is_private(course: dict) -> bool:
+    return course.get("visibility") == "private"
+
+
+def _has_role_reach(course: dict, user: dict, role: str) -> bool:
+    """Platform roles (assistant, faculty, elder) reach every course's teaching
+    surface — except a private one, which only its own staff (owner,
+    co-teachers, platform admins) and enrolled students may enter."""
+    return not _is_private(course) and has_permission(user["role"], role)
+
+
+def _is_enrolled(course_id: str, user_id: str) -> bool:
+    return enrollments_col.find_one({"user_id": user_id, "course_id": course_id}) is not None
+
+
 def _require_course_teacher(course_id: str, current_user: dict) -> dict:
     """Editing rights over the teaching surface — lessons and modules.
     Ownership actions (delete, visibility, invite codes, staffing) stay with
@@ -58,9 +83,11 @@ def _require_course_teacher(course_id: str, current_user: dict) -> dict:
     course = courses_col.find_one({"id": course_id})
     if not course:
         raise HTTPException(status_code=404, detail="Course not found")
-    if not _is_course_staff(course, current_user) and not has_permission(
-        current_user["role"], UserRole.ASSISTANT
+    if not _is_course_staff(course, current_user) and not _has_role_reach(
+        course, current_user, UserRole.ASSISTANT
     ):
+        if _is_private(course):
+            raise HTTPException(status_code=404, detail="Course not found")
         raise HTTPException(status_code=403, detail="Access denied")
     return course
 
@@ -145,6 +172,8 @@ async def create_course(request: Request, current_user: dict = Depends(get_curre
         "created_at": datetime.now(timezone.utc),
         "updated_at": datetime.now(timezone.utc),
     }
+    if course["visibility"] not in VISIBILITIES:
+        raise HTTPException(status_code=400, detail=f"visibility must be one of {', '.join(VISIBILITIES)}")
     if course["visibility"] == "village" and not village_id:
         raise HTTPException(status_code=400, detail="village visibility requires a village_id")
     courses_col.insert_one(course)
@@ -218,6 +247,10 @@ def get_course(course_id: str, current_user: dict = Depends(get_current_user)):
         )
         if not allowed:
             raise HTTPException(status_code=404, detail="Course not found")
+    # Private: staff and enrolled students only, 404 for everyone else.
+    if _is_private(course):
+        if not (_is_course_staff(course, current_user) or _is_enrolled(course_id, current_user["id"])):
+            raise HTTPException(status_code=404, detail="Course not found")
     return course
 
 
@@ -234,6 +267,11 @@ async def update_course(course_id: str, request: Request, current_user: dict = D
     for field in ["title", "description", "image_url", "status", "tags"]:
         if field in data:
             update_fields[field] = data[field]
+    # Certificates on (default) or off for this course.
+    if "certificates_enabled" in data:
+        if not isinstance(data["certificates_enabled"], bool):
+            raise HTTPException(status_code=400, detail="certificates_enabled must be true or false")
+        update_fields["certificates_enabled"] = data["certificates_enabled"]
     update_fields["updated_at"] = datetime.now(timezone.utc)
 
     courses_col.update_one({"id": course_id}, {"$set": update_fields})
@@ -398,11 +436,25 @@ def list_lessons(
     # show what is live and what is still scheduled.
     if not view_as_student and (
         _is_course_staff(course, current_user)
-        or has_permission(current_user["role"], UserRole.ASSISTANT)
+        or _has_role_reach(course, current_user, UserRole.ASSISTANT)
     ):
         for lesson in lessons:
             lesson["locked"] = not _lesson_is_open(lesson)
         return lessons
+
+    # Lesson content is for the class. Someone who isn't enrolled sees the
+    # course's outline — titles and order, no content — so they can decide
+    # to join; a private course doesn't exist for them at all.
+    is_staff = _is_course_staff(course, current_user) or _has_role_reach(
+        course, current_user, UserRole.ASSISTANT
+    )
+    if not is_staff and not _is_enrolled(course_id, current_user["id"]):
+        if _is_private(course):
+            raise HTTPException(status_code=404, detail="Course not found")
+        return [
+            {**_locked_lesson_stub(lesson), "enrollment_required": True}
+            for lesson in lessons if not lesson.get("hidden")
+        ]
 
     # Students: a hidden lesson disappears entirely; a scheduled one appears as
     # a dated placeholder so the shape of the course stays legible.
@@ -428,6 +480,10 @@ def enroll_in_course(course_id: str, current_user: dict = Depends(get_current_us
     existing = enrollments_col.find_one({"user_id": current_user["id"], "course_id": course_id})
     if existing:
         raise HTTPException(status_code=400, detail="Already enrolled")
+
+    # Private: no self-enrollment. Staff add people (or a bulk import does).
+    if _is_private(course):
+        raise HTTPException(status_code=403, detail="This course is by enrollment only")
 
     # Village-only courses: members of the village enroll directly (no invite
     # code needed); everyone else needs to belong to the village first.
@@ -687,8 +743,8 @@ def list_course_staff(course_id: str, current_user: dict = Depends(get_current_u
     course = courses_col.find_one({"id": course_id})
     if not course:
         raise HTTPException(status_code=404, detail="Course not found")
-    if not _is_course_staff(course, current_user) and not has_permission(
-        current_user["role"], UserRole.FACULTY
+    if not _is_course_staff(course, current_user) and not _has_role_reach(
+        course, current_user, UserRole.FACULTY
     ):
         raise HTTPException(status_code=403, detail="Access denied")
     ids = _course_staff_ids(course)
@@ -818,17 +874,18 @@ def delete_module(course_id: str, module_id: str, current_user: dict = Depends(g
 
 @router.post("/{course_id}/visibility")
 async def set_visibility(course_id: str, request: Request, current_user: dict = Depends(get_current_user)):
-    """Set course visibility: 'listed' (community catalog), 'unlisted'
-    (invite-only), or 'village' (village members only — requires the course
-    to be attached to a village)."""
+    """Set course visibility — see VISIBILITIES. Making a course private
+    switches off its invite codes."""
     course = _require_course_owner(course_id, current_user)
     data = await request.json()
     visibility = data.get("visibility")
-    if visibility not in ("listed", "unlisted", "village"):
-        raise HTTPException(status_code=400, detail="visibility must be 'listed', 'unlisted', or 'village'")
+    if visibility not in VISIBILITIES:
+        raise HTTPException(status_code=400, detail=f"visibility must be one of {', '.join(VISIBILITIES)}")
     if visibility == "village" and not course.get("village_id"):
         raise HTTPException(status_code=400, detail="Attach the course to a village before making it village-only")
     courses_col.update_one({"id": course_id}, {"$set": {"visibility": visibility}})
+    if visibility == "private":
+        course_invites_col.update_many({"course_id": course_id, "active": True}, {"$set": {"active": False}})
     return {"success": True, "visibility": visibility}
 
 
@@ -836,6 +893,8 @@ async def set_visibility(course_id: str, request: Request, current_user: dict = 
 def get_or_create_invite_code(course_id: str, current_user: dict = Depends(get_current_user)):
     """Return the course's invite code, creating it on first call."""
     course = _require_course_owner(course_id, current_user)
+    if _is_private(course):
+        raise HTTPException(status_code=400, detail="Private courses don't use invite codes — add people from the roster")
     existing = course_invites_col.find_one({"course_id": course_id, "active": True}, {"_id": 0})
     if existing:
         return {"code": existing["code"]}
@@ -862,7 +921,7 @@ def resolve_invite(code: str):
     if not invite:
         raise HTTPException(status_code=404, detail="Invite not found or no longer active")
     course = courses_col.find_one({"id": invite["course_id"]}, {"_id": 0})
-    if not course or course.get("status") != CourseStatus.ACTIVE:
+    if not course or course.get("status") != CourseStatus.ACTIVE or _is_private(course):
         raise HTTPException(status_code=404, detail="This course is not currently open")
     return {
         "code": invite["code"],
@@ -884,7 +943,7 @@ def accept_invite(code: str, current_user: dict = Depends(get_current_user)):
     if not invite:
         raise HTTPException(status_code=404, detail="Invite not found or no longer active")
     course = courses_col.find_one({"id": invite["course_id"]})
-    if not course or course.get("status") != CourseStatus.ACTIVE:
+    if not course or course.get("status") != CourseStatus.ACTIVE or _is_private(course):
         raise HTTPException(status_code=404, detail="This course is not currently open")
 
     if enrollments_col.find_one({"user_id": current_user["id"], "course_id": course["id"]}):

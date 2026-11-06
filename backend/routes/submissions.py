@@ -33,7 +33,7 @@ from middleware import get_current_user
 from models.user import has_permission, UserRole
 from events import emit
 # Acyclic: courses.py never imports from here.
-from routes.courses import _is_course_staff, _lesson_is_open
+from routes.courses import _is_course_staff, _lesson_is_open, _has_role_reach
 import teacher_alerts
 
 router = APIRouter(
@@ -56,8 +56,8 @@ def _verify_access(course_id: str, lesson_id: str, current_user: dict):
     if not lesson:
         raise HTTPException(status_code=404, detail="Lesson not found")
 
-    if _is_course_staff(course, current_user) or has_permission(
-        current_user["role"], UserRole.FACULTY
+    if _is_course_staff(course, current_user) or _has_role_reach(
+        course, current_user, UserRole.FACULTY
     ):
         return course, lesson, True
 
