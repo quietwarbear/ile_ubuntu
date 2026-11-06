@@ -356,7 +356,7 @@ async def register(request: Request):
             "Verify Email",
             verify_url,
         )
-        await send_email(email, "Verify your email — The Ile Ubuntu", html)
+        await send_email(email, "Verify your email — The Ile Ubuntu", html, kind="verify_email")
     except Exception:
         logger.exception("Verification email failed for %s", email)
 
@@ -577,11 +577,73 @@ async def forgot_password(request: Request):
             "Reset Password",
             reset_url,
         )
-        await send_email(email, "Reset your password — The Ile Ubuntu", html)
+        await send_email(email, "Reset your password — The Ile Ubuntu", html, kind="password_reset")
     except Exception:
         logger.exception("Password reset email failed for %s", email)
 
     return generic
+
+
+@router.post("/email-link")
+async def request_email_link(request: Request):
+    """Email me a sign-in link (I3). Always the same answer, so it can't be
+    used to find out who has an account. Limited per IP like forgot-password,
+    and per address (email_signin.MAX_LINKS_PER_ADDRESS per 15 minutes)."""
+    import email_signin
+
+    rate_limit(request, "email_link", max_requests=5, window_seconds=900)
+    data = await request.json()
+    email = (data.get("email") or "").strip().lower()
+    if not email or "@" not in email:
+        raise HTTPException(status_code=400, detail="Email required")
+    generic = {"success": True,
+               "message": "If there's an account for that email, a sign-in link is on its way. It expires in 15 minutes."}
+
+    user = users_col.find_one({"email": email})
+    if not user:
+        return generic
+    if email_signin.recent_link_count(user["id"]) >= email_signin.MAX_LINKS_PER_ADDRESS:
+        logger.info("email-link: per-address limit reached for user %s", user["id"])
+        return generic
+
+    token = email_signin.issue_token(user["id"], "signin")
+    subject, html = email_signin.signin_email(
+        user.get("name", ""), email_signin.signin_url(token, app=bool(data.get("app")))
+    )
+    try:
+        from routes.email_notifications import send_email
+        await send_email(email, subject, html, kind="signin_link")
+    except Exception:
+        logger.exception("Sign-in link email failed for %s", email)
+    emit("user.signin_link_sent", {"id": user["id"]})
+    return generic
+
+
+@router.post("/email-link/status")
+async def email_link_status(request: Request):
+    """Whether a link is still usable, without using it up."""
+    import email_signin
+
+    rate_limit(request, "email_link_redeem", max_requests=30, window_seconds=900)
+    data = await request.json()
+    return {"state": email_signin.token_state(data.get("token") or "")}
+
+
+@router.post("/email-link/redeem")
+async def redeem_email_link(request: Request):
+    """Trade a sign-in link for a session. Single use."""
+    import email_signin
+
+    rate_limit(request, "email_link_redeem", max_requests=30, window_seconds=900)
+    data = await request.json()
+    user = email_signin.redeem_token(data.get("token") or "")
+    if not user:
+        raise HTTPException(
+            status_code=400,
+            detail="This sign-in link has expired or was already used. Ask for a new one on the sign-in page.",
+        )
+    session = _create_session(user["id"])
+    return {"success": True, "user_id": user["id"], **session}
 
 
 @router.post("/admin/set-password")

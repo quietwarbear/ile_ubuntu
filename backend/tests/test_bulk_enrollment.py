@@ -13,13 +13,14 @@ from pymongo.collection import Collection
 
 import bulk_enrollment
 import database
+import email_signin
 import events
 import middleware
 import tier_gating
 from routes import auth, courses, email_notifications, enrollment_imports, subscriptions
 
 NOW = datetime.now(timezone.utc)
-MODULES = (database, bulk_enrollment, events, middleware, tier_gating, auth, courses, enrollment_imports,
+MODULES = (database, bulk_enrollment, email_signin, events, email_notifications, middleware, tier_gating, auth, courses, enrollment_imports,
            subscriptions)
 
 
@@ -33,6 +34,8 @@ def db(monkeypatch):
     for module in (auth, enrollment_imports):
         monkeypatch.setattr(module, "rate_limit", lambda *a, **k: None)
     monkeypatch.setattr(email_notifications, "RESEND_API_KEY", None, raising=False)
+    # Welcome emails (I3) are captured, not sent; see test_email_signin.py.
+    monkeypatch.setattr(email_notifications, "send_paced_in_background", lambda messages: None)
 
     people = {"owner": "faculty", "coteach": "faculty", "otherfaculty": "faculty",
               "student": "student", "admin": "admin"}
@@ -348,7 +351,7 @@ def test_invited_person_sets_a_password_through_the_reset_email(client, db, monk
     run(db, roster("Ada,ada@example.test,Day 1"))
     sent = []
 
-    async def fake_send(to, subject, html):
+    async def fake_send(to, subject, html, kind="general"):
         sent.append(html)
     monkeypatch.setattr(email_notifications, "send_email", fake_send)
 

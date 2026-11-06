@@ -74,6 +74,11 @@ course_topic_posts_col = db.course_topic_posts
 # a lesson's files are course material, a submission is one student's work.
 submissions_col = db.submissions
 
+# Emailed sign-in links (I3): one row per link, token stored only as a hash.
+email_signin_tokens_col = db.email_signin_tokens
+# One row per email the platform tries to send, with Resend's answer (I3).
+email_log_col = db.email_log
+
 
 def ensure_indexes():
     """Create the indexes the hot query paths rely on. Idempotent; called at startup.
@@ -135,6 +140,12 @@ def ensure_indexes():
         # One-time SSO handoff codes: lookup by code, TTL auto-purges spent/expired codes
         (sso_codes_col, [("code", 1)], {}),
         (sso_codes_col, [("expires_at", 1)], {"expireAfterSeconds": 0}),
+        (email_signin_tokens_col, [("token_hash", 1)], {"unique": True}),
+        (email_signin_tokens_col, [("user_id", 1), ("created_at", -1)], {}),
+        (email_signin_tokens_col, [("expires_at", 1)], {"expireAfterSeconds": 0}),
+        # Kept 180 days: long enough to answer "did my email arrive?".
+        (email_log_col, [("created_at", 1)], {"expireAfterSeconds": 180 * 86400}),
+        (email_log_col, [("to", 1), ("created_at", -1)], {}),
         # Activity event stream: per-user timelines, per-type trends, per-entity history
         (events_col, [("user_id", 1), ("created_at", -1)], {}),
         (events_col, [("type", 1), ("created_at", -1)], {}),

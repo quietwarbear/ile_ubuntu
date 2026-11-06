@@ -8,7 +8,7 @@ const API = process.env.REACT_APP_BACKEND_URL || process.env.REACT_APP_API_URL |
 export default function LoginPage({ onLogin, onPasswordLogin }) {
   const [appleSDKReady, setAppleSDKReady] = useState(false);
   const [isNative, setIsNative] = useState(false);
-  const [mode, setMode] = useState('login'); // 'login', 'register', or 'forgot'
+  const [mode, setMode] = useState('login'); // 'login', 'register', 'forgot', or 'link'
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
@@ -153,10 +153,12 @@ export default function LoginPage({ onLogin, onPasswordLogin }) {
       const endpoint =
         mode === 'register' ? '/api/auth/register'
         : mode === 'forgot' ? '/api/auth/forgot-password'
+        : mode === 'link' ? '/api/auth/email-link'
         : '/api/auth/login';
       const body =
         mode === 'register' ? { email, password, name }
         : mode === 'forgot' ? { email }
+        : mode === 'link' ? { email, app: isNative }
         : { email, password };
 
       // Use AbortController to enforce a 15-second timeout so the request
@@ -181,8 +183,10 @@ export default function LoginPage({ onLogin, onPasswordLogin }) {
         return;
       }
 
-      if (mode === 'forgot') {
-        setInfo(data.message || 'If an account exists for that email, a reset link has been sent.');
+      if (mode === 'forgot' || mode === 'link') {
+        setInfo(data.message || (mode === 'link'
+          ? "If there's an account for that email, a sign-in link is on its way."
+          : 'If an account exists for that email, a reset link has been sent.'));
         setLoading(false);
         return;
       }
@@ -281,7 +285,7 @@ export default function LoginPage({ onLogin, onPasswordLogin }) {
               </div>
             </div>
 
-            {mode !== 'forgot' && (
+            {mode !== 'forgot' && mode !== 'link' && (
               <div>
                 <label className="block text-xs text-[rgb(var(--text-muted))] mb-1.5 uppercase tracking-wider">Password</label>
                 <div className="relative">
@@ -332,11 +336,30 @@ export default function LoginPage({ onLogin, onPasswordLogin }) {
                 <><UserPlus size={18} weight="duotone" className="mr-2" /> Create Account</>
               ) : mode === 'forgot' ? (
                 <><EnvelopeSimple size={18} weight="duotone" className="mr-2" /> Send Reset Link</>
+              ) : mode === 'link' ? (
+                <><EnvelopeSimple size={18} weight="duotone" className="mr-2" /> Email Me a Sign-in Link</>
               ) : (
                 <><SignIn size={18} weight="duotone" className="mr-2" /> Sign In</>
               )}
             </Button>
           </form>
+
+          {/* Passwordless: one-time link by email */}
+          {mode === 'login' && (
+            <button
+              type="button"
+              onClick={() => { setMode('link'); setError(''); setInfo(''); }}
+              className="w-full text-xs text-[rgb(var(--gold))] hover:underline -mt-4"
+              data-testid="email-link-mode"
+            >
+              Email me a sign-in link instead
+            </button>
+          )}
+          {mode === 'link' && (
+            <p className="text-xs text-[rgb(var(--text-muted))] -mt-4 text-center">
+              No password needed. The link works once and expires in 15 minutes.
+            </p>
+          )}
 
           {/* Divider */}
           <div className="flex items-center gap-3">

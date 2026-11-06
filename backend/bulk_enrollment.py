@@ -26,7 +26,10 @@ Rules
 - A row with any problem (bad email, no sessions, a session that doesn't
   resolve) is rejected whole and reported, so nothing is half-done; fix the
   file or the mapping and run it again.
-- No email is sent here. The welcome email with a sign-in link is I3.
+- Everyone newly enrolled gets one welcome email (I3) naming the course(s)
+  they were just added to, with a single-use sign-in link (email_signin.py).
+  A rerun that adds nothing sends nothing; a dry run never sends. Emails go
+  out paced on one background thread (Resend's rate limit).
 """
 
 import csv
@@ -187,8 +190,27 @@ def _find_user(email: str):
     )
 
 
+def _send_welcome_emails(people) -> int:
+    """Queue one welcome email per person. Returns how many were queued.
+    Failures are logged (email_log) and never undo the enrollments."""
+    import email_signin
+    from routes.email_notifications import send_paced_in_background
+
+    messages = []
+    for user, titles in people:
+        if not user.get("email"):
+            continue
+        token = email_signin.issue_token(user["id"], "welcome")
+        subject, html = email_signin.welcome_email(
+            user.get("name", ""), titles, email_signin.signin_url(token)
+        )
+        messages.append((user["email"], subject, html, "welcome"))
+    send_paced_in_background(messages)
+    return len(messages)
+
+
 def import_enrollments(rows: list, session_map: dict = None, actor: dict = None,
-                       *, dry_run: bool = False) -> dict:
+                       *, dry_run: bool = False, send_welcome: bool = True) -> dict:
     """Create invited accounts and enroll each row into its sessions' courses.
 
     rows: [{"row": n, "name": str, "email": str, "sessions": [label, ...]}]
@@ -199,6 +221,7 @@ def import_enrollments(rows: list, session_map: dict = None, actor: dict = None,
           a row names. None means a trusted internal caller (such as X2's
           authenticated handoff) that has already authorized itself.
     dry_run: work out the report without writing anything (the preview).
+    send_welcome: email each newly enrolled person (never in a dry run).
     """
     session_map = {str(k).strip(): v for k, v in (session_map or {}).items() if v}
     now = datetime.now(timezone.utc)
@@ -207,6 +230,7 @@ def import_enrollments(rows: list, session_map: dict = None, actor: dict = None,
     known_users = {}        # email -> user (or a planned user in a dry run)
     done_pairs = set()      # (email, course_id) handled earlier in this file
     touched_courses = set()
+    new_by_user = {}        # user id -> (user, [course titles enrolled now])
 
     def resolve(label):
         if label in course_cache:
@@ -306,6 +330,7 @@ def import_enrollments(rows: list, session_map: dict = None, actor: dict = None,
                     report["skipped"].append({**entry, "reason": "Already enrolled"})
                     continue
                 touched_courses.add(course["id"])
+                new_by_user.setdefault(user["id"], (user, []))[1].append(course.get("title", ""))
                 emit("course.enrolled", actor, "course", course["id"],
                      meta={"student_id": user["id"], "source": IMPORT_SOURCE})
             report["enrolled"].append(entry)
@@ -316,6 +341,10 @@ def import_enrollments(rows: list, session_map: dict = None, actor: dict = None,
             {"id": course_id},
             {"$set": {"enrolled_count": enrollments_col.count_documents({"course_id": course_id})}},
         )
+
+    report["welcome_emails"] = 0
+    if send_welcome and not dry_run and new_by_user:
+        report["welcome_emails"] = _send_welcome_emails(new_by_user.values())
 
     report["errors"].sort(key=lambda e: e["row"])
     report["counts"] = {key: len(report[key]) for key in ("created", "enrolled", "skipped", "errors")}
