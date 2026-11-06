@@ -141,6 +141,7 @@ from routes.villages import router as villages_router
 from routes.portfolio import router as portfolio_router
 from routes.guide import router as guide_router
 from routes.enrollment_imports import router as enrollment_imports_router
+from routes.kindred_handoff import router as kindred_handoff_router
 from routes.course_notice import router as course_notice_router
 from routes.stream_video import router as stream_video_router
 
@@ -157,6 +158,7 @@ app.include_router(stream_video_router)
 app.include_router(messages_router)
 app.include_router(enrollments_router)
 app.include_router(enrollment_imports_router)
+app.include_router(kindred_handoff_router)
 app.include_router(live_sessions_router)
 app.include_router(google_router)
 app.include_router(spaces_router)
