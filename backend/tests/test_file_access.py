@@ -246,3 +246,13 @@ def test_portfolio_file_opens_to_guardian_only_when_shared(client, db):
     assert client.get("/api/files/f-public/download", headers=hdr("outsider")).status_code == 403
     db.portfolio_items.update_one({"id": "p1"}, {"$set": {"visibility": "shared"}})
     assert client.get("/api/files/f-public/download", headers=hdr("outsider")).status_code == 200
+
+
+def test_platform_faculty_cannot_open_files_on_a_private_course(client, db):
+    db.users.insert_one({"id": "u-faculty2", "role": "faculty", "name": "Other teacher"})
+    db.sessions.insert_one({"session_id": "s-faculty2", "user_id": "u-faculty2",
+                            "expires_at": NOW + timedelta(days=1)})
+    assert client.get("/api/files/f-attach/download", headers=hdr("faculty2")).status_code == 200
+    db.courses.update_one({"id": "c1"}, {"$set": {"visibility": "private"}})
+    assert client.get("/api/files/f-attach/download", headers=hdr("faculty2")).status_code == 403
+    assert client.get("/api/files/f-attach/download", headers=hdr("student")).status_code == 200

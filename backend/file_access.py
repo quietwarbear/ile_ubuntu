@@ -105,8 +105,12 @@ def is_public(file_data: dict) -> bool:
 
 
 def _is_staff_on(course: dict, user: dict) -> bool:
+    """Course staff, or a platform assistant+ — except on a private course,
+    which only its own staff reach (see VISIBILITIES in routes/courses.py)."""
     from routes.courses import _is_course_staff  # lazy: courses imports a lot
-    return _is_course_staff(course, user) or has_permission(user["role"], UserRole.ASSISTANT)
+    if _is_course_staff(course, user):
+        return True
+    return course.get("visibility") != "private" and has_permission(user["role"], UserRole.ASSISTANT)
 
 
 def _is_enrolled(course_id: str, user_id: str) -> bool:
