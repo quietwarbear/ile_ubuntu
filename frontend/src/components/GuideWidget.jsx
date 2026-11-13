@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Compass, X, PaperPlaneRight } from '@phosphor-icons/react';
 import { apiGet, apiPost } from '../lib/api';
+import './GuideWidget.css';
 
 // Ìmọ̀ (Yoruba: "knowledge", pronounced ee-maw) — the village guide: a
 // greeter/navigator, not a chatbot. Renders only when
@@ -63,11 +64,13 @@ export default function GuideWidget({ user }) {
       {!open && (
         <button
           onClick={() => setOpen(true)}
-          className="fixed bottom-5 right-5 z-40 h-12 pl-4 pr-5 rounded-full bg-[rgb(var(--gold))] text-[rgb(var(--ink-deep))] shadow-lg shadow-black/40 flex items-center justify-center gap-2 hover:bg-[rgb(var(--gold-soft))] transition-colors"
+          className="village-guide-launcher fixed bottom-5 right-5 z-40 h-12 pl-4 pr-5 rounded-full bg-[rgb(var(--gold))] text-[rgb(var(--ink-deep))] shadow-lg shadow-black/40 flex items-center justify-center gap-2 hover:bg-[rgb(var(--gold-soft))] transition-colors"
           title="Ask Ìmọ̀ — your village guide"
+          aria-label="Ask Ìmọ̀ — your village guide"
+          aria-expanded={false}
           data-testid="guide-launcher"
         >
-          <Compass size={24} weight="duotone" />
+          <Compass size={24} weight="duotone" className="village-guide-compass" aria-hidden="true" />
           {/* An unlabeled compass reads as decoration; say what it is. */}
           <span className="text-sm font-semibold">Ìmọ̀</span>
         </button>
@@ -75,12 +78,12 @@ export default function GuideWidget({ user }) {
 
       {/* Panel */}
       {open && (
-        <div className="fixed bottom-5 right-5 z-40 w-[min(92vw,360px)] rounded-lg border border-[rgb(var(--gold)/0.3)] bg-[rgb(var(--ink-card))] shadow-2xl shadow-black/60 flex flex-col overflow-hidden" data-testid="guide-panel">
+        <div className="village-guide-panel fixed bottom-5 right-5 z-40 w-[min(92vw,360px)] rounded-lg border border-[rgb(var(--gold)/0.3)] bg-[rgb(var(--ink-card))] shadow-2xl shadow-black/60 flex flex-col overflow-hidden" data-testid="guide-panel">
           <div className="flex items-center justify-between px-4 py-3 bg-[rgb(var(--ink-deep))] border-b border-[rgb(var(--ink-border))]">
             <span className="flex items-center gap-2 text-sm text-[rgb(var(--text-main))]" style={{ fontFamily: 'Cormorant Garamond, serif' }}>
               <Compass size={16} weight="duotone" className="text-[rgb(var(--gold))]" /> Ìmọ̀ · Village Guide
             </span>
-            <button onClick={() => setOpen(false)} className="text-[rgb(var(--text-muted))] hover:text-[rgb(var(--text-main))]" data-testid="guide-close">
+            <button onClick={() => setOpen(false)} aria-label="Close village guide" className="text-[rgb(var(--text-muted))] hover:text-[rgb(var(--text-main))]" data-testid="guide-close">
               <X size={16} />
             </button>
           </div>
@@ -107,7 +110,12 @@ export default function GuideWidget({ user }) {
                 </div>
               </div>
             ))}
-            {busy && <div className="text-[10px] text-[rgb(var(--text-faint))] italic">The guide is thinking…</div>}
+            {busy && (
+              <div role="status" className="flex items-center gap-2 text-[10px] text-[rgb(var(--text-muted))]">
+                <span className="village-guide-thinking" aria-hidden="true"><i /><i /><i /></span>
+                <span>The guide is thinking…</span>
+              </div>
+            )}
             <div ref={endRef} />
           </div>
 

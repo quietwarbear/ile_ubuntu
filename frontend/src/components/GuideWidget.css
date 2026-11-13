@@ -1,0 +1,61 @@
+/* A brief greeting every few seconds; keep the button's hit area still. */
+.village-guide-compass {
+  animation: village-guide-sway 9s ease-in-out 1s infinite;
+  transform-origin: center;
+}
+
+.village-guide-launcher:hover .village-guide-compass,
+.village-guide-launcher:focus-visible .village-guide-compass {
+  animation-play-state: paused;
+}
+
+.village-guide-launcher:focus-visible {
+  outline: 2px solid rgb(var(--gold-soft));
+  outline-offset: 4px;
+}
+
+.village-guide-panel {
+  animation: village-guide-arrive 180ms ease-out both;
+  transform-origin: bottom right;
+}
+
+.village-guide-thinking {
+  display: inline-flex;
+  gap: 3px;
+  align-items: center;
+}
+
+.village-guide-thinking i {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: rgb(var(--gold));
+  animation: village-guide-think 1.4s ease-in-out infinite;
+}
+
+.village-guide-thinking i:nth-child(2) { animation-delay: 160ms; }
+.village-guide-thinking i:nth-child(3) { animation-delay: 320ms; }
+
+@keyframes village-guide-sway {
+  0%, 5%, 24%, 100% { transform: translateY(0) rotate(0); }
+  10% { transform: translateY(-2px) rotate(-10deg); }
+  17% { transform: translateY(-2px) rotate(10deg); }
+}
+
+@keyframes village-guide-arrive {
+  from { opacity: 0; transform: translateY(8px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes village-guide-think {
+  0%, 60%, 100% { transform: translateY(0); opacity: 0.45; }
+  30% { transform: translateY(-3px); opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .village-guide-compass,
+  .village-guide-panel,
+  .village-guide-thinking i {
+    animation: none;
+  }
+}
